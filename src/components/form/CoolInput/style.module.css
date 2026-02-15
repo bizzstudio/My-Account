@@ -1,0 +1,102 @@
+/* style.module.css */
+.waveGroup {
+  position: relative;
+  width: 100%;
+}
+
+.waveGroup .input {
+  width: 100%;
+  font-size: 16px;
+  /* padding: 10px 10px 10px 5px; */
+  display: block;
+  /* border: none; */
+  /* border-bottom: 1px solid #515151; */
+  background: transparent;
+}
+
+.waveGroup .input:focus {
+  outline: none;
+}
+
+.waveGroup .label {
+  color: #999;
+  font-size: 18px;
+  font-weight: normal;
+  position: absolute;
+  pointer-events: none;
+  top: 10px;
+  display: flex;
+}
+
+.waveGroup .labelChar {
+  min-width: 3px;
+  transition: 0.2s ease all;
+  transition-delay: calc(var(--index) * .03s);
+}
+
+.waveGroup .input:focus~label .labelChar,
+/* .waveGroup .input:valid~label .labelChar, */
+.waveGroup .input:not(:placeholder-shown)~label .labelChar,
+.waveGroup .input:-webkit-autofill~label .labelChar {
+  transform: translateY(-20px);
+  font-size: 14px;
+  /* color: var(--main-color); */
+}
+
+.waveGroup .bar {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  /* background-color: #fff; */
+}
+
+.waveGroup .bar:before,
+.waveGroup .bar:after {
+  content: '';
+  height: 2px;
+  width: 0;
+  bottom: 1px;
+  position: absolute;
+  /* background: var(--main-color); */
+  transition: 0.2s ease all;
+  -moz-transition: 0.2s ease all;
+  -webkit-transition: 0.2s ease all;
+}
+
+.waveGroup .bar:before {
+  left: 50%;
+}
+
+.waveGroup .bar:after {
+  right: 50%;
+}
+
+.waveGroup .input:focus~.bar:before,
+.waveGroup .input:focus~.bar:after {
+  width: 50%;
+}
+
+input:-webkit-autofill {
+  background-color: transparent !important;
+  /* רקע מותאם */
+  transition: background-color 5000s ease-in-out 0s;
+  /* מניעת שינוי צבע אוטומטי */
+}
+
+input:-moz-autofill {
+  background-color: transparent !important;
+  /* רקע מותאם */
+  transition: background-color 5000s ease-in-out 0s;
+  /* מניעת שינוי צבע אוטומטי */
+}

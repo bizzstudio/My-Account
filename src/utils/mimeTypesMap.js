@@ -1,0 +1,28 @@
+const mimeTypesMap = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+    gif: "image/gif",
+    pdf: "application/pdf",
+    csv: "text/csv",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ppt: "application/vnd.ms-powerpoint",
+    pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    txt: "text/plain",
+    zip: "application/zip",
+    rar: "application/x-rar-compressed",
+    mp4: "video/mp4",
+    mp3: "audio/mpeg",
+    wav: "audio/wav",
+    avi: "video/x-msvideo",
+    mov: "video/quicktime",
+    flv: "video/x-flv",
+    mkv: "video/x-matroska",
+    svg: "image/svg+xml",
+    tiff: "image/tiff"
+};
+export default mimeTypesMap;

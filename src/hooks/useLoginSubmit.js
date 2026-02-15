@@ -1,0 +1,179 @@
+// src/hooks/useLoginSubmit.js
+import Cookies from "js-cookie";
+import { useContext, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
+
+// Internal import
+import { UserContext } from "@/context/UserContext";
+import UserServices from "@/services/UserServices";
+import { notifySuccess, notifyError } from "@/utils/toast";
+import { removeSetting } from "@/reduxStore/slice/settingSlice";
+import notifyApiResponse from "@/utils/notifyApiResponse";
+import { t } from "i18next";
+
+const useLoginSubmit = () => {
+  const reduxDispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const { dispatch } = useContext(UserContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const lang = Cookies.get("i18next");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      rememberDevice: true,
+    }
+  });
+
+  const onSubmit = ({
+    name,
+    email,
+    verifyEmail,
+    password,
+    role,
+    mfaCode,
+    rememberDevice,
+  }) => {
+    setLoading(true);
+    const cookieTimeOut = 30;
+    // return;
+
+    if (location.pathname === "/login") {
+      reduxDispatch(removeSetting("globalSetting"));
+      const trustedToken = Cookies.get("trustedDevice");
+
+      UserServices.loginUser({ email, password, trustedToken })
+        .then((res) => {
+          setLoading(false);
+
+          // 1) אם אימות דו שלבי נדרש – ננווט למסך הקוד
+          if (res?.step === 'mfa_required' && res?.tempToken) {
+            navigate("/mfa", { state: { tempToken: res.tempToken } });
+            return;
+          }
+
+          // 2) אם דילגנו על האימות דו שלבי (מכשיר מוכר) – מתנהגים כמו היום
+          if (res?.token) {
+            notifyApiResponse(res, true);
+            dispatch({ type: "USER_LOGIN", payload: res });
+            Cookies.set("userInfo", JSON.stringify(res), {
+              expires: cookieTimeOut,
+              sameSite: "None",
+              secure: true,
+            });
+            navigate("/admins", { replace: true });
+            window.location.reload();
+          }
+        })
+        .catch((err) => {
+          notifyApiResponse(err, false);
+          setLoading(false);
+        });
+    }
+
+    // טיפול באימות דו שלבי
+    if (location.pathname === "/mfa") {
+      const { tempToken } = location.state || {};
+
+      if (!tempToken) {
+        notifyError(t("InvalidSessionError"));
+        navigate("/login", { replace: true });
+        setLoading(false);
+        return;
+      }
+
+      if (!mfaCode || mfaCode.length !== 6) {
+        notifyError(t("InvalidCodeError"));
+        setLoading(false);
+        return;
+      }
+
+      UserServices.verifyMfa({
+        tempToken,
+        code: mfaCode,
+        rememberDevice: rememberDevice || false,
+      })
+        .then((res) => {
+          setLoading(false);
+
+          if (res?.trustedToken) {
+            Cookies.set("trustedDevice", res.trustedToken, {
+              expires: 30,
+              sameSite: "None",
+              secure: true,
+            });
+          }
+
+          if (res?.token) {
+            notifySuccess(t("MFASuccess"));
+            dispatch({ type: "USER_LOGIN", payload: res });
+            Cookies.set("userInfo", JSON.stringify(res), {
+              expires: cookieTimeOut,
+              sameSite: "None",
+              secure: true,
+            });
+            navigate("/admins", { replace: true });
+            window.location.reload();
+          }
+        })
+        .catch((err) => {
+          notifyApiResponse(err, false);
+          setLoading(false);
+        });
+    }
+
+    if (location.pathname === "/signup") {
+      UserServices.registerUser({ name, email, password, role })
+        .then((res) => {
+          if (res) {
+            setLoading(false);
+            notifySuccess("Register Success!");
+            dispatch({ type: "USER_LOGIN", payload: res });
+            Cookies.set("userInfo", JSON.stringify(res), {
+              expires: cookieTimeOut,
+              sameSite: "None",
+              secure: true,
+            });
+            navigate("/", { replace: true });
+          }
+        })
+        .catch((err) => {
+          notifyApiResponse(err, false);
+          setLoading(false);
+        });
+    }
+
+    if (location.pathname === "/forgot-password") {
+      UserServices.forgetPassword({ verifyEmail, language: lang || "he" })
+        .then((res) => {
+          setLoading(false);
+          notifyApiResponse(res, true);
+        })
+        .catch((err) => {
+          setLoading(false);
+          notifyApiResponse(err, false);
+        });
+    }
+  };
+  // פונקציה לטיפול בחזרה ללוגין מעמוד MFA
+  const handleBackToLogin = () => {
+    navigate("/login", { replace: true });
+  };
+
+  return {
+    onSubmit,
+    register,
+    handleSubmit,
+    errors,
+    loading,
+    handleBackToLogin,
+  };
+};
+
+export default useLoginSubmit;

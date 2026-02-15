@@ -1,0 +1,11 @@
+// jsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "es6",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "moduleResolution": "node" // הוספת קונפיגורציה עבור ניהול מודולים
+  }
+}
