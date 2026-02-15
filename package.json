@@ -167,4 +167,9 @@
       "last 1 safari version"
     ]
   }
+  {
+  "overrides": {
+    "react-focus-lock": "^2.10.0"
+  }
+
 }
