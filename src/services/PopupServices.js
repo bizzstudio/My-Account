@@ -1,5 +1,5 @@
 // src/services/PopupServices.js
-import requests from "./HttpService";
+import requests from "./httpService";
 
 const PopupServices = {
   // Add a new popup
