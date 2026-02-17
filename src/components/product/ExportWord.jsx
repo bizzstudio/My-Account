@@ -1,42 +1,50 @@
-// src/components/product/exportWordFunction.js
-import { Document, Packer, Paragraph, TextRun } from "docx";
-import { saveAs } from "file-saver";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
 
-const ExportWord = (products, isCheck = []) => {
-  // תמיד יוצרים רשימה של מוצרים לייצוא
+const ExportWord = async (products, isCheck = []) => {
   const dataToExport = isCheck.length > 0
     ? products.filter(p => isCheck.includes(p._id))
-    : products; // אם לא בחרת – כל המוצרים
+    : products;
 
-  // עבור כל מוצר – יוצרים קובץ נפרד
-  dataToExport.forEach((product, index) => {
-    const borrower = product.borrowers?.[0] || {};
+  try {
+    const response = await fetch("/template.docx?" + Date.now(), { cache: "no-cache" });
+    if (!response.ok) throw new Error(`Template not found. Status: ${response.status}`);
+    const content = await response.arrayBuffer();
 
-    const doc = new Document({
-      sections: [
-        {
-          children: [
-            new Paragraph({
-              children: [new TextRun({ text: `שלום ל-${borrower.borrowerName || "-"}`, bold: true })],
-            }),
-            new Paragraph({ children: [new TextRun(`משפחה: ${borrower.borrowerFamily || "-"}`)] }),
-            new Paragraph({ children: [new TextRun(`תעודת זהות: ${borrower.borrowerIdNumber || "-"}`)] }),
-            new Paragraph({ children: [new TextRun(`כתובת: ${borrower.borrowerAddress || "-"}`)] }),
-            new Paragraph({ children: [new TextRun(`מייל: ${borrower.borrowerEmail || "-"}`)] }),
-            new Paragraph({ children: [new TextRun(" ")] }),
-          ],
-        },
-      ],
-    });
+    for (let index = 0; index < dataToExport.length; index++) {
+      const product = dataToExport[index];
+      const borrowers = product.borrowers?.length > 0 ? product.borrowers : [{}];
 
-    // מוסיפים זמן קצר בין ההורדות כדי למנוע שהדפדפן יחסום את ההורדה
-    setTimeout(() => {
-      Packer.toBlob(doc).then(blob => {
-        const fileName = `${borrower.borrowerName || "Product"}_${index + 1}.docx`;
-        saveAs(blob, fileName);
-      });
-    }, index * 300);
-  });
+      for (let bIndex = 0; bIndex < borrowers.length; bIndex++) {
+        const borrower = borrowers[bIndex];
+        const safeData = {
+          borrowerName: borrower.borrowerName || "-",
+          borrowerIdNumber: borrower.borrowerIdNumber || "-",
+          borrowerFamily: borrower.borrowerFamily || "-",
+          borrowerAddress: borrower.borrowerAddress || "-",
+          borrowerEmail: borrower.borrowerEmail || "-",
+        };
+
+        const zip = new PizZip(content.slice(0));
+        const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+        doc.setData(safeData);
+        doc.render();
+
+        const blob = doc.getZip().generate({ type: "blob" });
+        const formData = new FormData();
+        formData.append("file", blob, `${safeData.borrowerName}.docx`);
+
+        // שולח את הקובץ לשרת
+        await fetch("/api/upload-to-drive", {
+          method: "POST",
+          body: formData,
+        });
+      }
+    }
+    alert("✅ כל הקבצים הועלו ל‑Drive בהצלחה!");
+  } catch (err) {
+    console.error("Error processing files:", err);
+  }
 };
 
 export default ExportWord;
