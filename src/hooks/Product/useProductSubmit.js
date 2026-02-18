@@ -19,7 +19,6 @@ const useProductSubmit = (id, onSuccess) => {
 
   const defaultBorrower = {
     borrowerName: "",
-    borrowerFamily: "",
     borrowerIdType: "",
     borrowerIdNumber: "",
     borrowerAddress: "",

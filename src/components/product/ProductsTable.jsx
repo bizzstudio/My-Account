@@ -94,29 +94,18 @@ const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false }) => {
                 {product.borrowers?.[0]?.borrowerName || "-"}
               </TableCell>
               <TableCell className="text-center">
-                {product.borrowers?.[0]?.borrowerFamily || "-"}
-              </TableCell>
-              <TableCell className="text-center">
                 {product.borrowers?.[0]?.borrowerIdType || "-"}
               </TableCell>
               <TableCell className="text-center">
-                {product.borrowers?.[0]?.borrowerIdNumber || "-"}
+                {product.signingDetails.lawyerName || "-"}
               </TableCell>
               <TableCell className="text-center">
-                {product.borrowers?.[0]?.borrowerAddress || "-"}
+                {product.signingDetails.consultant || "-"}
               </TableCell>
               <TableCell className="text-center">
-                {product.borrowers?.[0]?.borrowerDateOfBirth
-                  ? new Date(product.borrowers[0].borrowerDateOfBirth).toLocaleDateString()
-                  : "-"}
+                {product.signingDetails.primaryBacker || "-"}
               </TableCell>
-              <TableCell className="text-center">
-              {product.borrowers?.[0]?.borrowerGender
-    ? t(product.borrowers[0].borrowerGender === "male" ? "Male" : "Female")
-    : "-"}              </TableCell>
-              <TableCell className="text-center">
-                {product.borrowers?.[0]?.borrowerEmail || "-"}
-              </TableCell>
+             
             </TableRow>
           ))}
         </TableBody>

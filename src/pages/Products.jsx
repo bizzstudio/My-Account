@@ -268,13 +268,10 @@ import {
                   { key: "checkbox" },
                   { key: "actions", label: t("Actions") },
                   { key: "borrowerName", label: t("Image") },
-                  { key: "borrowerFamily", label: t("BorrowerFamily") },
                   { key: "borrowerIdType", label: t("BorrowerIdType") },
-                  { key: "borrowerIdNumber", label: t("BorrowerIdNumber") },
-                  { key: "borrowerAddress", label: t("BorrowerAddress") },
-                  { key: "borrowerDateOfBirth", label: t("BorrowerDateOfBirth") },
-                  { key: "borrowerGender", label: t("BorrowerGender") },
-                  { key: "borrowerEmail", label: t("BorrowerEmail") },
+                  { key: "lawyerName", label: t("LawyerName") },
+                  { key: "consultant", label: t("Consultant") },
+                  { key: "primaryBacker", label: t("PrimaryBacker") },
                 ]} />
                 <ProductsTable
                   products={products}

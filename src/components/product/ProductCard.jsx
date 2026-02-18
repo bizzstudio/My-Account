@@ -53,61 +53,33 @@ const ProductCard = ({ product, isCheck, setIsCheck, handleClick, toggleDrawerDa
       </div>
 
       {/* Borrower details */}
-      <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="flex flex-col divide-y divide-דgray-200 dark:divide-gray-700">
         <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("BorrowerName")}:</span>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("borrowerName")}:</span>
           <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerName || "-"}</span>
         </div>
 
         <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("BorrowerFamily")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerFamily || "-"}</span>
-        </div>
-
-        <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("BorrowerIdType")}:</span>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("borrowerIdType")}:</span>
           <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerIdType || "-"}</span>
         </div>
 
         <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("BorrowerIdNumber")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerIdNumber || "-"}</span>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("lawyerName")}:</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{signingDetails.lawyerName || "-"}</span>
         </div>
 
         <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("BorrowerAddress")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerAddress || "-"}</span>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("consultant")}:</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{product.signingDetails || "-"}</span>
         </div>
 
         <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("BorrowerDateOfBirth")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">
-            {borrower.borrowerDateOfBirth
-              ? new Date(borrower.borrowerDateOfBirth).toLocaleDateString()
-              : "-"}
-          </span>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("primaryBacker")}:</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{roduct.signingDetails || "-"}</span>
         </div>
 
-        <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("BorrowerGender")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerGender || "-"}</span>
-        </div>
-
-        <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("BorrowerEmail")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerEmail || "-"}</span>
-        </div>
-
-        {/* Status */}
-        <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("Status")}:</span>
-          <ActiveInActiveButton
-            id={product?._id}
-            product={product}
-            option="product"
-            status={product.status}
-          />
-        </div>
+  
       </div>
     </div>
   );

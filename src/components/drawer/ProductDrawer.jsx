@@ -211,21 +211,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
             </div>
           </div>
 
-          {/* Borrower Family */}
-          <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-            <LabelArea label={t("BorrowerFamily")} />
-            <div className="col-span-6">
-              <InputArea
-                register={register}
-                label={t("BorrowerFamily")}
-                name={`borrowers[${index}].borrowerFamily`}
-                type="text"
-                placeholder={t("BorrowerFamily")}
-              />
-              <Error errorName={errors?.borrowers?.[index]?.borrowerFamily} />
-            </div>
-          </div>
-
+        
           {/* Borrower ID Type */}
           <div className="flex flex-col gap-1 md:col-span-2 col-span-12">
             <LabelArea label={t("BorrowerIdType")} />
@@ -286,6 +272,21 @@ const ProductDrawer = ({ id, onSuccess }) => {
             </div>
           </div>
 
+{/* Borrower Email */}
+<div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+            <LabelArea label={t("BorrowerEmail")} />
+            <div className="col-span-6">
+              <InputArea
+                register={register}
+                label={t("BorrowerEmail")}
+                name={`borrowers[${index}].borrowerEmail`}
+                type="email"
+                placeholder={t("BorrowerEmail")}
+              />
+              <Error errorName={errors?.borrowers?.[index]?.borrowerEmail} />
+            </div>
+          </div>
+          
  {/* Borrower Gender */}
  <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
   <LabelArea label={t("BorrowerGender")} /> {/* כאן כבר משתמשים ב-t() */}
@@ -316,20 +317,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
   <Error errorName={errors?.borrowers?.[index]?.borrowerGender} />
 </div>
 
-          {/* Borrower Email */}
-          <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-            <LabelArea label={t("BorrowerEmail")} />
-            <div className="col-span-6">
-              <InputArea
-                register={register}
-                label={t("BorrowerEmail")}
-                name={`borrowers[${index}].borrowerEmail`}
-                type="email"
-                placeholder={t("BorrowerEmail")}
-              />
-              <Error errorName={errors?.borrowers?.[index]?.borrowerEmail} />
-            </div>
-          </div>
+          
 
           {/* כפתור הסרה */}
           <div className="col-span-12 flex justify-end">
