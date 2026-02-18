@@ -9,7 +9,7 @@ import { notifySuccess, notifyError } from "@/utils/toast";
 import ChangStatusModal from "../../modal/ChangStatusModal";
 
 /** אופציונלי: כשהמשתמש מאשר שינוי לאותו סטטוס (ללא קריאת API) – קוראים ל-callback */
-const SelectStatus = ({ order, onSameStatusConfirm }) => {
+const selectStatus = ({ order, onSameStatusConfirm }) => {
     const { statuses, setIsUpdate } = useContext(SidebarContext);
     const { mode } = useContext(WindmillContext);
     const { t } = useTranslation();
@@ -182,4 +182,4 @@ const SelectStatus = ({ order, onSameStatusConfirm }) => {
     );
 };
 
-export default SelectStatus;
+export default selectStatus;

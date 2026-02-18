@@ -32,8 +32,9 @@ const ProductServices = {
   },
 
   deleteManyProducts: async (body) => {
-    return requests.patch("/products/delete/many", body);
+    return requests.patch("/products/delete/many", body); // בלי /api כפול
   },
+  
 
   findProductByTranscript: async (params) => {
     const queryString = new URLSearchParams(params).toString();

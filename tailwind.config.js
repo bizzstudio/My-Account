@@ -10,7 +10,7 @@ const config = {
         mainColor: {
           superLight: '#fffbf7',
           light: '#edcbaf',
-          DEFAULT: '#eb8c42',
+          DEFAULT: '#a57d45',
           dark: '#52534f',
         },
       },

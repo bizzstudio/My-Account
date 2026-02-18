@@ -111,8 +111,9 @@ const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false }) => {
                   : "-"}
               </TableCell>
               <TableCell className="text-center">
-                {product.borrowers?.[0]?.borrowerGender || "-"}
-              </TableCell>
+              {product.borrowers?.[0]?.borrowerGender
+    ? t(product.borrowers[0].borrowerGender === "male" ? "Male" : "Female")
+    : "-"}              </TableCell>
               <TableCell className="text-center">
                 {product.borrowers?.[0]?.borrowerEmail || "-"}
               </TableCell>

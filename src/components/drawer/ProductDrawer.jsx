@@ -286,20 +286,35 @@ const ProductDrawer = ({ id, onSuccess }) => {
             </div>
           </div>
 
-          {/* Borrower Gender */}
-          <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-            <LabelArea label={t("BorrowerGender")} />
-            <div className="col-span-6">
-              <InputArea
-                register={register}
-                label={t("BorrowerGender")}
-                name={`borrowers[${index}].borrowerGender`}
-                type="text"
-                placeholder={t("BorrowerGender")}
-              />
-              <Error errorName={errors?.borrowers?.[index]?.borrowerGender} />
-            </div>
-          </div>
+ {/* Borrower Gender */}
+ <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+  <LabelArea label={t("BorrowerGender")} /> {/* כאן כבר משתמשים ב-t() */}
+  <div className="flex gap-4">
+    <label className="flex items-center gap-2">
+      <input
+        type="radio"
+        value="male"  // הערך נשמר באנגלית, אין צורך לשנות
+        {...register(`borrowers[${index}].borrowerGender`, {
+          required: true,
+        })}
+      />
+      {t("Male")} {/* כאן נוסף t() להצגה בעברית או אנגלית */}
+    </label>
+
+    <label className="flex items-center gap-2">
+      <input
+        type="radio"
+        value="female"
+        {...register(`borrowers[${index}].borrowerGender`, {
+          required: true,
+        })}
+      />
+      {t("Female")} {/* כאן נוסף t() להצגה בעברית או אנגלית */}
+    </label>
+  </div>
+
+  <Error errorName={errors?.borrowers?.[index]?.borrowerGender} />
+</div>
 
           {/* Borrower Email */}
           <div className="flex flex-col gap-1 md:col-span-6 col-span-12">

@@ -160,7 +160,7 @@ const DeleteModal = ({ id, ids, setIsCheck, title, table = '', trainings = [], o
           <FiTrash2 />
         </span>
           <h2 className="text-xl font-medium mb-2">
-            {t("DeleteModalH2")} <span className="text-red-500">{title || contextTitle}</span>?
+            {t("DeleteModalH2")} <span className="text-red-500"></span>?
           </h2>
           <p>{t("DeleteModalPtag")}</p>
           {hasFutureTrainings && (

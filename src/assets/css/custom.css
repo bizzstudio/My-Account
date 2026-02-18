@@ -53,15 +53,15 @@ thead tr > * {
 }
 
 .rc-slider .rc-slider-track {
-  background-color: #eb8c42;
+  background-color: #a57d45;
 }
 
 .rc-slider .rc-slider-handle {
-  border-color: #eb8c42;
+  border-color: #a57d45;
 }
 
 .rc-slider .rc-slider-dot-active {
-  border-color: #eb8c42;
+  border-color: #a57d45;
 }
 
 /* עיצוב עבור ה-header של לוח השנה */
@@ -222,7 +222,7 @@ body>iframe[style*="2147483647"]:not([id="webpack-dev-server-client-overlay"]) {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #eb8c42;
+  background-color: #a57d45;
   /* color of the scrollbar thumb */
   border-radius: 4px;
   /* radius of the scrollbar thumb */
@@ -1957,12 +1957,12 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"]:hover {
-  border-color: #eb8c42;
+  border-color: #a57d45;
 }
 
 input[type="checkbox"]:checked {
-  background-color: #eb8c42;
-  border-color: #eb8c42;
+  background-color: #a57d45;
+  border-color: #a57d45;
 }
 
 input[type="checkbox"]:checked::after {

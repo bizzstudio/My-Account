@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Avatar, WindmillContext } from "@windmill/react-ui";
 import Cookies from "js-cookie";
 import TextLogo from "@/components/common/TextLogo";
-
+import logo from "@/assets/img/logo.jpeg";
 // Icons
 import { IoLogOutOutline } from "react-icons/io5";
 import { FiUsers, FiUser, FiPackage } from "react-icons/fi";
@@ -80,7 +80,8 @@ const SidebarContent = () => {
       {/* לוגו בחלק העליון */}
       <div className="flex justify-center border-b border-gray-200 dark:border-gray-700 p-3">
         <NavLink to="/admins" className="cursor-pointer">
-          <TextLogo text={t("Arrilani")} size="medium" />
+        <img src={logo} alt="Company Logo" style={{ maxWidth: "100%", height: "auto" }} />
+
         </NavLink>
       </div>
 

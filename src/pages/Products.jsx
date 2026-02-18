@@ -149,26 +149,63 @@ import {
   
     // ✅ מחיקה מיידית – פריט בודד או מרובים – כולל עדכון מיידי של הטבלה
     const handleDeleteSelected = async (ids = null) => {
-      try {
-        const idsToDelete = ids || isCheck;
-        if (!idsToDelete || idsToDelete.length === 0) return;
-  
-        // מחיקה מהשרת
-        await ProductServices.deleteProducts(idsToDelete);
-  
-        // עדכון מיידי של הטבלה בדף הנוכחי
-        setProductsData(prev => ({
-          ...prev,
-          products: prev.products.filter(p => !idsToDelete.includes(p._id)),
-          totalDoc: prev.totalDoc - idsToDelete.length
-        }));
-  
-        // ריקון הבחירות
-        setIsCheck([]);
-      } catch (err) {
-        console.error("Error deleting products:", err);
+  try {
+    const idsToDelete = ids || isCheck;
+
+    console.log("🟡 Delete clicked");
+    console.log("IDs to delete:", idsToDelete);
+    console.log("Before delete - productsData:", productsData);
+
+    if (!idsToDelete || idsToDelete.length === 0) {
+      console.log("❌ No IDs selected");
+      return;
+    }
+
+    // מחיקה מהשרת
+    let res;
+    if (idsToDelete.length === 1) {
+      // אם רק מוצר אחד
+      res = await ProductServices.deleteProduct(idsToDelete[0]);
+    } else {
+      // אם יותר ממוצר אחד
+      res = await ProductServices.deleteManyProducts({ ids: idsToDelete });
+      
+
+    }
+    
+    console.log("🟢 Server delete response:", res);
+    
+        console.log("🟢 Server delete response:", res);
+
+    // עדכון לוקאלי של ה-state
+    setProductsData(prev => {
+      if (!prev || !prev.products) {
+        console.log("❌ prev or prev.products is null");
+        return prev;
       }
-    };
+
+      const updatedProducts = prev.products.filter(
+        p => !idsToDelete.includes(p._id)
+      );
+
+      console.log("🟢 Updated products after filter:", updatedProducts);
+
+      return {
+        ...prev,
+        products: updatedProducts,
+        totalDoc: prev.totalDoc - idsToDelete.length,
+      };
+    });
+
+    // ניקוי בחירה
+    setIsCheck([]);
+
+    console.log("🟢 Delete finished");
+  } catch (err) {
+    console.error("🔴 Error deleting products:", err);
+  }
+};
+
   
     return (
       <div className="w-full h-fit flex flex-col lg:px-20 sm:px-4 px-5 mx-auto overflow-x-hidden">
@@ -205,7 +242,7 @@ import {
       { label: <div className="flex items-center gap-1"><FiPlus size={20} /> {t("AddProduct")}</div>, onClick: toggleDrawer },
       { label: <div className="flex items-center gap-1.5"><FiDownload size={17} /> {isCheck.length > 0 ? t("ExportSelected") : t("ExportToExcel")}</div>, onClick: handleExportToExcel, disabled: !products || products.length === 0 },
       { label: <div className="flex items-center gap-1.5"><FiUpload size={17} /> {t("ImportFromExcel")}</div>, onClick: () => fileInputRef.current?.click(), disabled: false },
-      { label: <div className="flex items-center gap-1.5"><FiTrash2 size={17} /> {t("Delete")}</div>, onClick: handleDeleteSelected, disabled: isCheck.length < 1 },
+      { label: <div className="flex items-center gap-1.5"><FiTrash2 size={17} /> {t("Delete")}</div>, onClick: () => handleDeleteSelected(),  disabled: isCheck.length < 1 },
       { label: <div className="flex items-center gap-1.5"><FiDownload size={17} /> {t("ExportToWord")}</div>, 
         onClick: () => ExportWord(products, isCheck),
         disabled: !products || products.length === 0
