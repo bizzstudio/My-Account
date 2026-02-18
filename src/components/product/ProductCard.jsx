@@ -14,6 +14,7 @@ const ProductCard = ({ product, isCheck, setIsCheck, handleClick, toggleDrawerDa
   const { userInfo } = userState;
 
   const borrower = product.borrowers?.[0] || {};
+  const signingDetails = product.signingDetails || {};
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-4">
@@ -71,12 +72,12 @@ const ProductCard = ({ product, isCheck, setIsCheck, handleClick, toggleDrawerDa
 
         <div className="flex justify-between items-center gap-2 py-1">
           <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("consultant")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{product.signingDetails || "-"}</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{signingDetails.consultant || "-"}</span>
         </div>
 
         <div className="flex justify-between items-center gap-2 py-1">
           <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("primaryBacker")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{roduct.signingDetails || "-"}</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{signingDetails.primaryBacker || "-"}</span>
         </div>
 
   
