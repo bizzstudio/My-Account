@@ -10,7 +10,7 @@ import EditDeleteButton from "@/components/table/EditDeleteButton";
 import OrderCard from "./OrderCardComponent";
 import CheckBox from "@/components/form/others/CheckBox";
 import { UserContext } from "@/context/UserContext";
-import SelectStatus from "../form/selectOption/selectStatus";
+import SelectStatus from "../form/selectOption/SelectStatus";
 import { useNavigate } from "react-router-dom";
 
 
