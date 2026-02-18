@@ -63,30 +63,104 @@ import {
     const filters = useProductFilter();
   
     const productFields = [
-      { key: "_id", label: "ID" },
-      { key: "name", label: t("ProductName") },
-      { key: "sku", label: t("SKU") },
-      { key: "barcode", label: t("Barcode") },
-      { key: "owner.name", label: t("Owner") + " - " + t("Name") },
-      { key: "owner.email", label: t("Owner") + " - " + t("Email") },
-      { key: "description", label: t("Description") },
-      { key: "images", label: t("ProductImages") },
-      { key: "stock", label: t("Stock") },
-      { key: "sales", label: t("Sales") },
-      { key: "packages", label: t("Packages") },
-      { key: "category", label: t("Category") },
-      { key: "tags", label: t("Tags") },
-      { key: "brand", label: t("Brand") },
-      { key: "model", label: t("Model") },
-      { key: "classification", label: t("Classification") },
-      { key: "price", label: t("Price") },
-      { key: "salePrice", label: t("SalePrice") },
-      { key: "cargoType", label: t("CargoType") },
-      { key: "autoShipment", label: t("AutoShipment") },
-      { key: "isWarehouse", label: t("IsWarehouse") },
-      { key: "status", label: t("Status") },
-      { key: "createdAt", label: t("CreationDate") },
-      { key: "updatedAt", label: t("UpdateDate") },
+  // ===== קבוצה 2: פרטי חתימה =====
+  { key: "signingDetails.signingDate", label: t("SigningDate") },
+  { key: "signingDetails.lawyerName", label: t("LawyerName") },
+  { key: "signingDetails.lawyerRegistrationNumber", label: t("LawyerRegistrationNumber") },
+  { key: "signingDetails.lawyerIdNumber", label: t("LawyerIdNumber") },
+  { key: "signingDetails.consultant", label: t("Consultant") },
+  { key: "signingDetails.primaryBacker", label: t("PrimaryBacker") },
+  { key: "signingDetails.primaryBackerId", label: t("PrimaryBackerId") },
+  { key: "signingDetails.secondaryBacker", label: t("SecondaryBacker") },
+  { key: "signingDetails.secondaryBackerId", label: t("SecondaryBackerId") },
+  { key: "signingDetails.thirdBacker", label: t("ThirdBacker") },
+  { key: "signingDetails.thirdBackerId", label: t("ThirdBackerId") },
+
+  // ===== קבוצה 3: לווים =====
+  { key: "borrowers.borrowerName", label: t("BorrowerName") },
+  { key: "borrowers.borrowerFamily", label: t("BorrowerFamily") },
+  { key: "borrowers.borrowerIdType", label: t("BorrowerIdType") },
+  { key: "borrowers.borrowerIdNumber", label: t("BorrowerIdNumber") },
+  { key: "borrowers.borrowerAddress", label: t("BorrowerAddress") },
+  { key: "borrowers.borrowerDateOfBirth", label: t("BorrowerDateOfBirth") },
+  { key: "borrowers.borrowerGender", label: t("BorrowerGender") },
+  { key: "borrowers.borrowerEmail", label: t("BorrowerEmail") },
+
+  // ===== קבוצה 4: פרטי רישום =====
+  { key: "registrationDetails.block", label: t("Block") },
+  { key: "registrationDetails.plot", label: t("Plot") },
+  { key: "registrationDetails.subPlot", label: t("SubPlot") },
+  { key: "registrationDetails.land", label: t("Land") },
+  { key: "registrationDetails.plan", label: t("Plan") },
+  { key: "registrationDetails.contract", label: t("Contract") },
+  { key: "registrationDetails.mortgageName", label: t("MortgageName") },
+  { key: "registrationDetails.mortgageCompanyId", label: t("MortgageCompanyId") },
+  { key: "registrationDetails.office", label: t("Office") },
+  { key: "registrationDetails.plotArea", label: t("PlotArea") },
+  { key: "registrationDetails.right", label: t("Right") },
+  { key: "registrationDetails.parts", label: t("Parts") },
+  { key: "registrationDetails.propertyType", label: t("PropertyType") },
+  { key: "registrationDetails.street", label: t("Street") },
+  { key: "registrationDetails.houseNumber", label: t("HouseNumber") },
+  { key: "registrationDetails.apartmentNumber", label: t("ApartmentNumber") },
+  { key: "registrationDetails.floor", label: t("Floor") },
+  { key: "registrationDetails.direction", label: t("Direction") },
+  { key: "registrationDetails.entrance", label: t("Entrance") },
+  { key: "registrationDetails.unit", label: t("Unit") },
+  { key: "registrationDetails.settlement", label: t("Settlement") },
+
+  // ===== קבוצה 5: מוכרים =====
+  { key: "sellers.sellerName", label: t("SellerName") },
+  { key: "sellers.sellerIdType", label: t("SellerIdType") },
+  { key: "sellers.sellerIdNumber", label: t("SellerIdNumber") },
+  { key: "sellers.sellerAddress", label: t("SellerAddress") },
+
+  // ===== קבוצה 6: הלוואות =====
+  { key: "loans.loanAmount", label: t("LoanAmount") },
+  { key: "loans.loanChange", label: t("LoanChange") },
+  { key: "loans.clause", label: t("Clause") },
+  { key: "loans.loanPlan", label: t("LoanPlan") },
+  { key: "loans.loanMonths", label: t("LoanMonths") },
+  { key: "loans.loanInterestRate", label: t("LoanInterestRate") },
+  { key: "loans.adjustedLoan", label: t("AdjustedLoan") },
+  { key: "loans.realLoan", label: t("RealLoan") },
+  { key: "loans.primeMargin", label: t("PrimeMargin") },
+  { key: "loans.loanCreation", label: t("LoanCreation") },
+  { key: "loans.loanNumber", label: t("LoanNumber") },
+  { key: "loans.mortgageNumber", label: t("MortgageNumber") },
+
+  // ===== קבוצה 7: נושה בכיר =====
+  { key: "seniorCreditor.seniorCreditorName", label: t("SeniorCreditorName") },
+  { key: "seniorCreditor.seniorCreditorIdType", label: t("SeniorCreditorIdType") },
+  { key: "seniorCreditor.seniorCreditorIdNumber", label: t("SeniorCreditorIdNumber") },
+
+  // ===== קבוצה 8: חשבון בנק =====
+  { key: "borrowerBankAccount.borrowerAccountNumber", label: t("AccountNumber") },
+  { key: "borrowerBankAccount.borrowerBranchCode", label: t("BranchCode") },
+  { key: "borrowerBankAccount.borrowerBankName", label: t("BankName") },
+
+  // ===== קבוצה 9: מורשים =====
+  { key: "authorizedPerson.authorizedName", label: t("AuthorizedName") },
+  { key: "authorizedPerson.authorizedIdNumber", label: t("AuthorizedIdNumber") },
+
+  { key: "mortgagors.mortgagorDetails", label: t("MortgagorDetails") },
+  { key: "mortgagors.mortgagorFamily", label: t("MortgagorFamily") },
+  { key: "mortgagors.mortgagorIdType", label: t("MortgagorIdType") },
+  { key: "mortgagors.mortgagorIdNumber", label: t("MortgagorIdNumber") },
+
+  // ===== קבוצה 10: פרטי פרויקט =====
+  { key: "projectDetails.tamAgreementDate", label: t("TamAgreementDate") },
+  { key: "projectDetails.appraiser", label: t("Appraiser") },
+  { key: "projectDetails.supervisor", label: t("Supervisor") },
+  { key: "projectDetails.additionalFloors", label: t("AdditionalFloors") },
+  { key: "projectDetails.projectUnits", label: t("ProjectUnits") },
+  { key: "projectDetails.transferFees", label: t("TransferFees") },
+  { key: "projectDetails.ltv", label: t("LTV") },
+  { key: "projectDetails.projectValue", label: t("ProjectValue") },
+  { key: "projectDetails.minimumWithdrawal", label: t("MinimumWithdrawal") },
+  { key: "projectDetails.contractorName", label: t("ContractorName") },
+  { key: "projectDetails.architect", label: t("Architect") },
+
     ];
   
     // Fetch admins if super-admin
@@ -144,7 +218,7 @@ import {
     const handleExportToExcel = () => {
       let dataToExport = products;
       if (isCheck.length > 0) dataToExport = products.filter(p => isCheck.includes(p._id));
-      exportToExcel(dataToExport, productFields, t("Products"));
+      exportToExcel(dataToExport, productFields, t("ProductsMortgageFiles"));
     };
   
     // ✅ מחיקה מיידית – פריט בודד או מרובים – כולל עדכון מיידי של הטבלה
@@ -268,7 +342,7 @@ import {
                   { key: "checkbox" },
                   { key: "actions", label: t("Actions") },
                   { key: "borrowerName", label: t("Image") },
-                  { key: "borrowerIdType", label: t("BorrowerIdType") },
+                  { key: "borrowerIdNumber", label: t("BorrowerIdNumber") },
                   { key: "lawyerName", label: t("LawyerName") },
                   { key: "consultant", label: t("Consultant") },
                   { key: "primaryBacker", label: t("PrimaryBacker") },

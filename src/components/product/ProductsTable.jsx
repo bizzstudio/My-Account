@@ -94,7 +94,7 @@ const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false }) => {
                 {product.borrowers?.[0]?.borrowerName || "-"}
               </TableCell>
               <TableCell className="text-center">
-                {product.borrowers?.[0]?.borrowerIdType || "-"}
+                {product.borrowers?.[0]?.borrowerIdNumber || "-"}
               </TableCell>
               <TableCell className="text-center">
                 {product.signingDetails.lawyerName || "-"}

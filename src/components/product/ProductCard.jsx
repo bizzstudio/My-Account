@@ -61,8 +61,8 @@ const ProductCard = ({ product, isCheck, setIsCheck, handleClick, toggleDrawerDa
         </div>
 
         <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("borrowerIdType")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerIdType || "-"}</span>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("borrowerIdNumber")}:</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerIdNumber || "-"}</span>
         </div>
 
         <div className="flex justify-between items-center gap-2 py-1">
