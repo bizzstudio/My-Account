@@ -212,20 +212,6 @@ const ProductDrawer = ({ id, onSuccess }) => {
           </div>
 
         
-          {/* Borrower ID Type */}
-          <div className="flex flex-col gap-1 md:col-span-2 col-span-12">
-            <LabelArea label={t("BorrowerIdType")} />
-            <div className="col-span-6">
-              <InputArea
-                register={register}
-                label={t("BorrowerIdType")}
-                name={`borrowers[${index}].borrowerIdType`}
-                type="text"
-                placeholder={t("BorrowerIdType")}
-              />
-              <Error errorName={errors?.borrowers?.[index]?.borrowerIdType} />
-            </div>
-          </div>
 
           {/* Borrower ID Number */}
           <div className="flex flex-col gap-1 md:col-span-2 col-span-12">
@@ -286,7 +272,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
               <Error errorName={errors?.borrowers?.[index]?.borrowerEmail} />
             </div>
           </div>
-          
+
  {/* Borrower Gender */}
  <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
   <LabelArea label={t("BorrowerGender")} /> {/* כאן כבר משתמשים ב-t() */}
