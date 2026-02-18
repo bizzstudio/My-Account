@@ -54,10 +54,10 @@ const ExportWord = async (products, isCheck = []) => {
 
     // אלרט בהתאם למספר הקבצים
     if (uploadedFiles.length === 1) {
-      alert(`✅ הקובץ ${uploadedFiles[0]} הועלה בהצלחה!`);
+      alert(`✅ המסמך ${uploadedFiles[0]} הועלה בהצלחה!`);
     } else if (uploadedFiles.length > 1) {
       alert(
-        `✅ ${uploadedFiles.length} קבצים הועלו בהצלחה:\n- ${uploadedFiles.join(
+        `✅ ${uploadedFiles.length} מסמכים הועלו בהצלחה:\n- ${uploadedFiles.join(
           "\n- "
         )}`
       );

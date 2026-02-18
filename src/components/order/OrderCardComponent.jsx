@@ -7,7 +7,7 @@ import dayjs from "dayjs";
 import EditDeleteButton from "@/components/table/EditDeleteButton";
 import CheckBox from "@/components/form/others/CheckBox";
 import { UserContext } from "@/context/UserContext";
-import SelectStatus from "../form/selectOption/selectStatus";
+import SelectStatus from "../form/selectOption/SelectStatus";
 
 const OrderCard = ({ order, isCheck, setIsCheck, handleClick, toggleDrawerData }) => {
   const { state: userState } = useContext(UserContext);
