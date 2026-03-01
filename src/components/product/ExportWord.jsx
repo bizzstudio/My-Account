@@ -29,7 +29,8 @@ const ExportWord = async (products, isCheck = [], template = null) => {
       );
       if (!response.ok)
         throw new Error(`Template fetch failed. Status: ${response.status}`);
-      content = await response.arrayBuffer();
+      // שומרים כ-Uint8Array כדי שניתן לעשות slice מרובים ללא ניצול ה-buffer
+      content = new Uint8Array(await response.arrayBuffer());
     } else {
       // תבנית ברירת מחדל — מהתיקייה הציבורית
       const response = await fetch(`/template.docx?${Date.now()}`, {
@@ -37,7 +38,7 @@ const ExportWord = async (products, isCheck = [], template = null) => {
       });
       if (!response.ok)
         throw new Error(`Template not found. Status: ${response.status}`);
-      content = await response.arrayBuffer();
+      content = new Uint8Array(await response.arrayBuffer());
     }
 
     for (let product of dataToExport) {
@@ -52,18 +53,23 @@ const ExportWord = async (products, isCheck = [], template = null) => {
           borrowerEmail: borrower.borrowerEmail || "-",
         };
 
-        const zip = new PizZip(content.slice(0));
+        // יצירת עותק חדש לכל איטרציה — מונע ניצול ה-buffer המקורי
+        const zip = new PizZip(new Uint8Array(content));
         const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
         await doc.renderAsync(safeData);
 
         const blob = doc.getZip().generate({ type: "blob" });
 
+        const templateFileName = template?.name || "תבנית ברירת מחדל";
         const formData = new FormData();
-        formData.append("file", blob, `${safeData.borrowerName}.docx`);
+        formData.append("file", blob, "document.docx");
         const uniqueFolderName = safeData.borrowerName || "Unknown";
         formData.append("folderName", uniqueFolderName);
+        formData.append("productId", product._id || "");
 
-        const res = await fetch("/api/upload-to-drive", {
+        // שם הקובץ עובר כ-query param מקודד כדי לתמוך בעברית בצורה אמינה
+        const encodedFileName = encodeURIComponent(`${templateFileName}.docx`);
+        const res = await fetch(`/api/upload-to-drive?fileName=${encodedFileName}`, {
           method: "POST",
           body: formData,
         });
@@ -76,6 +82,24 @@ const ExportWord = async (products, isCheck = [], template = null) => {
           const data = await res.json();
           if (data?.folder?.webViewLink) {
             driveLinks[product._id] = data.folder.webViewLink;
+          }
+          // שמירת תבנית שיוצאה על המוצר לצורך עדכון אוטומטי בעתיד
+          if (product._id) {
+            const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
+            fetch(
+              `${import.meta.env.VITE_APP_API_BASE_URL}/products/${product._id}/exported-templates`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: tokenHolder ? `Bearer ${tokenHolder.token}` : "",
+                },
+                body: JSON.stringify({
+                  id: template?._id || "default",
+                  name: templateName,
+                }),
+              }
+            ).catch(() => {});
           }
         }
       }

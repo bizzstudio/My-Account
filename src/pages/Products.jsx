@@ -41,7 +41,7 @@ import {
   const Products = () => {
     const { state: userState } = useContext(UserContext);
     const { userInfo } = userState;
-    const { toggleDrawer, setBreadcrumbs } = useContext(SidebarContext);
+    const { toggleDrawer, setBreadcrumbs, isUpdate, setIsUpdate } = useContext(SidebarContext);
     const { exportToExcel } = useExport();
     const {
       handleSelectFile,
@@ -198,7 +198,10 @@ import {
       }
     }, [filters.buildParams, currentPage, resultsPerPage, userInfo]);
   
-    useEffect(() => { fetchProducts(); }, [
+    useEffect(() => {
+      fetchProducts();
+      if (isUpdate) setIsUpdate(false);
+    }, [
       currentPage,
       filters.searchTerm,
       filters.selectedStatus,
@@ -212,6 +215,7 @@ import {
       filters.priceMax,
       filters.sortBy,
       filters.sortOrder,
+      isUpdate,
     ]);
   
     const products = productsData?.products || [];

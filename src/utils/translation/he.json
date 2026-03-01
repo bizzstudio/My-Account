@@ -735,8 +735,8 @@
   "Sellers": "מוכרים",
   "AddSeller": "הוסף מוכר",
   "SellerName": "שם המוכר",
-  "SellerIdType": "סוג תעודת זהות",
-  "SellerIdNumber": "מספר תעודת זהות",
+  "SellerIdType": "סוג ת\"ז מוכר",
+  "SellerIdNumber": "מספר ת\"ז מוכר",
   "SellerAddress": "כתובת",
   "RemoveSeller": "הסר מוכר",
 
@@ -758,8 +758,8 @@
 
   "SeniorCreditor": "נושה בכיר",
   "SeniorCreditorName": "שם הנושה הבכיר",
-  "SeniorCreditorIdType": "סוג תעודת זהות",
-  "SeniorCreditorIdNumber": "מספר תעודת זהות",
+  "SeniorCreditorIdType": "סוג ת\"ז נושה",
+  "SeniorCreditorIdNumber": "מספר ת\"ז נושה",
 
   "BorrowerBankAccount": "חשבון בנק של הלווה",
   "BorrowerAccountNumber": "מספר חשבון",
@@ -776,8 +776,8 @@
   "AddMortgagor": "הוסף משכן",
   "MortgagorDetails": "פרטי משכן",
   "MortgagorFamily": "שם משפחה משכן",
-  "MortgagorIdType": "סוג תעודת זהות",
-  "MortgagorIdNumber": "מספר תעודת זהות",
+  "MortgagorIdType": "סוג ת\"ז משכן",
+  "MortgagorIdNumber": "מספר ת\"ז משכן",
   "RemoveMortgagor": "הסר משכן",
 
   "ProjectDetails": "פרטי פרויקט",
@@ -805,7 +805,8 @@
   "AddBorrower": "הוסף לווה",
   "ExportToWord": "ייצוא מסמך ",
   "Female":"נקבה",
-   "Male":"זכר",
+  "Male":"זכר",
+  "FieldRequired": "שדה חובה",
    "MortgageFiles": "תיקי משכנתאות",
   "Settings": "הגדרות",
   "DocumentTemplates": "תבניות מסמך",

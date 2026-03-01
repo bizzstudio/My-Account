@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import Cookies from "js-cookie";
 
 // Internal imports
 import { SidebarContext } from "@/context/SidebarContext";
@@ -7,6 +8,7 @@ import { UserContext } from "@/context/UserContext";
 import ProductServices from "@/services/ProductServices";
 import UserServices from "@/services/UserServices";
 import notifyApiResponse from "@/utils/notifyApiResponse";
+import ExportWord from "@/components/product/ExportWord";
 
 const useProductSubmit = (id, onSuccess) => {
   const { isDrawerOpen, closeDrawer, setIsUpdate } =
@@ -92,6 +94,27 @@ const useProductSubmit = (id, onSuccess) => {
     return isNaN(d.getTime()) ? undefined : d;
   };
 
+  const reExportToDrive = async (productId, productData) => {
+    try {
+      const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
+      const res = await fetch(
+        `${import.meta.env.VITE_APP_API_BASE_URL}/products/${productId}/exported-templates`,
+        { headers: { Authorization: tokenHolder ? `Bearer ${tokenHolder.token}` : "" } }
+      );
+      if (!res.ok) return;
+      const { exportedTemplates } = await res.json();
+      if (!exportedTemplates || exportedTemplates.length === 0) return;
+
+      const fullProduct = { ...productData, _id: productId };
+      for (const tpl of exportedTemplates) {
+        const templateArg = tpl.id === "default" ? null : { _id: tpl.id, name: tpl.name };
+        ExportWord([fullProduct], [], templateArg).catch(console.error);
+      }
+    } catch (err) {
+      console.error("re-export failed:", err);
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
       setIsSubmitting(true);
@@ -135,6 +158,11 @@ const useProductSubmit = (id, onSuccess) => {
       notifyApiResponse(res, true);
       closeDrawer();
       if (onSuccess) onSuccess();
+
+      // re-export אוטומטי לדרייב אם קיימות תבניות שיוצאו בעבר
+      if (id) {
+        reExportToDrive(id, productData).catch(console.error);
+      }
     } catch (err) {
       notifyApiResponse(err, false);
     } finally {

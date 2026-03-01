@@ -10,7 +10,6 @@ import ProductServices from "@/services/ProductServices";
 import notifyApiResponse from "@/utils/notifyApiResponse";
 import { notifyError, notifySuccess } from "@/utils/toast";
 import { useTranslation } from "react-i18next";
-import { DEFAULT_CARGO_TYPE } from "@/constants/cargoTypes";
 
 const useImport = () => {
     const { t } = useTranslation();
@@ -84,47 +83,101 @@ const useImport = () => {
         }
     };
 
-    // Helper function to map Hebrew column names to field names
+    // Helper function to map Hebrew column names to model field paths
     const mapProductColumnNames = (row) => {
         const columnMap = {
-            [t('ProductName')]: 'name',
-            [t('SKU')]: 'sku',
-            [t('Slug')]: 'slug',
-            [t('Barcode')]: 'barcode',
-            [t('Owner') + ' - ' + t('Email')]: 'owner',
-            [t('Description')]: 'description',
-            [t('ShortDescription')]: 'shortDescription',
-            [t('LongDescription')]: 'longDescription',
-            [t('ProductImages')]: 'images',
-            [t('Stock')]: 'stock',
-            [t('Sales')]: 'sales',
-            [t('Cartons')]: 'packagesCount',
-            [t('Packages')]: 'packagesCount',
-            [t('Category')]: 'category',
-            [t('AdditionalCategories')]: 'additionalCategories',
-            [t('Tags')]: 'tags',
-            [t('Brand')]: 'brand',
-            [t('Model')]: 'model',
-            [t('Classification')]: 'classification',
-            [t('InternalCost')]: 'internalCost',
-            [t('Price')]: 'price',
-            [t('SalePrice')]: 'salePrice',
-            [t('ShippingPrice')]: 'shippingPrice',
-            [t('LikeDiscountPrice')]: 'likeDiscountPrice',
-            [t('ShareDiscountPrice')]: 'shareDiscountPrice',
-            [t('CargoType')]: 'cargoType',
-            [t('AutoShipment')]: 'autoShipment',
-            [t('IsWarehouse')]: 'isWarehouse',
-            [t('SupportsShipping')]: 'supportsShipping',
-            [t('SEOTitle')]: 'seoTitle',
-            [t('SEODescription')]: 'seoDescription',
-            [t('SEOKeywords')]: 'seoKeywords',
-            [t('Weight')]: 'weight',
-            [t('YouTubeVideoUrl')]: 'youtubeVideoUrl',
-            [t('IsVisibleInStore')]: 'isVisibleInStore',
-            [t('Language')]: 'language',
-            [t('QuantityType')]: 'quantityType',
-            [t('Status')]: 'status',
+            // לווה
+            [t('BorrowerName')]: 'borrowerName',
+            [t('BorrowerFamily')]: 'borrowerFamily',
+            [t('BorrowerIdNumber')]: 'borrowerIdNumber',
+            [t('BorrowerIdType')]: 'borrowerIdType',
+            [t('BorrowerAddress')]: 'borrowerAddress',
+            [t('BorrowerDateOfBirth')]: 'borrowerDateOfBirth',
+            [t('BorrowerGender')]: 'borrowerGender',
+            [t('BorrowerEmail')]: 'borrowerEmail',
+            // פרטי חתימה
+            [t('SigningDate')]: 'signingDate',
+            [t('LawyerName')]: 'lawyerName',
+            [t('LawyerRegistrationNumber')]: 'lawyerRegistrationNumber',
+            [t('LawyerIdNumber')]: 'lawyerIdNumber',
+            [t('LawyerEmail')]: 'lawyerEmail',
+            [t('Consultant')]: 'consultant',
+            [t('ConsultantEmail')]: 'consultantEmail',
+            [t('PrimaryBacker')]: 'primaryBacker',
+            [t('PrimaryBackerId')]: 'primaryBackerId',
+            [t('SecondaryBacker')]: 'secondaryBacker',
+            [t('SecondaryBackerId')]: 'secondaryBackerId',
+            [t('ThirdBacker')]: 'thirdBacker',
+            [t('ThirdBackerId')]: 'thirdBackerId',
+            // פרטי רישום
+            [t('Block')]: 'block',
+            [t('Plot')]: 'plot',
+            [t('SubPlot')]: 'subPlot',
+            [t('Land')]: 'land',
+            [t('Plan')]: 'plan',
+            [t('Contract')]: 'contract',
+            [t('MortgageName')]: 'mortgageName',
+            [t('MortgageCompanyId')]: 'mortgageCompanyId',
+            [t('Office')]: 'office',
+            [t('PlotArea')]: 'plotArea',
+            [t('Right')]: 'right',
+            [t('Parts')]: 'parts',
+            [t('PropertyType')]: 'propertyType',
+            [t('Street')]: 'street',
+            [t('HouseNumber')]: 'houseNumber',
+            [t('ApartmentNumber')]: 'apartmentNumber',
+            [t('Floor')]: 'floor',
+            [t('Direction')]: 'direction',
+            [t('Entrance')]: 'entrance',
+            [t('Unit')]: 'unit',
+            [t('Settlement')]: 'settlement',
+            // הלוואות
+            [t('LoanAmount')]: 'loanAmount',
+            [t('LoanChange')]: 'loanChange',
+            [t('Clause')]: 'clause',
+            [t('LoanPlan')]: 'loanPlan',
+            [t('LoanMonths')]: 'loanMonths',
+            [t('LoanInterestRate')]: 'loanInterestRate',
+            [t('AdjustedLoan')]: 'adjustedLoan',
+            [t('RealLoan')]: 'realLoan',
+            [t('PrimeMargin')]: 'primeMargin',
+            [t('LoanNumber')]: 'loanNumber',
+            [t('MortgageNumber')]: 'mortgageNumber',
+            // נושה בכיר
+            [t('SeniorCreditorName')]: 'seniorCreditorName',
+            [t('SeniorCreditorIdType')]: 'seniorCreditorIdType',
+            [t('SeniorCreditorIdNumber')]: 'seniorCreditorIdNumber',
+            // חשבון בנק
+            [t('BorrowerAccountNumber')]: 'borrowerAccountNumber',
+            [t('BorrowerBranchCode')]: 'borrowerBranchCode',
+            [t('BorrowerBankName')]: 'borrowerBankName',
+            // מוכרים
+            [t('SellerName')]: 'sellerName',
+            [t('SellerIdType')]: 'sellerIdType',
+            [t('SellerIdNumber')]: 'sellerIdNumber',
+            [t('SellerAddress')]: 'sellerAddress',
+            // הלוואה — תאריך יצירה
+            [t('LoanCreation')]: 'loanCreation',
+            // מורשים
+            [t('AuthorizedName')]: 'authorizedName',
+            [t('AuthorizedIdNumber')]: 'authorizedIdNumber',
+            // משכנים
+            [t('MortgagorDetails')]: 'mortgagorDetails',
+            [t('MortgagorFamily')]: 'mortgagorFamily',
+            [t('MortgagorIdType')]: 'mortgagorIdType',
+            [t('MortgagorIdNumber')]: 'mortgagorIdNumber',
+            // פרטי פרויקט
+            [t('TamAgreementDate')]: 'tamAgreementDate',
+            [t('Appraiser')]: 'appraiser',
+            [t('Supervisor')]: 'supervisor',
+            [t('AdditionalFloors')]: 'additionalFloors',
+            [t('ProjectUnits')]: 'projectUnits',
+            [t('TransferFees')]: 'transferFees',
+            [t('LTV')]: 'ltv',
+            [t('ProjectValue')]: 'projectValue',
+            [t('MinimumWithdrawal')]: 'minimumWithdrawal',
+            [t('ContractorName')]: 'contractorName',
+            [t('Architect')]: 'architect',
         };
 
         const mappedRow = {};
@@ -135,13 +188,106 @@ const useImport = () => {
         return mappedRow;
     };
 
-    // Build packages for import: count → array of { cargoType }; or use existing packages array if valid
-    const buildPackagesFromImport = (packagesCount, packagesArray) => {
-        if (Array.isArray(packagesArray) && packagesArray.length > 0 && packagesArray.every((p) => p && p.cargoType)) {
-            return packagesArray.map((p) => ({ cargoType: p.cargoType || DEFAULT_CARGO_TYPE }));
-        }
-        const n = packagesCount != null ? Math.max(1, Number(packagesCount) || 1) : 1;
-        return Array(n).fill(null).map(() => ({ cargoType: DEFAULT_CARGO_TYPE }));
+    // בניית מפת כל השמות הידועים (עברית → שם שדה)
+    const buildColumnMap = () => ({
+        [t('BorrowerName')]: 'borrowerName',
+        [t('BorrowerFamily')]: 'borrowerFamily',
+        [t('BorrowerIdNumber')]: 'borrowerIdNumber',
+        [t('BorrowerIdType')]: 'borrowerIdType',
+        [t('BorrowerAddress')]: 'borrowerAddress',
+        [t('BorrowerDateOfBirth')]: 'borrowerDateOfBirth',
+        [t('BorrowerGender')]: 'borrowerGender',
+        [t('BorrowerEmail')]: 'borrowerEmail',
+        [t('SigningDate')]: 'signingDate',
+        [t('LawyerName')]: 'lawyerName',
+        [t('LawyerRegistrationNumber')]: 'lawyerRegistrationNumber',
+        [t('LawyerIdNumber')]: 'lawyerIdNumber',
+        [t('LawyerEmail')]: 'lawyerEmail',
+        [t('Consultant')]: 'consultant',
+        [t('ConsultantEmail')]: 'consultantEmail',
+        [t('PrimaryBacker')]: 'primaryBacker',
+        [t('PrimaryBackerId')]: 'primaryBackerId',
+        [t('SecondaryBacker')]: 'secondaryBacker',
+        [t('SecondaryBackerId')]: 'secondaryBackerId',
+        [t('ThirdBacker')]: 'thirdBacker',
+        [t('ThirdBackerId')]: 'thirdBackerId',
+        [t('Block')]: 'block',
+        [t('Plot')]: 'plot',
+        [t('SubPlot')]: 'subPlot',
+        [t('Land')]: 'land',
+        [t('Plan')]: 'plan',
+        [t('Contract')]: 'contract',
+        [t('MortgageName')]: 'mortgageName',
+        [t('MortgageCompanyId')]: 'mortgageCompanyId',
+        [t('Office')]: 'office',
+        [t('PlotArea')]: 'plotArea',
+        [t('Right')]: 'right',
+        [t('Parts')]: 'parts',
+        [t('PropertyType')]: 'propertyType',
+        [t('Street')]: 'street',
+        [t('HouseNumber')]: 'houseNumber',
+        [t('ApartmentNumber')]: 'apartmentNumber',
+        [t('Floor')]: 'floor',
+        [t('Direction')]: 'direction',
+        [t('Entrance')]: 'entrance',
+        [t('Unit')]: 'unit',
+        [t('Settlement')]: 'settlement',
+        [t('LoanAmount')]: 'loanAmount',
+        [t('LoanChange')]: 'loanChange',
+        [t('Clause')]: 'clause',
+        [t('LoanPlan')]: 'loanPlan',
+        [t('LoanMonths')]: 'loanMonths',
+        [t('LoanInterestRate')]: 'loanInterestRate',
+        [t('AdjustedLoan')]: 'adjustedLoan',
+        [t('RealLoan')]: 'realLoan',
+        [t('PrimeMargin')]: 'primeMargin',
+        [t('LoanCreation')]: 'loanCreation',
+        [t('LoanNumber')]: 'loanNumber',
+        [t('MortgageNumber')]: 'mortgageNumber',
+        [t('SeniorCreditorName')]: 'seniorCreditorName',
+        [t('SeniorCreditorIdType')]: 'seniorCreditorIdType',
+        [t('SeniorCreditorIdNumber')]: 'seniorCreditorIdNumber',
+        [t('BorrowerAccountNumber')]: 'borrowerAccountNumber',
+        [t('BorrowerBranchCode')]: 'borrowerBranchCode',
+        [t('BorrowerBankName')]: 'borrowerBankName',
+        [t('SellerName')]: 'sellerName',
+        [t('SellerIdType')]: 'sellerIdType',
+        [t('SellerIdNumber')]: 'sellerIdNumber',
+        [t('SellerAddress')]: 'sellerAddress',
+        [t('AuthorizedName')]: 'authorizedName',
+        [t('AuthorizedIdNumber')]: 'authorizedIdNumber',
+        [t('MortgagorDetails')]: 'mortgagorDetails',
+        [t('MortgagorFamily')]: 'mortgagorFamily',
+        [t('MortgagorIdType')]: 'mortgagorIdType',
+        [t('MortgagorIdNumber')]: 'mortgagorIdNumber',
+        [t('TamAgreementDate')]: 'tamAgreementDate',
+        [t('Appraiser')]: 'appraiser',
+        [t('Supervisor')]: 'supervisor',
+        [t('AdditionalFloors')]: 'additionalFloors',
+        [t('ProjectUnits')]: 'projectUnits',
+        [t('TransferFees')]: 'transferFees',
+        [t('LTV')]: 'ltv',
+        [t('ProjectValue')]: 'projectValue',
+        [t('MinimumWithdrawal')]: 'minimumWithdrawal',
+        [t('ContractorName')]: 'contractorName',
+        [t('Architect')]: 'architect',
+    });
+
+    // ולידציה של כותרות הקובץ לפני עיבוד
+    const validateColumns = (data) => {
+        if (!data || data.length === 0) return { valid: false, missingRequired: [], unrecognized: [], recognized: [] };
+
+        const columnMap = buildColumnMap();
+        const knownColumns = Object.keys(columnMap);
+
+        const fileColumns = Object.keys(data[0]);
+        const recognized = fileColumns.filter(col => knownColumns.includes(col));
+        const unrecognized = fileColumns.filter(col => !knownColumns.includes(col));
+
+        // הקובץ תקין אם לפחות עמודה אחת מוכרת
+        const valid = recognized.length > 0;
+
+        return { valid, missingRequired: [], unrecognized, recognized, allExpected: knownColumns };
     };
 
     // Helper to parse arrays from string
@@ -151,22 +297,6 @@ const useImport = () => {
         return value.split(',').map(item => item.trim()).filter(Boolean);
     };
 
-    // Helper to parse boolean from string
-    const parseBoolean = (value) => {
-        if (typeof value === 'boolean') return value;
-        if (!value || value === '') return undefined;
-        const str = String(value).toLowerCase().trim();
-        if (str === t('Yes').toLowerCase() || str === 'true' || str === '1' || str === 'כן') return true;
-        if (str === t('No').toLowerCase() || str === 'false' || str === '0' || str === 'לא') return false;
-        return undefined;
-    };
-
-    // Helper to parse enum fields
-    const parseEnumField = (value, enumMap) => {
-        if (!value || value === '') return undefined;
-        const str = String(value).trim();
-        return enumMap[str] || str;
-    };
 
     const processFileData = (data, pathname) => {
         if (!data || data.length === 0) {
@@ -178,60 +308,155 @@ const useImport = () => {
             let processedData = [];
 
             if (pathname === "/products") {
-                // Enum mappings
-                const statusMap = {
-                    [t('Active')]: 'active',
-                    [t('Inactive')]: 'inactive',
-                };
+                // ולידציה של כותרות
+                const validation = validateColumns(data);
+                if (!validation.valid) {
+                    setImportStage('validation_error');
+                    setImportResults({
+                        total: 0,
+                        success: 0,
+                        failure: 0,
+                        errors: [],
+                        validationError: {
+                            missingRequired: validation.missingRequired,
+                            unrecognized: validation.unrecognized,
+                            recognized: validation.recognized,
+                            allExpected: validation.allExpected,
+                        }
+                    });
+                    return;
+                }
+                const num = (v) => (v !== undefined && v !== '' ? Number(v) : undefined);
+                const str = (v) => (v !== undefined && v !== '' ? String(v).trim() : undefined);
 
-                const cargoTypeMap = {
-                    [t('CargoType_199')]: 199,
-                    [t('CargoType_150')]: 150,
-                    [t('CargoType_155')]: 155,
-                    [t('CargoType_0')]: 0,
-                };
-
-                const quantityTypeMap = {
-                    [t('Unit')]: 'unit',
-                    [t('Kilogram')]: 'kg',
-                    [t('Liter')]: 'liter',
-                    [t('Box')]: 'box',
-                    [t('Carton')]: 'carton',
-                    [t('Other')]: 'other',
-                };
-
-                const languageMap = {
-                    [t('Hebrew')]: 'hebrew',
-                };
-
-                processedData = data.map((row, index) => {
-                    const mappedRow = mapProductColumnNames(row);
+                processedData = data.map((row) => {
+                    const r = mapProductColumnNames(row);
 
                     const product = {
-                        name: mappedRow.name || '',
-                        sku: mappedRow.sku || '',
-                        barcode: mappedRow.barcode || '',
-                        description: mappedRow.description || '',
-                        images: parseArrayField(mappedRow.images),
-                        stock: mappedRow.stock ? Number(mappedRow.stock) : 0,
-                        sales: mappedRow.sales ? Number(mappedRow.sales) : 0,
-                        packages: buildPackagesFromImport(mappedRow.packagesCount, mappedRow.packages),
-                        category: mappedRow.category || '',
-                        tags: parseArrayField(mappedRow.tags),
-                        brand: mappedRow.brand || '',
-                        model: mappedRow.model || '',
-                        classification: mappedRow.classification || '',
-                        price: mappedRow.price ? Number(mappedRow.price) : undefined,
-                        salePrice: mappedRow.salePrice ? Number(mappedRow.salePrice) : undefined,
-                        cargoType: parseEnumField(mappedRow.cargoType, cargoTypeMap) ?? 199,
-                        autoShipment: parseBoolean(mappedRow.autoShipment) || false,
-                        isWarehouse: parseBoolean(mappedRow.isWarehouse) || false,
-                        status: parseEnumField(mappedRow.status, statusMap) || 'active',
+                        // לווה ראשון
+                        borrowers: [{
+                            borrowerName: str(r.borrowerName) || '',
+                            borrowerFamily: str(r.borrowerFamily),
+                            borrowerIdType: str(r.borrowerIdType),
+                            borrowerIdNumber: num(r.borrowerIdNumber),
+                            borrowerAddress: str(r.borrowerAddress),
+                            borrowerDateOfBirth: r.borrowerDateOfBirth ? new Date(r.borrowerDateOfBirth) : undefined,
+                            borrowerGender: str(r.borrowerGender),
+                            borrowerEmail: str(r.borrowerEmail),
+                        }],
+
+                        // פרטי חתימה
+                        signingDetails: {
+                            signingDate: r.signingDate ? new Date(r.signingDate) : undefined,
+                            lawyerName: str(r.lawyerName),
+                            lawyerRegistrationNumber: num(r.lawyerRegistrationNumber),
+                            lawyerIdNumber: num(r.lawyerIdNumber),
+                            lawyerEmail: str(r.lawyerEmail),
+                            consultant: str(r.consultant),
+                            consultantEmail: str(r.consultantEmail),
+                            primaryBacker: str(r.primaryBacker),
+                            primaryBackerId: num(r.primaryBackerId),
+                            secondaryBacker: str(r.secondaryBacker),
+                            secondaryBackerId: num(r.secondaryBackerId),
+                            thirdBacker: str(r.thirdBacker),
+                            thirdBackerId: num(r.thirdBackerId),
+                        },
+
+                        // פרטי רישום
+                        registrationDetails: {
+                            block: str(r.block),
+                            plot: str(r.plot),
+                            subPlot: str(r.subPlot),
+                            land: str(r.land),
+                            plan: str(r.plan),
+                            contract: str(r.contract),
+                            mortgageName: str(r.mortgageName),
+                            mortgageCompanyId: str(r.mortgageCompanyId),
+                            office: str(r.office),
+                            plotArea: str(r.plotArea),
+                            right: str(r.right),
+                            parts: str(r.parts),
+                            propertyType: str(r.propertyType),
+                            street: str(r.street),
+                            houseNumber: num(r.houseNumber),
+                            apartmentNumber: num(r.apartmentNumber),
+                            floor: str(r.floor),
+                            direction: str(r.direction),
+                            entrance: str(r.entrance),
+                            unit: str(r.unit),
+                            settlement: str(r.settlement),
+                        },
+
+                        // הלוואה ראשונה
+                        loans: (r.loanAmount || r.loanNumber) ? [{
+                            loanAmount: num(r.loanAmount),
+                            loanChange: str(r.loanChange),
+                            clause: str(r.clause),
+                            loanPlan: str(r.loanPlan),
+                            loanMonths: num(r.loanMonths),
+                            loanInterestRate: num(r.loanInterestRate),
+                            adjustedLoan: num(r.adjustedLoan),
+                            realLoan: num(r.realLoan),
+                            primeMargin: num(r.primeMargin),
+                            loanCreation: r.loanCreation ? new Date(r.loanCreation) : undefined,
+                            loanNumber: num(r.loanNumber),
+                            mortgageNumber: num(r.mortgageNumber),
+                        }] : [],
+
+                        // נושה בכיר
+                        seniorCreditor: {
+                            seniorCreditorName: str(r.seniorCreditorName),
+                            seniorCreditorIdType: str(r.seniorCreditorIdType),
+                            seniorCreditorIdNumber: num(r.seniorCreditorIdNumber),
+                        },
+
+                        // חשבון בנק
+                        borrowerBankAccount: {
+                            borrowerAccountNumber: num(r.borrowerAccountNumber),
+                            borrowerBranchCode: num(r.borrowerBranchCode),
+                            borrowerBankName: str(r.borrowerBankName),
+                        },
+
+                        // מוכרים
+                        sellers: (r.sellerName) ? [{
+                            sellerName: str(r.sellerName),
+                            sellerIdType: str(r.sellerIdType),
+                            sellerIdNumber: num(r.sellerIdNumber),
+                            sellerAddress: str(r.sellerAddress),
+                        }] : [],
+
+                        // מורשים
+                        authorizedPerson: (r.authorizedName) ? [{
+                            authorizedName: str(r.authorizedName),
+                            authorizedIdNumber: num(r.authorizedIdNumber),
+                        }] : [],
+
+                        // משכנים
+                        mortgagors: (r.mortgagorDetails || r.mortgagorFamily) ? [{
+                            mortgagorDetails: str(r.mortgagorDetails),
+                            mortgagorFamily: str(r.mortgagorFamily),
+                            mortgagorIdType: str(r.mortgagorIdType),
+                            mortgagorIdNumber: num(r.mortgagorIdNumber),
+                        }] : [],
+
+                        // פרטי פרויקט
+                        projectDetails: {
+                            tamAgreementDate: r.tamAgreementDate ? new Date(r.tamAgreementDate) : undefined,
+                            appraiser: str(r.appraiser),
+                            supervisor: str(r.supervisor),
+                            additionalFloors: str(r.additionalFloors),
+                            projectUnits: str(r.projectUnits),
+                            transferFees: str(r.transferFees),
+                            ltv: str(r.ltv),
+                            projectValue: str(r.projectValue),
+                            minimumWithdrawal: str(r.minimumWithdrawal),
+                            contractorName: str(r.contractorName),
+                            architect: str(r.architect),
+                        },
                     };
 
-                    // Add owner field only for super-admin
-                    if (userInfo?.role === 'super-admin' && mappedRow.owner) {
-                        product.owner = mappedRow.owner;
+                    if (userInfo?.role === 'super-admin' && r.owner) {
+                        product.owner = r.owner;
                     }
 
                     return product;

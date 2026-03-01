@@ -280,12 +280,12 @@ const ProductDrawer = ({ id, onSuccess }) => {
     <label className="flex items-center gap-2">
       <input
         type="radio"
-        value="male"  // הערך נשמר באנגלית, אין צורך לשנות
+        value="male"
         {...register(`borrowers[${index}].borrowerGender`, {
-          required: true,
+          required: t("FieldRequired"),
         })}
       />
-      {t("Male")} {/* כאן נוסף t() להצגה בעברית או אנגלית */}
+      {t("Male")}
     </label>
 
     <label className="flex items-center gap-2">
@@ -293,10 +293,10 @@ const ProductDrawer = ({ id, onSuccess }) => {
         type="radio"
         value="female"
         {...register(`borrowers[${index}].borrowerGender`, {
-          required: true,
+          required: t("FieldRequired"),
         })}
       />
-      {t("Female")} {/* כאן נוסף t() להצגה בעברית או אנגלית */}
+      {t("Female")}
     </label>
   </div>
 

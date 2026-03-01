@@ -27,14 +27,18 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
     const hasSuccess = successCount > 0;
     const isProcessing = isLoading || stage === 'processing' || stage === 'uploading';
     const isCompleted = stage === 'completed' && !isLoading;
-    const isReady = !stage && !isLoading && totalCount > 0; // File processed and ready for upload
+    const isReady = !stage && !isLoading && totalCount > 0;
+    const isValidationError = stage === 'validation_error';
+    const validationError = results?.validationError || null;
 
     return (
         <Modal isOpen={isOpen} onClose={isProcessing ? undefined : onClose}>
             {/* Header with icon and close button */}
             <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 rounded-t-lg border-b border-gray-200 dark:border-gray-600 flex items-center justify-between" style={{ direction: "rtl" }}>
                 <div className="flex items-center gap-3">
-                    {hasFailures ? (
+                    {isValidationError ? (
+                        <MdErrorOutline className="text-2xl text-red-500 dark:text-red-400" />
+                    ) : hasFailures ? (
                         <MdErrorOutline className="text-2xl text-red-500 dark:text-red-400" />
                     ) : hasSuccess ? (
                         <MdCheckCircle className="text-2xl text-green-500 dark:text-green-400" />
@@ -42,7 +46,7 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                         <MdInfoOutline className="text-2xl text-blue-500 dark:text-blue-400" />
                     )}
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                        {t("ImportResults")}
+                        {isValidationError ? 'שגיאה בקובץ הייבוא' : t("ImportResults")}
                     </h2>
                 </div>
                 {!isProcessing && (
@@ -78,6 +82,67 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                                     {stage === 'uploading' ? t("UploadingFileDescription") : t("ProcessingDescription")}
                                 </p>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Validation Error State */}
+                {isValidationError && validationError && (
+                    <div className="flex flex-col gap-4" style={{ direction: 'rtl' }}>
+                        <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                            <MdErrorOutline className="text-red-500 text-2xl shrink-0" />
+                            <div>
+                                <p className="font-semibold text-red-700 dark:text-red-400">הקובץ שהועלה אינו תואם לפורמט הנדרש</p>
+                                <p className="text-sm text-red-600 dark:text-red-300 mt-0.5">
+                                    {validationError.recognized.length === 0
+                                        ? 'לא נמצאה אף עמודה מוכרת — ודא שהכותרות תואמות לשמות הנדרשים'
+                                        : `זוהו ${validationError.recognized.length} עמודות מוכרות מתוך ${validationError.recognized.length + validationError.unrecognized.length} בסך הכל`}
+                                </p>
+                            </div>
+                        </div>
+
+                        {validationError.missingRequired.length > 0 && (
+                            <div>
+                                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">שדות חובה חסרים:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {validationError.missingRequired.map((col) => (
+                                        <span key={col} className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-sm font-medium">
+                                            ✗ {col}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {validationError.unrecognized.length > 0 && (
+                            <div>
+                                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">עמודות לא מוכרות בקובץ:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {validationError.unrecognized.map((col) => (
+                                        <span key={col} className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-sm">
+                                            ⚠ {col}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div>
+                            <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">שמות עמודות תקניים (לשימוש בקובץ):</p>
+                            <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700/50">
+                                <div className="flex flex-wrap gap-2">
+                                    {validationError.allExpected.map((col) => (
+                                        <span key={col} className={`px-2 py-1 rounded text-xs ${
+                                            validationError.recognized.includes(col)
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                                : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                                        }`}>
+                                            {col}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">ירוק = נמצא בקובץ שלך | אפור = לא נמצא</p>
                         </div>
                     </div>
                 )}
@@ -223,6 +288,14 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                             {t("UploadToSystem")}
                         </Button>
                     </>
+                ) : isValidationError ? (
+                    <Button
+                        className="sm:w-auto w-full h-12 hover:bg-white hover:border-gray-50 dark:text-gray-600"
+                        layout="outline"
+                        onClick={onClose}
+                    >
+                        {t("Close")}
+                    </Button>
                 ) : (
                     <Button
                         className="sm:w-auto w-full h-12 hover:bg-white hover:border-gray-50 dark:text-gray-600"
