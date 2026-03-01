@@ -400,6 +400,22 @@ const ProductDrawer = ({ id, onSuccess }) => {
         </div>
       </div>
 
+      {/* מייל עורך דין */}
+      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+        <LabelArea label={t("LawyerEmail")} />
+        <div className="col-span-6">
+          <InputArea
+            register={register}
+            label={t("LawyerEmail")}
+            name="signingDetails.lawyerEmail"
+            type="email"
+            placeholder={t("LawyerEmail")}
+            isRequired={false}
+          />
+          <Error errorName={errors?.signingDetails?.lawyerEmail} />
+        </div>
+      </div>
+
       {/* יועץ */}
       <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
         <LabelArea label={t("Consultant")} />
@@ -413,6 +429,22 @@ const ProductDrawer = ({ id, onSuccess }) => {
             isRequired={false}
           />
           <Error errorName={errors?.signingDetails?.consultant} />
+        </div>
+      </div>
+
+      {/* מייל יועץ */}
+      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+        <LabelArea label={t("ConsultantEmail")} />
+        <div className="col-span-6">
+          <InputArea
+            register={register}
+            label={t("ConsultantEmail")}
+            name="signingDetails.consultantEmail"
+            type="email"
+            placeholder={t("ConsultantEmail")}
+            isRequired={false}
+          />
+          <Error errorName={errors?.signingDetails?.consultantEmail} />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 // src/routes/sidebar.js
 import { FaRegWindowRestore } from "react-icons/fa6";
-import { FiUser, FiPackage } from "react-icons/fi";
+import { FiUser, FiPackage, FiSettings } from "react-icons/fi";
 import { LuListPlus } from "react-icons/lu";
 import { FaChalkboardTeacher } from "react-icons/fa";
 import { MdEvent, MdPeople } from "react-icons/md";
@@ -16,6 +16,16 @@ const sidebar = [
     path: "/admins",
     icon: FiUser,
     name: "Admins",
+  },
+  {
+    path: "/products",
+    icon: FiPackage,
+    name: "Products",
+  },
+  {
+    path: "/settings",
+    icon: FiSettings,
+    name: "Settings",
   },
   // {
   //   path: "/lecturers",

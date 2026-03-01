@@ -10,6 +10,7 @@ import Registrants from "@/pages/Registrants";
 import Products from "@/pages/Products";
 import Orders from "@/pages/Orders";
 import OrderForm from "@/pages/OrderForm";
+import Settings from "@/pages/Settings";
 
 
 const routes = [
@@ -67,6 +68,11 @@ const routes = [
     path: "/edit-profile",
     component: EditProfile,
     title: "Edit Profile"
+  },
+  {
+    path: "/settings",
+    component: Settings,
+    title: "Settings"
   },
   // {
   //   path: "/popups",

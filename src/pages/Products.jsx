@@ -15,6 +15,8 @@ import {
   import TableLoading from "@/components/preloader/TableLoading";
   import ProductsTable from "@/components/product/ProductsTable";
   import ExportWord from "@/components/product/ExportWord";
+  import TemplateSelectModal from "@/components/settings/TemplateSelectModal";
+  import requests from "@/services/httpService";
 
 
   import ProductFilters from "@/components/product/ProductFilters";
@@ -59,6 +61,8 @@ import {
     const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [resultsPerPage] = useState(20);
+    const [showTemplateModal, setShowTemplateModal] = useState(false);
+    const [driveLinks, setDriveLinks] = useState({});
   
     const filters = useProductFilter();
   
@@ -212,6 +216,18 @@ import {
   
     const products = productsData?.products || [];
     const totalResults = productsData?.totalDoc || 0;
+
+    // טעינת קישורי דרייב לכל המוצרים בדף הנוכחי
+    useEffect(() => {
+      if (!products.length) return;
+      const items = products
+        .filter((p) => p.borrowers?.[0]?.borrowerName)
+        .map((p) => ({ productId: p._id, borrowerName: p.borrowers[0].borrowerName }));
+      if (!items.length) return;
+      requests.post("/products/drive-folders-batch", { items })
+        .then((data) => setDriveLinks(data))
+        .catch(() => {});
+    }, [productsData]);
   
     const handleChangePage = (page) => setCurrentPage(page);
   
@@ -288,6 +304,15 @@ import {
         <MainDrawer width="100vw">
           <ProductDrawer id={serviceId} onSuccess={fetchProducts} />
         </MainDrawer>
+
+        {showTemplateModal && (
+          <TemplateSelectModal
+            products={products}
+            isCheck={isCheck}
+            onClose={() => setShowTemplateModal(false)}
+            onExportDone={(links) => setDriveLinks((prev) => ({ ...prev, ...links }))}
+          />
+        )}
   
         {isCheck?.length >= 1 && (
           <DeleteModal
@@ -318,7 +343,7 @@ import {
       { label: <div className="flex items-center gap-1.5"><FiUpload size={17} /> {t("ImportFromExcel")}</div>, onClick: () => fileInputRef.current?.click(), disabled: false },
       { label: <div className="flex items-center gap-1.5"><FiTrash2 size={17} /> {t("Delete")}</div>, onClick: () => handleDeleteSelected(),  disabled: isCheck.length < 1 },
       { label: <div className="flex items-center gap-1.5"><FiDownload size={17} /> {t("ExportToWord")}</div>, 
-        onClick: () => ExportWord(products, isCheck),
+        onClick: () => setShowTemplateModal(true),
         disabled: !products || products.length === 0
       }
     ]}
@@ -346,6 +371,7 @@ import {
                   { key: "lawyerName", label: t("LawyerName") },
                   { key: "consultant", label: t("Consultant") },
                   { key: "primaryBacker", label: t("PrimaryBacker") },
+                  { key: "driveFolder", label: t("DriveFolder") },
                 ]} />
                 <ProductsTable
                   products={products}
@@ -353,6 +379,7 @@ import {
                   setIsCheck={setIsCheck}
                   isMobile={false}
                   handleDeleteSelected={handleDeleteSelected}
+                  driveLinks={driveLinks}
                 />
               </StandardTable>
               <TableFooter>

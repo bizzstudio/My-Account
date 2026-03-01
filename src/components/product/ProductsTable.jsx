@@ -1,7 +1,8 @@
 // src/components/product/ProductsTable.jsx
 import { Avatar, TableBody, TableCell, TableRow } from "@windmill/react-ui";
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { t } from "i18next";
+import { FiMail, FiFolder } from "react-icons/fi";
 
 // Internal import
 import useToggleDrawer from "@/hooks/useToggleDrawer";
@@ -11,10 +12,12 @@ import ActiveInActiveButton from "@/components/table/ActiveInActiveButton";
 import ProductCard from "./ProductCard";
 import CheckBox from "@/components/form/others/CheckBox";
 import { UserContext } from "@/context/UserContext";
+import SendEmailModal from "./SendEmailModal";
 
-const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false }) => {
+const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false, driveLinks = {} }) => {
   const { state: userState } = useContext(UserContext);
   const { userInfo } = userState;
+  const [emailModal, setEmailModal] = useState(null); // { product, driveFolderLink }
 
   const {
     title,
@@ -45,6 +48,13 @@ const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false }) => {
     <>
       {isCheck?.length < 1 && (
         <DeleteModal id={serviceId} title={title} table="products" />
+      )}
+
+      {emailModal && (
+        <SendEmailModal
+          product={emailModal.product}
+          onClose={() => setEmailModal(null)}
+        />
       )}
 
       {isMobile ? (
@@ -79,14 +89,23 @@ const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false }) => {
 
               {/* 2️⃣ Actions */}
               <TableCell className="text-center">
-                <EditDeleteButton
-                  id={product._id}
-                  product={product}
-                  isSubmitting={isSubmitting}
-                  handleUpdate={handleUpdate}
-                  handleModalOpen={handleModalOpen}
-                  title={product?.base}
-                />
+                <div className="flex items-center justify-center gap-1">
+                  <EditDeleteButton
+                    id={product._id}
+                    product={product}
+                    isSubmitting={isSubmitting}
+                    handleUpdate={handleUpdate}
+                    handleModalOpen={handleModalOpen}
+                    title={product?.base}
+                  />
+                  <button
+                    onClick={() => setEmailModal({ product })}
+                    title={t("SendEmail")}
+                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-[#a57d45] transition"
+                  >
+                    <FiMail size={16} />
+                  </button>
+                </div>
               </TableCell>
 
               {/* 3️⃣ Borrower הראשון בלבד (בטוח גם אם אין Borrowers) */}
@@ -105,7 +124,25 @@ const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false }) => {
               <TableCell className="text-center">
                 {product.signingDetails.primaryBacker || "-"}
               </TableCell>
-             
+
+              {/* Drive folder link */}
+              <TableCell className="text-center">
+                {driveLinks[product._id] ? (
+                  <a
+                    href={driveLinks[product._id]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={t("OpenDriveFolder")}
+                    className="inline-flex items-center gap-1 text-[#a57d45] hover:text-[#8a6535] transition text-sm"
+                  >
+                    <FiFolder size={16} />
+                  </a>
+                ) : (
+                  <span className="text-gray-300 dark:text-gray-600">
+                    <FiFolder size={16} />
+                  </span>
+                )}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

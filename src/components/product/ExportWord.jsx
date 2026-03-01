@@ -1,8 +1,11 @@
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import Cookies from "js-cookie";
 
-const ExportWord = async (products, isCheck = []) => {
+// מחזיר מפה של { productId: driveFolderLink } לשימוש בשליחת מייל
+const ExportWord = async (products, isCheck = [], template = null) => {
   const uploadedFiles = [];
+  const driveLinks = {}; // productId → folder webViewLink
 
   const dataToExport =
     isCheck.length > 0
@@ -10,14 +13,32 @@ const ExportWord = async (products, isCheck = []) => {
       : products;
 
   try {
-    // טוענים את התבנית
-    const response = await fetch(`/template.docx?${Date.now()}`, {
-      cache: "no-cache",
-    });
-    if (!response.ok)
-      throw new Error(`Template not found. Status: ${response.status}`);
+    let content;
 
-    const content = await response.arrayBuffer();
+    if (template) {
+      // תבנית שהועלתה על ידי האדמין — מורידים מהדרייב דרך הבקאנד
+      const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
+      const response = await fetch(
+        `${import.meta.env.VITE_APP_API_BASE_URL}/templates/${template._id}/file`,
+        {
+          headers: {
+            Authorization: tokenHolder ? `Bearer ${tokenHolder.token}` : "",
+            "Cache-Control": "no-cache",
+          },
+        }
+      );
+      if (!response.ok)
+        throw new Error(`Template fetch failed. Status: ${response.status}`);
+      content = await response.arrayBuffer();
+    } else {
+      // תבנית ברירת מחדל — מהתיקייה הציבורית
+      const response = await fetch(`/template.docx?${Date.now()}`, {
+        cache: "no-cache",
+      });
+      if (!response.ok)
+        throw new Error(`Template not found. Status: ${response.status}`);
+      content = await response.arrayBuffer();
+    }
 
     for (let product of dataToExport) {
       const borrowers = product.borrowers?.length ? product.borrowers : [{}];
@@ -39,7 +60,7 @@ const ExportWord = async (products, isCheck = []) => {
 
         const formData = new FormData();
         formData.append("file", blob, `${safeData.borrowerName}.docx`);
-        const uniqueFolderName = safeData.borrowerIdNumber || "Unknown";
+        const uniqueFolderName = safeData.borrowerName || "Unknown";
         formData.append("folderName", uniqueFolderName);
 
         const res = await fetch("/api/upload-to-drive", {
@@ -47,23 +68,23 @@ const ExportWord = async (products, isCheck = []) => {
           body: formData,
         });
 
-        if (!res.ok) console.error("❌ Upload failed for", safeData.borrowerName);
-        else uploadedFiles.push(`${safeData.borrowerName}.docx`);
+        if (!res.ok) {
+          console.error("❌ Upload failed for", safeData.borrowerName);
+        } else {
+          const templateName = template?.name || "תבנית ברירת מחדל";
+          uploadedFiles.push({ borrower: safeData.borrowerName, template: templateName });
+          const data = await res.json();
+          if (data?.folder?.webViewLink) {
+            driveLinks[product._id] = data.folder.webViewLink;
+          }
+        }
       }
     }
 
-    // אלרט בהתאם למספר הקבצים
-    if (uploadedFiles.length === 1) {
-      alert(`✅ המסמך ${uploadedFiles[0]} הועלה בהצלחה!`);
-    } else if (uploadedFiles.length > 1) {
-      alert(
-        `✅ ${uploadedFiles.length} מסמכים הועלו בהצלחה:\n- ${uploadedFiles.join(
-          "\n- "
-        )}`
-      );
-    }
+    return { driveLinks, uploadedFiles };
   } catch (err) {
     console.error("Error processing files:", err);
+    return { driveLinks: {}, uploadedFiles: [] };
   }
 };
 
