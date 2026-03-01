@@ -11,12 +11,7 @@ const ProductServices = {
 
   getAllProducts: async (params) => {
     const queryString = new URLSearchParams(params).toString();
-    const token = localStorage.getItem("token"); // או איפה שאת שומרת את ה-token
-    return requests.get(`/products?${queryString}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }); // סוגריים מסולסלים + סוגריים רגילים
+    return requests.get(`/products?${queryString}`);
   },
 
   getProductById: async (id) => {

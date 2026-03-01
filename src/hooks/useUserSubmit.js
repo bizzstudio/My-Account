@@ -32,7 +32,8 @@ const useUserSubmit = (id) => {
     email: "",
     password: "",
     phone: "",
-    role: "admin",
+    role: "super-admin",
+    idNumber: "",
     status: true,
     image: "",
     joiningDate: dayjs(new Date()).format("YYYY-MM-DD"),
@@ -61,12 +62,16 @@ const useUserSubmit = (id) => {
         password: data.password,
         phone: data.phone,
         role: data.role,
+        idNumber: data.idNumber || undefined,
         status: data.status,
         image: data.image,
       };
 
+      console.log("🔵 onSubmit userData:", JSON.stringify(userData));
+
       if (id) {
         const res = await UserServices.updateUser(id, userData);
+        console.log("🟢 updateUser response:", JSON.stringify(res));
         setIsUpdate(true);
         setIsSubmitting(false);
         notifyApiResponse(res, true);
@@ -114,6 +119,7 @@ const useUserSubmit = (id) => {
           password: "",
           phone: res.phone,
           role: res.role || "admin",
+          idNumber: res.idNumber || "",
           status: res.status !== undefined ? res.status : true,
           joiningDate: dayjs(res.joiningData).format("YYYY-MM-DD"),
           image: res.image || "",

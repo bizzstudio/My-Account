@@ -80,6 +80,7 @@ const useProductSubmit = (id, onSuccess) => {
       seniorCreditor: {},
       borrowers: [defaultBorrower],
       sellers: [defaultSeller],
+      financingCompanies: [],
       loans: [defaultLoan],
       authorizedPerson: [defaultAuthorized],
       mortgagors: [defaultMortgagor],
@@ -213,6 +214,7 @@ const useProductSubmit = (id, onSuccess) => {
       setValue("authorizedPerson", res.authorizedPerson || [defaultAuthorized]);
       setValue("mortgagors", res.mortgagors || [defaultMortgagor]);
       setValue("sellers", res.sellers || [defaultSeller]);
+      setValue("financingCompanies", res.financingCompanies || []);
       setValue("transcriptText", res.transcriptText || "");
       setValue("facebookFeedData", res.facebookFeedData || "");
     } catch (err) {

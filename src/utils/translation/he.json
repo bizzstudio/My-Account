@@ -60,7 +60,7 @@
   "UserRoleUser": "עורך דין",
   "SelectSuperAdmin": "מנהל מערכת",
   "Admins":" משתמשים",
-  "Importer": "עורך דין",
+  "Importer": "מנהל",
   "Super Admin": "מנהל מערכת",
   "Filter": "סינון",
   "Reset": "איפוס",
@@ -807,6 +807,7 @@
   "Female":"נקבה",
   "Male":"זכר",
   "FieldRequired": "שדה חובה",
+  "Lawyer": "עורך דין",
    "MortgageFiles": "תיקי משכנתאות",
   "Settings": "הגדרות",
   "DocumentTemplates": "תבניות מסמך",
@@ -842,8 +843,15 @@
   "EmailSendError": "שגיאה בשליחת המייל",
   "Sending": "שולח...",
   "Borrower": "לקוח",
-  "Lawyer": "עורך דין",
   "DriveFolder": "תיקיית מסמכים",
-  "OpenDriveFolder": "פתח תיקייה בגוגל דרייב"
+  "OpenDriveFolder": "פתח תיקייה בגוגל דרייב",
+  "ForLawyersOnly": "לעורכי דין בלבד",
+  "LawyerDetails": "פרטי עורך דין",
+  "ConsultantDetails": "פרטי יועץ משכנתאות",
+  "FinancingCompanies": "פרטי חברות מימון",
+  "AddFinancingCompany": "הוסף חברת מימון",
+  "FinancingCompanyName": "שם חברה",
+  "FinancingCompanyId": "ח.פ / ת\"ז",
+  "SendConsultantLink": "שלח לינק ליועץ"
   }
   

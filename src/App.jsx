@@ -16,6 +16,7 @@ import useArrowScroll from "./hooks/useArrowScroll";
 
 const Layout = lazy(() => import("@/layout/Layout"));
 const Login = lazy(() => import("@/pages/Login"));
+const ConsultantForm = lazy(() => import("@/pages/ConsultantForm"));
 // const SignUp = lazy(() => import("@/pages/SignUp"));
 const ForgetPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
@@ -65,6 +66,9 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             {/* <Route path="/signup/:id" element={<SignUpUserChallenge />} /> */}
             {/* <Route path="/signup" element={<SignUp />} /> */}
+            {/* טופס ציבורי ליועץ משכנתאות — ללא התחברות */}
+            <Route path="/consultant-form" element={<ConsultantForm />} />
+
             <Route path="/forgot-password" element={<ForgetPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/mfa" element={<MFA />} />

@@ -717,5 +717,14 @@
   "Lawyer": "Lawyer",
   "DriveFolder": "Drive Folder",
   "OpenDriveFolder": "Open Google Drive Folder",
-  "FieldRequired": "Required field"
+  "FieldRequired": "Required field",
+  "LawyerIdNumber": "ID Number (Lawyer)",
+  "ForLawyersOnly": "For lawyers only",
+  "LawyerDetails": "Lawyer Details",
+  "ConsultantDetails": "Mortgage Consultant Details",
+  "FinancingCompanies": "Financing Companies",
+  "AddFinancingCompany": "Add Financing Company",
+  "FinancingCompanyName": "Company Name",
+  "FinancingCompanyId": "Company ID / Tax ID",
+  "SendConsultantLink": "Send Consultant Link"
 }

@@ -48,7 +48,7 @@ const useLoginSubmit = () => {
       reduxDispatch(removeSetting("globalSetting"));
       const trustedToken = Cookies.get("trustedDevice");
 
-      UserServices.loginUser({ email, password, trustedToken })
+      UserServices.loginUser({ email, password, trustedToken: rememberDevice ? trustedToken : undefined })
         .then((res) => {
           setLoading(false);
 

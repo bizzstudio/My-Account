@@ -154,12 +154,104 @@ const ProductDrawer = ({ id, onSuccess }) => {
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-grow overflow-y-auto">
         <div className="px-6 pt-2 pb-4 grid grid-cols-12 gap-5 flex-grow">
 
-                           {/* סקשן: Borrowers */}
+  {/* ===== סקשן 1: פרטי עורך דין ===== */}
+<div className="col-span-12">
+  <CollapsibleSection
+    title={t("LawyerDetails")}
+    icon={<MdEditNote size={24} className="mt-1" />}
+    defaultOpen
+  >
+    <div className="grid grid-cols-12 gap-5 mt-2">
+
+      {/* שם עורך דין — חובה */}
+      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+        <LabelArea label={t("LawyerName")} />
+        <div className="col-span-6">
+          <InputArea
+            register={register}
+            label={t("LawyerName")}
+            name="signingDetails.lawyerName"
+            type="text"
+            placeholder={t("LawyerName")}
+            isRequired={true}
+          />
+          <Error errorName={errors?.signingDetails?.lawyerName} />
+        </div>
+      </div>
+
+      {/* מספר ת"ז עורך דין — חובה */}
+      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+        <LabelArea label={t("LawyerIdNumber")} />
+        <div className="col-span-6">
+          <InputArea
+            register={register}
+            label={t("LawyerIdNumber")}
+            name="signingDetails.lawyerIdNumber"
+            type="number"
+            placeholder={t("LawyerIdNumber")}
+            isRequired={true}
+          />
+          <Error errorName={errors?.signingDetails?.lawyerIdNumber} />
+        </div>
+      </div>
+
+      {/* מספר רישום עורך דין */}
+      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+        <LabelArea label={t("LawyerRegistrationNumber")} />
+        <div className="col-span-6">
+          <InputArea
+            register={register}
+            label={t("LawyerRegistrationNumber")}
+            name="signingDetails.lawyerRegistrationNumber"
+            type="text"
+            placeholder={t("LawyerRegistrationNumber")}
+            isRequired={false}
+          />
+          <Error errorName={errors?.signingDetails?.lawyerRegistrationNumber} />
+        </div>
+      </div>
+
+      {/* מייל עורך דין */}
+      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+        <LabelArea label={t("LawyerEmail")} />
+        <div className="col-span-6">
+          <InputArea
+            register={register}
+            label={t("LawyerEmail")}
+            name="signingDetails.lawyerEmail"
+            type="email"
+            placeholder={t("LawyerEmail")}
+            isRequired={false}
+          />
+          <Error errorName={errors?.signingDetails?.lawyerEmail} />
+        </div>
+      </div>
+
+      {/* תאריך חתימה */}
+      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+        <LabelArea label={t("SigningDate")} />
+        <div className="col-span-6">
+          <InputArea
+            register={register}
+            label={t("SigningDate")}
+            name="signingDetails.signingDate"
+            type="date"
+            placeholder={t("SigningDate")}
+            isRequired={false}
+          />
+          <Error errorName={errors?.signingDetails?.signingDate} />
+        </div>
+      </div>
+
+    </div>
+  </CollapsibleSection>
+</div>
+
+  {/* ===== סקשן 2: פרטי לווים ===== */}
 <div className="col-span-12">
   <CollapsibleSection
     title={t("Borrowers")}
     icon={<MdEditNote size={24} className="mt-1" />}
-    defaultOpen
   >
     <div className="flex flex-col gap-2 mt-2">
 
@@ -195,7 +287,6 @@ const ProductDrawer = ({ id, onSuccess }) => {
           key={index}
           className="grid grid-cols-12 gap-5 p-2 border rounded-md bg-gray-50 dark:bg-gray-800"
         >
-
           {/* Borrower Name */}
           <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
             <LabelArea label={t("BorrowerName")} />
@@ -210,8 +301,6 @@ const ProductDrawer = ({ id, onSuccess }) => {
               <Error errorName={errors?.borrowers?.[index]?.borrowerName} />
             </div>
           </div>
-
-        
 
           {/* Borrower ID Number */}
           <div className="flex flex-col gap-1 md:col-span-2 col-span-12">
@@ -252,14 +341,13 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 label={t("BorrowerDateOfBirth")}
                 name={`borrowers[${index}].borrowerDateOfBirth`}
                 type="date"
-                
               />
               <Error errorName={errors?.borrowers?.[index]?.borrowerDateOfBirth} />
             </div>
           </div>
 
-{/* Borrower Email */}
-<div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+          {/* Borrower Email */}
+          <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
             <LabelArea label={t("BorrowerEmail")} />
             <div className="col-span-6">
               <InputArea
@@ -273,37 +361,25 @@ const ProductDrawer = ({ id, onSuccess }) => {
             </div>
           </div>
 
- {/* Borrower Gender */}
- <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-  <LabelArea label={t("BorrowerGender")} /> {/* כאן כבר משתמשים ב-t() */}
-  <div className="flex gap-4">
-    <label className="flex items-center gap-2">
-      <input
-        type="radio"
-        value="male"
-        {...register(`borrowers[${index}].borrowerGender`, {
-          required: t("FieldRequired"),
-        })}
-      />
-      {t("Male")}
-    </label>
-
-    <label className="flex items-center gap-2">
-      <input
-        type="radio"
-        value="female"
-        {...register(`borrowers[${index}].borrowerGender`, {
-          required: t("FieldRequired"),
-        })}
-      />
-      {t("Female")}
-    </label>
-  </div>
-
-  <Error errorName={errors?.borrowers?.[index]?.borrowerGender} />
-</div>
-
-          
+          {/* Borrower Gender */}
+          <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+            <LabelArea label={t("BorrowerGender")} />
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2">
+                <input type="radio" value="male"
+                  {...register(`borrowers[${index}].borrowerGender`)}
+                />
+                {t("Male")}
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" value="female"
+                  {...register(`borrowers[${index}].borrowerGender`)}
+                />
+                {t("Female")}
+              </label>
+            </div>
+            <Error errorName={errors?.borrowers?.[index]?.borrowerGender} />
+          </div>
 
           {/* כפתור הסרה */}
           <div className="col-span-12 flex justify-end">
@@ -311,8 +387,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
               type="button"
               onClick={() => {
                 const current = watch("borrowers") || [];
-                const next = current.filter((_, i) => i !== index);
-                setValue("borrowers", next);
+                setValue("borrowers", current.filter((_, i) => i !== index));
               }}
               className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-sm"
               disabled={(watch("borrowers") || []).length <= 1}
@@ -320,114 +395,27 @@ const ProductDrawer = ({ id, onSuccess }) => {
               {t("RemoveBorrower")}
             </button>
           </div>
-
         </div>
       ))}
     </div>
   </CollapsibleSection>
 </div>
 
-      {/* Signing Details */}
+  {/* ===== סקשן 3: פרטי יועץ משכנתאות ===== */}
 <div className="col-span-12">
   <CollapsibleSection
-    title={t("SigningDetails")}
+    title={t("ConsultantDetails")}
     icon={<MdEditNote size={24} className="mt-1" />}
-     defaultfalse
   >
     <div className="grid grid-cols-12 gap-5 mt-2">
 
-      {/* תאריך חתימה */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("SigningDate")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("SigningDate")}
-            name="signingDetails.signingDate"
-            type="date"
-            placeholder={t("SigningDate")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.signingDate} />
-        </div>
-      </div>
-
-      {/* שם עורך דין */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("LawyerName")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("LawyerName")}
-            name="signingDetails.lawyerName"
-            type="text"
-            placeholder={t("LawyerName")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.lawyerName} />
-        </div>
-      </div>
-
-      {/* מספר רישום עורך דין */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("LawyerRegistrationNumber")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("LawyerRegistrationNumber")}
-            name="signingDetails.lawyerRegistrationNumber"
-            type="text"
-            placeholder={t("LawyerRegistrationNumber")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.lawyerRegistrationNumber} />
-        </div>
-      </div>
-
-      {/* מספר ת"ז עורך דין */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("LawyerIdNumber")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("LawyerIdNumber")}
-            name="signingDetails.lawyerIdNumber"
-            type="number"
-            placeholder={t("LawyerIdNumber")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.lawyerIdNumber} />
-        </div>
-      </div>
-
-      {/* מייל עורך דין */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("LawyerEmail")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("LawyerEmail")}
-            name="signingDetails.lawyerEmail"
-            type="email"
-            placeholder={t("LawyerEmail")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.lawyerEmail} />
-        </div>
-      </div>
-
-      {/* יועץ */}
+      {/* שם יועץ */}
       <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
         <LabelArea label={t("Consultant")} />
         <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("Consultant")}
-            name="signingDetails.consultant"
-            type="text"
-            placeholder={t("Consultant")}
-            isRequired={false}
-          />
+          <InputArea register={register} label={t("Consultant")}
+            name="signingDetails.consultant" type="text"
+            placeholder={t("Consultant")} isRequired={false} />
           <Error errorName={errors?.signingDetails?.consultant} />
         </div>
       </div>
@@ -436,113 +424,89 @@ const ProductDrawer = ({ id, onSuccess }) => {
       <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
         <LabelArea label={t("ConsultantEmail")} />
         <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("ConsultantEmail")}
-            name="signingDetails.consultantEmail"
-            type="email"
-            placeholder={t("ConsultantEmail")}
-            isRequired={false}
-          />
+          <InputArea register={register} label={t("ConsultantEmail")}
+            name="signingDetails.consultantEmail" type="email"
+            placeholder={t("ConsultantEmail")} isRequired={false} />
           <Error errorName={errors?.signingDetails?.consultantEmail} />
         </div>
       </div>
 
-      {/* משקיע ראשי */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("PrimaryBacker")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("PrimaryBacker")}
-            name="signingDetails.primaryBacker"
-            type="text"
-            placeholder={t("PrimaryBacker")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.primaryBacker} />
-        </div>
+    </div>
+  </CollapsibleSection>
+</div>
+
+  {/* ===== סקשן 4: פרטי חברות מימון (מערך) ===== */}
+<div className="col-span-12">
+  <CollapsibleSection
+    title={t("FinancingCompanies")}
+    icon={<MdEditNote size={24} className="mt-1" />}
+  >
+    <div className="flex flex-col gap-2 mt-2">
+
+      {/* כפתור הוספה */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            const current = watch("financingCompanies") || [];
+            setValue("financingCompanies", [...current, { name: "", idNumber: "" }]);
+          }}
+          className="text-sm text-mainColor hover:underline whitespace-nowrap"
+        >
+          + {t("AddFinancingCompany")}
+        </button>
       </div>
 
-      {/* מספר ת"ז משקיע ראשי */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("PrimaryBackerId")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("PrimaryBackerId")}
-            name="signingDetails.primaryBackerId"
-            type="number"
-            placeholder={t("PrimaryBackerId")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.primaryBackerId} />
-        </div>
-      </div>
+      {/* מערך חברות מימון */}
+      {(watch("financingCompanies") || []).map((company, index) => (
+        <div key={index} className="grid grid-cols-12 gap-5 p-2 border rounded-md bg-gray-50 dark:bg-gray-800">
 
-      {/* משקיע שני */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("SecondaryBacker")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("SecondaryBacker")}
-            name="signingDetails.secondaryBacker"
-            type="text"
-            placeholder={t("SecondaryBacker")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.secondaryBacker} />
-        </div>
-      </div>
+          {/* שם חברה */}
+          <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+            <LabelArea label={t("FinancingCompanyName")} />
+            <div className="col-span-6">
+              <InputArea register={register}
+                label={t("FinancingCompanyName")}
+                name={`financingCompanies[${index}].name`}
+                type="text"
+                placeholder={t("FinancingCompanyName")}
+                isRequired={false}
+              />
+              <Error errorName={errors?.financingCompanies?.[index]?.name} />
+            </div>
+          </div>
 
-      {/* מספר ת"ז משקיע שני */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("SecondaryBackerId")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("SecondaryBackerId")}
-            name="signingDetails.secondaryBackerId"
-            type="number"
-            placeholder={t("SecondaryBackerId")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.secondaryBackerId} />
-        </div>
-      </div>
+          {/* מספר ח.פ / ת"ז */}
+          <div className="flex flex-col gap-1 md:col-span-5 col-span-12">
+            <LabelArea label={t("FinancingCompanyId")} />
+            <div className="col-span-6">
+              <InputArea register={register}
+                label={t("FinancingCompanyId")}
+                name={`financingCompanies[${index}].idNumber`}
+                type="text"
+                placeholder={t("FinancingCompanyId")}
+                isRequired={false}
+              />
+              <Error errorName={errors?.financingCompanies?.[index]?.idNumber} />
+            </div>
+          </div>
 
-      {/* משקיע שלישי */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("ThirdBacker")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("ThirdBacker")}
-            name="signingDetails.thirdBacker"
-            type="text"
-            placeholder={t("ThirdBacker")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.thirdBacker} />
-        </div>
-      </div>
+          {/* כפתור הסרה */}
+          <div className="col-span-12 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                const current = watch("financingCompanies") || [];
+                setValue("financingCompanies", current.filter((_, i) => i !== index));
+              }}
+              className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-sm"
+            >
+              {t("Remove")}
+            </button>
+          </div>
 
-      {/* מספר ת"ז משקיע שלישי */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("ThirdBackerId")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("ThirdBackerId")}
-            name="signingDetails.thirdBackerId"
-            type="number"
-            placeholder={t("ThirdBackerId")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.thirdBackerId} />
         </div>
-      </div>
+      ))}
 
     </div>
   </CollapsibleSection>

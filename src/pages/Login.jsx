@@ -60,6 +60,18 @@ const Login = () => {
                 />
                 <Error errorName={errors.password} />
 
+                <div className="mt-3">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      {...register("rememberDevice")}
+                      defaultChecked={true}
+                      className="rounded border-gray-300 text-mainColor focus:ring-mainColor"
+                    />
+                    {t("RememberDevice")}
+                  </label>
+                </div>
+
                 <CMButton
                   disabled={loading}
                   isLoading={loading}

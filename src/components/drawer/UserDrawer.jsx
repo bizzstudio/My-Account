@@ -145,8 +145,8 @@ const UserDrawer = ({ id }) => {
                 <div className="col-span-6">
                   <SelectWithOptions
                     options={[
-                      { _id: "admin", name: t("Importer") },
                       { _id: "super-admin", name: t("Super Admin") },
+                      { _id: "lawyer", name: t("Lawyer") },
                     ]}
                     value={watch("role")}
                     onChange={(value) => setValue("role", value)}
@@ -156,6 +156,22 @@ const UserDrawer = ({ id }) => {
                     className="border h-12 text-sm focus:outline-none block w-full bg-gray-100 dark:bg-gray-700 border-transparent focus:bg-white dark:focus:bg-gray-600 dark:focus:border-gray-600 dark:text-gray-300"
                     name="role"
                   />
+                </div>
+              </div>
+
+              {/* תעודת זהות — חובה לעורכי דין, אופציונלי לשאר */}
+              <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                <LabelArea label={`${t("LawyerIdNumber")} (${t("ForLawyersOnly")})`} />
+                <div className="col-span-6">
+                  <InputArea
+                    register={register}
+                    label={t("LawyerIdNumber")}
+                    name="idNumber"
+                    type="text"
+                    placeholder={t("LawyerIdNumber")}
+                    isRequired={false}
+                  />
+                  <Error errorName={errors.idNumber} />
                 </div>
               </div>
             </div>

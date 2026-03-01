@@ -5,8 +5,8 @@ import {
     TableContainer,
     TableFooter,
   } from "@windmill/react-ui";
-  import { useContext, useEffect, useState, useCallback } from "react";
-  import { FiPlus, FiTrash2, FiDownload, FiUpload } from "react-icons/fi";
+  import React, { useContext, useEffect, useState, useCallback } from "react";
+  import { FiPlus, FiTrash2, FiDownload, FiUpload, FiLink } from "react-icons/fi";
   import { t } from "i18next";
   
   import useExport from "@/hooks/useExport";
@@ -38,6 +38,108 @@ import {
   
   
   
+  // ─── Modal לשליחת לינק ליועץ ───────────────────────────────────────────────
+  const ConsultantLinkModal = ({ link, lawyerName, onClose }) => {
+    const [email, setEmail] = React.useState("");
+    const [sending, setSending] = React.useState(false);
+    const [sent, setSent] = React.useState(false);
+    const [sendError, setSendError] = React.useState("");
+    const [copied, setCopied] = React.useState(false);
+
+    const handleSend = async () => {
+      if (!email || !email.includes("@")) {
+        setSendError("אנא הכנס כתובת מייל תקינה");
+        return;
+      }
+      setSending(true);
+      setSendError("");
+      try {
+        await requests.post("/products/send-consultant-link", { to: email, link, lawyerName });
+        setSent(true);
+      } catch (e) {
+        setSendError("שגיאה בשליחה — אנא נסה שוב");
+      } finally {
+        setSending(false);
+      }
+    };
+
+    const handleCopy = () => {
+      navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" dir="rtl">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+          <h3 className="text-lg font-bold text-gray-800 mb-1">שלח לינק ליועץ משכנתאות</h3>
+
+          {sent ? (
+            <div className="text-center py-6">
+              <div className="text-5xl mb-3">✅</div>
+              <p className="text-green-600 font-semibold text-base">המייל נשלח בהצלחה!</p>
+              <button onClick={onClose} className="mt-5 px-6 py-2 bg-[#a57d45] text-white rounded-lg text-sm font-medium">סגור</button>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-gray-500 mb-5">הכנס את כתובת המייל של היועץ ולחץ שלח, או העתק את הקישור ישירות.</p>
+
+              {/* העתק קישור */}
+              <div className="flex gap-2 mb-5">
+                <input
+                  readOnly
+                  value={link}
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-600 truncate"
+                  onClick={(e) => e.target.select()}
+                />
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className={`px-3 py-2 rounded-lg text-sm border transition whitespace-nowrap font-medium ${copied ? "bg-green-50 border-green-300 text-green-600" : "bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700"}`}
+                >
+                  {copied ? "✓ הועתק" : "העתק קישור"}
+                </button>
+              </div>
+
+              <div className="border-t border-gray-100 pt-4 mb-4">
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">שלח במייל ישירות</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="consultant@example.com"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a57d45]"
+                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                  autoFocus
+                />
+              </div>
+
+              {sendError && <p className="text-red-500 text-xs mb-3">{sendError}</p>}
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                >
+                  ביטול
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={sending}
+                  className="px-5 py-2 bg-[#a57d45] hover:bg-[#8a6535] text-white text-sm font-medium rounded-lg transition disabled:opacity-60"
+                >
+                  {sending ? "שולח..." : "שלח מייל"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const Products = () => {
     const { state: userState } = useContext(UserContext);
     const { userInfo } = userState;
@@ -63,6 +165,7 @@ import {
     const [resultsPerPage] = useState(20);
     const [showTemplateModal, setShowTemplateModal] = useState(false);
     const [driveLinks, setDriveLinks] = useState({});
+    const [consultantLink, setConsultantLink] = useState(null);
   
     const filters = useProductFilter();
   
@@ -187,8 +290,10 @@ import {
       try {
         setLoading(true);
         setError(null);
+        console.log("🔍 DEBUG userInfo:", { role: userInfo?.role, idNumber: userInfo?.idNumber, _id: userInfo?._id });
         const body = filters.buildParams(currentPage, resultsPerPage, userInfo);
         const res = await ProductServices.getAllProducts(body);
+        console.log("🔍 DEBUG products count:", res?.totalDoc, "| products:", res?.products?.length);
         setProductsData(res);
       } catch (err) {
         console.error("fetchProducts error:", err);
@@ -309,6 +414,17 @@ import {
           <ProductDrawer id={serviceId} onSuccess={fetchProducts} />
         </MainDrawer>
 
+        {/* חלונית לינק ליועץ */}
+        {consultantLink && (() => {
+          return (
+            <ConsultantLinkModal
+              link={consultantLink}
+              lawyerName={userInfo?.name || ""}
+              onClose={() => setConsultantLink(null)}
+            />
+          );
+        })()}
+
         {showTemplateModal && (
           <TemplateSelectModal
             products={products}
@@ -353,6 +469,22 @@ import {
     ]}
               />
               <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleSelectFile} style={{ display: 'none' }} />
+
+              {/* כפתור שלח לינק ליועץ — מוצג רק לעורכי דין */}
+              {userInfo?.role === "lawyer" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const base = window.location.origin;
+                    const link = `${base}/consultant-form?token=${encodeURIComponent(userInfo.idNumber)}&lawyerName=${encodeURIComponent(userInfo.name || "")}`;
+                    setConsultantLink(link);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#a57d45] hover:bg-[#8a6535] text-white rounded-lg text-sm font-medium transition"
+                >
+                  <FiLink size={16} />
+                  {t("SendConsultantLink")}
+                </button>
+              )}
             </div>
   
             <ProductFilters filters={filters} allAdmins={allAdmins} userInfo={userInfo} onFilterChange={() => setCurrentPage(1)} />
