@@ -726,5 +726,8 @@
   "AddFinancingCompany": "Add Financing Company",
   "FinancingCompanyName": "Company Name",
   "FinancingCompanyId": "Company ID / Tax ID",
-  "SendConsultantLink": "Send Consultant Link"
+  "SendConsultantLink": "Send Consultant Link",
+  "lawyer": "Lawyer",
+  "super-admin": "Super Admin",
+  "admin": "Admin"
 }

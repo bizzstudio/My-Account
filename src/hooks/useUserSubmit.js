@@ -118,7 +118,7 @@ const useUserSubmit = (id) => {
           email: res.email,
           password: "",
           phone: res.phone,
-          role: res.role || "admin",
+          role: res.role || "super-admin",
           idNumber: res.idNumber || "",
           status: res.status !== undefined ? res.status : true,
           joiningDate: dayjs(res.joiningData).format("YYYY-MM-DD"),
