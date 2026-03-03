@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiPlus, FiTrash2, FiFileText, FiSave, FiSettings, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiFileText, FiSave, FiSettings, FiEye, FiEyeOff, FiBook } from "react-icons/fi";
 import { t } from "i18next";
 import { Card, CardBody } from "@windmill/react-ui";
 
@@ -11,6 +11,146 @@ import TemplateUploadModal from "@/components/settings/TemplateUploadModal";
 import SystemSettingsServices from "@/services/SystemSettingsServices";
 import CollapsibleSection from "@/components/common/CollapsibleSection";
 import Cookies from "js-cookie";
+
+// מקרא — משתנים לתבניות מסמך (לשימוש במסמכי Word)
+const LEGEND_SECTIONS = [
+  {
+    title: "פרטי עורך דין",
+    items: [
+      { key: "{lawyerName}", label: "שם עורך הדין" },
+      { key: "{lawyerRegistrationNumber}", label: "מספר רישיון עורך דין" },
+      { key: "{lawyerIdNumber}", label: "תעודת זהות עורך דין" },
+      { key: "{lawyerEmail}", label: "אימייל עורך דין" },
+    ],
+  },
+  {
+    title: "פרטי יועץ",
+    items: [
+      { key: "{consultant}", label: "שם יועץ" },
+      { key: "{consultantEmail}", label: "אימייל יועץ" },
+    ],
+  },
+  {
+    title: "חברות מימון",
+    items: [
+      { key: "{financingCompanyName}", label: "שם חברת מימון" },
+      { key: "{financingCompanyIdNumber}", label: "מספר מזהה חברת מימון" },
+    ],
+  },
+  {
+    title: "לווים",
+    items: [
+      { key: "{borrowerName}", label: "שם פרטי לווה" },
+      { key: "{borrowerFamily}", label: "שם משפחה לווה" },
+      { key: "{borrowerIdType}", label: "סוג תעודה מזהה" },
+      { key: "{borrowerIdNumber}", label: "מספר תעודת זהות לווה" },
+      { key: "{borrowerAddress}", label: "כתובת לווה" },
+      { key: "{borrowerDateOfBirth}", label: "תאריך לידה" },
+      { key: "{borrowerGender}", label: "מין" },
+      { key: "{borrowerEmail}", label: "אימייל לווה" },
+    ],
+  },
+  {
+    title: "פרטי רישום",
+    items: [
+      { key: "{block}", label: "גוש" },
+      { key: "{plot}", label: "חלקה" },
+      { key: "{subPlot}", label: "תת חלקה" },
+      { key: "{land}", label: "קרקע" },
+      { key: "{plan}", label: "תוכנית" },
+      { key: "{contract}", label: "חוזה" },
+      { key: "{mortgageName}", label: "שם בעל המשכנתא" },
+      { key: "{mortgageCompanyId}", label: "מספר מזהה חברה משכנת" },
+      { key: "{office}", label: "לשכה" },
+      { key: "{plotArea}", label: "שטח חלקה" },
+      { key: "{right}", label: "סוג זכות" },
+      { key: "{parts}", label: "חלקים" },
+      { key: "{propertyType}", label: "סוג נכס" },
+      { key: "{street}", label: "רחוב" },
+      { key: "{houseNumber}", label: "מספר בית" },
+      { key: "{apartmentNumber}", label: "מספר דירה" },
+      { key: "{floor}", label: "קומה" },
+      { key: "{direction}", label: "כיוון" },
+      { key: "{entrance}", label: "כניסה" },
+      { key: "{unit}", label: "יחידה" },
+      { key: "{settlement}", label: "יישוב" },
+    ],
+  },
+  {
+    title: "מוכרים",
+    items: [
+      { key: "{sellerName}", label: "שם מוכר" },
+      { key: "{sellerIdType}", label: "סוג תעודה מזהה מוכר" },
+      { key: "{sellerIdNumber}", label: "מספר תעודת זהות מוכר" },
+      { key: "{sellerAddress}", label: "כתובת מוכר" },
+    ],
+  },
+  {
+    title: "הלוואות",
+    items: [
+      { key: "{loanAmount}", label: "סכום הלוואה" },
+      { key: "{loanChange}", label: "סוג הצמדה / שינוי" },
+      { key: "{clause}", label: "סעיף" },
+      { key: "{loanPlan}", label: "מסלול הלוואה" },
+      { key: "{loanMonths}", label: "מספר חודשי הלוואה" },
+      { key: "{loanInterestRate}", label: "ריבית" },
+      { key: "{adjustedLoan}", label: "סכום הלוואה מתואם" },
+      { key: "{realLoan}", label: "סכום הלוואה בפועל" },
+      { key: "{primeMargin}", label: "מרווח פריים" },
+      { key: "{loanCreation}", label: "תאריך פתיחת הלוואה" },
+      { key: "{loanNumber}", label: "מספר הלוואה" },
+      { key: "{mortgageNumber}", label: "מספר משכנתא" },
+    ],
+  },
+  {
+    title: "נושה בכיר",
+    items: [
+      { key: "{seniorCreditorName}", label: "שם נושה בכיר" },
+      { key: "{seniorCreditorIdType}", label: "סוג מזהה נושה בכיר" },
+      { key: "{seniorCreditorIdNumber}", label: "מספר מזהה נושה בכיר" },
+    ],
+  },
+  {
+    title: "חשבון בנק לווה",
+    items: [
+      { key: "{borrowerAccountNumber}", label: "מספר חשבון" },
+      { key: "{borrowerBranchCode}", label: "קוד סניף" },
+      { key: "{borrowerBankName}", label: "שם בנק" },
+    ],
+  },
+  {
+    title: "מורשים",
+    items: [
+      { key: "{authorizedName}", label: "שם מורשה" },
+      { key: "{authorizedIdNumber}", label: "מספר תעודת זהות מורשה" },
+    ],
+  },
+  {
+    title: "ממשכנים",
+    items: [
+      { key: "{mortgagorDetails}", label: "פרטי ממשכן" },
+      { key: "{mortgagorFamily}", label: "שם משפחה ממשכן" },
+      { key: "{mortgagorIdType}", label: "סוג מזהה ממשכן" },
+      { key: "{mortgagorIdNumber}", label: "מספר מזהה ממשכן" },
+    ],
+  },
+  {
+    title: "פרטי פרויקט",
+    items: [
+      { key: "{tamAgreementDate}", label: "תאריך הסכם" },
+      { key: "{appraiser}", label: "שמאי" },
+      { key: "{supervisor}", label: "מפקח" },
+      { key: "{additionalFloors}", label: "קומות נוספות" },
+      { key: "{projectUnits}", label: "מספר יחידות בפרויקט" },
+      { key: "{transferFees}", label: "דמי העברה" },
+      { key: "{ltv}", label: "אחוז מימון" },
+      { key: "{projectValue}", label: "שווי פרויקט" },
+      { key: "{minimumWithdrawal}", label: "משיכה מינימלית" },
+      { key: "{contractorName}", label: "שם קבלן" },
+      { key: "{architect}", label: "אדריכל" },
+    ],
+  },
+];
 
 const Settings = () => {
   const { setBreadcrumbs } = useContext(SidebarContext);
@@ -259,6 +399,40 @@ const Settings = () => {
           </CardBody>
         </Card>
       )}
+
+      {/* מקרא — משתנים לתבניות */}
+      <Card className="min-w-0 shadow-xs bg-white dark:bg-gray-800 mb-5">
+        <CardBody>
+          <CollapsibleSection
+            title={t("Legend")}
+            icon={<FiBook size={18} className="text-[#a57d45]" />}
+            defaultOpen={false}
+          >
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4" dir="rtl">
+              משתנים לשימוש בתבניות מסמך (העתק ל־Word והחלף בערכים).
+            </p>
+            <div className="space-y-6" dir="rtl">
+              {LEGEND_SECTIONS.map((section) => (
+                <div key={section.title}>
+                  <h3 className="text-sm font-semibold text-[#a57d45] mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">
+                    {section.title}
+                  </h3>
+                  <div className="pt-1 flex flex-col gap-1">
+                    {section.items.map((item) => (
+                      <div key={item.key} className="flex items-baseline gap-2 text-sm">
+                        <span className="font-mono text-[#a57d45] whitespace-nowrap" dir="ltr">
+                          {item.key}
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-300">– {item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
+        </CardBody>
+      </Card>
 
       {/* תבניות מסמך — גלוי לכולם */}
       <Card className="min-w-0 shadow-xs bg-white dark:bg-gray-800 mb-5">

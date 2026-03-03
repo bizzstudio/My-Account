@@ -70,7 +70,7 @@ const UserTable = ({ users, lang, isCheck, setIsCheck, isMobile = false }) => {
                   handleModalOpen={handleModalOpen}
                   handleResetPassword={handleResetPassword}
                   title={user?.name}
-                  showDelete={import.meta.env.VITE_APP_ENVIRONMENT === 'development'}
+                  showDelete={true}
                 />
               </TableCell>
 

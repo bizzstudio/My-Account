@@ -23,7 +23,7 @@ const UserCard = ({ user, toggleDrawerData }) => {
                     handleModalOpen={toggleDrawerData.handleModalOpen}
                     handleResetPassword={toggleDrawerData.handleResetPassword}
                     title={user?.name + ", " + t("warningDeleteUser")}
-                    showDelete={import.meta.env.VITE_APP_ENVIRONMENT === 'development'}
+                    showDelete={true}
                 />
             </div>
 
