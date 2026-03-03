@@ -19,6 +19,7 @@ import TrainingServices from "@/services/TrainingServices";
 import RegistrantServices from "@/services/RegistrantServices";
 import ProductServices from "@/services/ProductServices";
 import GuideServices from "@/services/GuideServices";
+import TutorialServices from "@/services/TutorialServices";
 import OrderServices from "@/services/OrderServices";
 
 const DeleteModal = ({ id, ids, setIsCheck, title, table = '', trainings = [], onSuccess }) => {
@@ -121,6 +122,16 @@ const DeleteModal = ({ id, ids, setIsCheck, title, table = '', trainings = [], o
           notifyApiResponse(res, true);
         }
         fetchGuides();
+      } else if (table === "tutorials") {
+        if (ids) {
+          const res = await TutorialServices.deleteManyTutorials({ ids: ids });
+          setIsUpdate(true);
+          notifyApiResponse(res, true);
+        } else {
+          const res = await TutorialServices.deleteTutorial(id);
+          setIsUpdate(true);
+          notifyApiResponse(res, true);
+        }
       } else if (location.pathname === "/admins") {
         const res = await UserServices.deleteUser(id);
         setIsUpdate(true);

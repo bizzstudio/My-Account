@@ -2,7 +2,9 @@
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import logo from "@/assets/img/logo.jpeg";
+import { isValidIsraeliID } from "@/utils/israeliId";
 
 // VITE_APP_API_BASE_URL = "http://localhost:3031/api" — מסירים את /api בסוף
 const API_BASE = import.meta.env.VITE_APP_API_BASE_URL || "http://localhost:3031/api";
@@ -34,9 +36,9 @@ const Field = ({ label, children, col = 6 }) => (
   </div>
 );
 
-const Input = ({ register, name, type = "text", placeholder, step }) => (
+const Input = ({ register, name, type = "text", placeholder, step, registerOptions }) => (
   <input
-    {...register(name)}
+    {...register(name, registerOptions)}
     type={type}
     placeholder={placeholder}
     step={step}
@@ -46,11 +48,14 @@ const Input = ({ register, name, type = "text", placeholder, step }) => (
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const ConsultantForm = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const lawyerToken = searchParams.get("token"); // ת"ז עורך הדין
   const lawyerName = searchParams.get("lawyerName") || "";
 
-  const { register, handleSubmit, watch, setValue } = useForm({
+  const idValidate = (v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId");
+
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
       borrowers: [{ borrowerName: "", borrowerFamily: "", borrowerIdType: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "" }],
       registrationDetails: {},
@@ -157,7 +162,8 @@ const ConsultantForm = () => {
                 <Field label="שם פרטי" col={3}><Input register={register} name={`borrowers[${i}].borrowerName`} placeholder="שם פרטי" /></Field>
                 <Field label="שם משפחה" col={3}><Input register={register} name={`borrowers[${i}].borrowerFamily`} placeholder="שם משפחה" /></Field>
                 <Field label="סוג מזהה" col={3}><Input register={register} name={`borrowers[${i}].borrowerIdType`} placeholder="ת.ז / דרכון" /></Field>
-                <Field label="מספר ת.ז" col={3}><Input register={register} name={`borrowers[${i}].borrowerIdNumber`} type="number" placeholder="מספר ת.ז" /></Field>
+                <Field label="מספר ת.ז" col={3}><Input register={register} name={`borrowers[${i}].borrowerIdNumber`} type="text" placeholder="מספר ת.ז" registerOptions={{ validate: idValidate }} /></Field>
+                {errors?.borrowers?.[i]?.borrowerIdNumber && <div className="col-span-12 text-red-600 text-sm">{errors.borrowers[i].borrowerIdNumber.message}</div>}
                 <Field label="כתובת" col={6}><Input register={register} name={`borrowers[${i}].borrowerAddress`} placeholder="כתובת מגורים" /></Field>
                 <Field label="תאריך לידה" col={3}><Input register={register} name={`borrowers[${i}].borrowerDateOfBirth`} type="date" /></Field>
                 <Field label="מין" col={3}>
@@ -210,7 +216,8 @@ const ConsultantForm = () => {
               <div key={i} className="col-span-12 border rounded-xl p-4 bg-gray-50 grid grid-cols-12 gap-4">
                 <Field label="שם מוכר" col={3}><Input register={register} name={`sellers[${i}].sellerName`} placeholder="שם מוכר" /></Field>
                 <Field label="סוג מזהה" col={3}><Input register={register} name={`sellers[${i}].sellerIdType`} placeholder="ת.ז / ח.פ" /></Field>
-                <Field label="מספר מזהה" col={3}><Input register={register} name={`sellers[${i}].sellerIdNumber`} type="number" placeholder="מספר מזהה" /></Field>
+                <Field label="מספר מזהה" col={3}><Input register={register} name={`sellers[${i}].sellerIdNumber`} type="text" placeholder="מספר מזהה" registerOptions={{ validate: idValidate }} /></Field>
+                {errors?.sellers?.[i]?.sellerIdNumber && <div className="col-span-12 text-red-600 text-sm">{errors.sellers[i].sellerIdNumber.message}</div>}
                 <Field label="כתובת" col={3}><Input register={register} name={`sellers[${i}].sellerAddress`} placeholder="כתובת" /></Field>
                 <div className="col-span-12 flex justify-end">
                   <button type="button" onClick={() => setValue("sellers", (watch("sellers") || []).filter((_, j) => j !== i))} className="text-sm text-red-500 hover:underline">הסר מוכר</button>
@@ -227,7 +234,8 @@ const ConsultantForm = () => {
             {(watch("financingCompanies") || []).map((_, i) => (
               <div key={i} className="col-span-12 border rounded-xl p-4 bg-gray-50 grid grid-cols-12 gap-4">
                 <Field label="שם חברה"><Input register={register} name={`financingCompanies[${i}].name`} placeholder="שם חברה" /></Field>
-                <Field label='ח.פ / ת"ז'><Input register={register} name={`financingCompanies[${i}].idNumber`} placeholder="מספר מזהה" /></Field>
+                <Field label='ח.פ / ת"ז'><Input register={register} name={`financingCompanies[${i}].idNumber`} placeholder="מספר מזהה" registerOptions={{ validate: idValidate }} /></Field>
+                {errors?.financingCompanies?.[i]?.idNumber && <div className="col-span-12 text-red-600 text-sm">{errors.financingCompanies[i].idNumber.message}</div>}
                 <div className="col-span-12 flex justify-end">
                   <button type="button" onClick={() => setValue("financingCompanies", (watch("financingCompanies") || []).filter((_, j) => j !== i))} className="text-sm text-red-500 hover:underline">הסר חברה</button>
                 </div>
@@ -265,7 +273,8 @@ const ConsultantForm = () => {
           <Section title="פרטי נושה בכיר">
             <Field label="שם נושה בכיר" col={4}><Input register={register} name="seniorCreditor.seniorCreditorName" placeholder="שם" /></Field>
             <Field label="סוג מזהה" col={4}><Input register={register} name="seniorCreditor.seniorCreditorIdType" placeholder="ת.ז / ח.פ" /></Field>
-            <Field label="מספר מזהה" col={4}><Input register={register} name="seniorCreditor.seniorCreditorIdNumber" type="number" placeholder="מספר" /></Field>
+            <Field label="מספר מזהה" col={4}><Input register={register} name="seniorCreditor.seniorCreditorIdNumber" type="text" placeholder="מספר" registerOptions={{ validate: idValidate }} /></Field>
+            {errors?.seniorCreditor?.seniorCreditorIdNumber && <div className="col-span-12 text-red-600 text-sm">{errors.seniorCreditor.seniorCreditorIdNumber.message}</div>}
           </Section>
 
           {/* ══ חשבון בנק לווה ══ */}

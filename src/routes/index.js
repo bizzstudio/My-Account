@@ -11,6 +11,7 @@ import Products from "@/pages/Products";
 import Orders from "@/pages/Orders";
 import OrderForm from "@/pages/OrderForm";
 import Settings from "@/pages/Settings";
+import Tutorials from "@/pages/Tutorials";
 
 
 const routes = [
@@ -73,6 +74,11 @@ const routes = [
     path: "/settings",
     component: Settings,
     title: "Settings"
+  },
+  {
+    path: "/tutorials",
+    component: Tutorials,
+    title: "Tutorials"
   },
   // {
   //   path: "/popups",

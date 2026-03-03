@@ -8,11 +8,11 @@ import Error from "@/components/form/others/Error";
 import Title from "@/components/form/others/Title";
 import InputArea from "@/components/form/input/InputArea";
 import useUserSubmit from "@/hooks/useUserSubmit";
+import { isValidIsraeliID } from "@/utils/israeliId";
 import SelectWithOptions from "@/components/form/selectOption/SelectWithOptions";
 import DrawerButton from "@/components/form/button/DrawerButton";
 import LabelArea from "@/components/form/selectOption/LabelArea";
 import Uploader from "@/components/image-uploader/Uploader";
-
 const UserDrawer = ({ id }) => {
   const {
     register,
@@ -159,7 +159,7 @@ const UserDrawer = ({ id }) => {
                 </div>
               </div>
 
-              {/* תעודת זהות — חובה לעורכי דין, אופציונלי לשאר */}
+              {/* תעודת זהות */}
               <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
                 <LabelArea label={`${t("LawyerIdNumber")} (${t("ForLawyersOnly")})`} />
                 <div className="col-span-6">
@@ -170,13 +170,31 @@ const UserDrawer = ({ id }) => {
                     type="text"
                     placeholder={t("LawyerIdNumber")}
                     isRequired={false}
+                    validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
                   />
                   <Error errorName={errors.idNumber} />
                 </div>
               </div>
+
+              {/* מספר רישום עורך דין */}
+              <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                <LabelArea label={`${t("LawyerRegistrationNumber")} (${t("ForLawyersOnly")})`} />
+                <div className="col-span-6">
+                  <InputArea
+                    register={register}
+                    label={t("LawyerRegistrationNumber")}
+                    name="registrationNumber"
+                    type="text"
+                    placeholder={t("LawyerRegistrationNumber")}
+                    isRequired={false}
+                  />
+                  <Error errorName={errors.registrationNumber} />
+                </div>
+              </div>
+
             </div>
 
-            <DrawerButton id={id} title={t("User")} isSubmitting={isSubmitting} />
+            <DrawerButton id={id} title={t("Lawyer")} isSubmitting={isSubmitting} />
           </form>
         </CardBody>
       </Card>

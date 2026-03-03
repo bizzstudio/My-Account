@@ -11,6 +11,7 @@ import Error from "@/components/form/others/Error";
 import Title from "@/components/form/others/Title";
 import InputArea from "@/components/form/input/InputArea";
 import useLecturerSubmit from "@/hooks/useLecturerSubmit";
+import { isValidIsraeliID } from "@/utils/israeliId";
 import DrawerButton from "@/components/form/button/DrawerButton";
 import LabelArea from "@/components/form/selectOption/LabelArea";
 import CollapsibleSection from "@/components/common/CollapsibleSection";
@@ -97,6 +98,7 @@ const LecturerDrawer = ({ id }) => {
                                                     name="idNumber"
                                                     type="text"
                                                     placeholder={t("LecturerIdNumber")}
+                                                    validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
                                                 />
                                                 <Error errorName={errors.idNumber} />
                                             </div>

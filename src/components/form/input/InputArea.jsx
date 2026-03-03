@@ -21,6 +21,7 @@ const InputArea = ({
   isRequired = true,
   min,
   max,
+  validate,
   props
 }) => {
 
@@ -61,6 +62,7 @@ const InputArea = ({
             valueAsNumber: type === "number",
             min: min !== undefined ? { value: min, message: t("minValue", { min }) } : undefined,
             max: max !== undefined ? { value: max, message: t("maxValue", { max }) } : undefined,
+            ...(validate && { validate }),
           })}
           type={type}
           step={type === "number" ? 'any' : undefined}

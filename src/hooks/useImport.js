@@ -10,6 +10,7 @@ import ProductServices from "@/services/ProductServices";
 import notifyApiResponse from "@/utils/notifyApiResponse";
 import { notifyError, notifySuccess } from "@/utils/toast";
 import { useTranslation } from "react-i18next";
+import { isValidIsraeliID } from "@/utils/israeliId";
 
 const useImport = () => {
     const { t } = useTranslation();
@@ -95,12 +96,9 @@ const useImport = () => {
             [t('BorrowerDateOfBirth')]: 'borrowerDateOfBirth',
             [t('BorrowerGender')]: 'borrowerGender',
             [t('BorrowerEmail')]: 'borrowerEmail',
-            // פרטי חתימה
+            // פרטי חתימה — רק ת"ז עורך דין (שאר הפרטים יימשכו אוטומטית מהשרת)
             [t('SigningDate')]: 'signingDate',
-            [t('LawyerName')]: 'lawyerName',
-            [t('LawyerRegistrationNumber')]: 'lawyerRegistrationNumber',
             [t('LawyerIdNumber')]: 'lawyerIdNumber',
-            [t('LawyerEmail')]: 'lawyerEmail',
             [t('Consultant')]: 'consultant',
             [t('ConsultantEmail')]: 'consultantEmail',
             [t('PrimaryBacker')]: 'primaryBacker',
@@ -109,6 +107,9 @@ const useImport = () => {
             [t('SecondaryBackerId')]: 'secondaryBackerId',
             [t('ThirdBacker')]: 'thirdBacker',
             [t('ThirdBackerId')]: 'thirdBackerId',
+            // חברות מימון (חברה ראשונה)
+            [t('FinancingCompanyName')]: 'financingCompanyName',
+            [t('FinancingCompanyId')]: 'financingCompanyId',
             // פרטי רישום
             [t('Block')]: 'block',
             [t('Plot')]: 'plot',
@@ -199,10 +200,7 @@ const useImport = () => {
         [t('BorrowerGender')]: 'borrowerGender',
         [t('BorrowerEmail')]: 'borrowerEmail',
         [t('SigningDate')]: 'signingDate',
-        [t('LawyerName')]: 'lawyerName',
-        [t('LawyerRegistrationNumber')]: 'lawyerRegistrationNumber',
         [t('LawyerIdNumber')]: 'lawyerIdNumber',
-        [t('LawyerEmail')]: 'lawyerEmail',
         [t('Consultant')]: 'consultant',
         [t('ConsultantEmail')]: 'consultantEmail',
         [t('PrimaryBacker')]: 'primaryBacker',
@@ -211,6 +209,8 @@ const useImport = () => {
         [t('SecondaryBackerId')]: 'secondaryBackerId',
         [t('ThirdBacker')]: 'thirdBacker',
         [t('ThirdBackerId')]: 'thirdBackerId',
+        [t('FinancingCompanyName')]: 'financingCompanyName',
+        [t('FinancingCompanyId')]: 'financingCompanyId',
         [t('Block')]: 'block',
         [t('Plot')]: 'plot',
         [t('SubPlot')]: 'subPlot',
@@ -297,6 +297,27 @@ const useImport = () => {
         return value.split(',').map(item => item.trim()).filter(Boolean);
     };
 
+    // Validate Israeli ID in product rows; return { valid, invalidRows: [{ rowIndex, fieldKey }] }
+    const validateProductIds = (products) => {
+        const invalidRows = [];
+        products.forEach((product, rowIndex) => {
+            const check = (value, fieldKey) => {
+                if (value === undefined || value === null || value === '') return;
+                const str = String(value).trim().replace(/\D/g, '');
+                if (str.length === 0) return;
+                if (!isValidIsraeliID(value)) invalidRows.push({ rowIndex: rowIndex + 1, fieldKey });
+            };
+            product.borrowers?.[0]?.borrowerIdNumber != null && check(product.borrowers[0].borrowerIdNumber, 'BorrowerIdNumber');
+            product.signingDetails?.lawyerIdNumber != null && check(product.signingDetails.lawyerIdNumber, 'LawyerIdNumber');
+            product.seniorCreditor?.seniorCreditorIdNumber != null && check(product.seniorCreditor.seniorCreditorIdNumber, 'SeniorCreditorIdNumber');
+            product.sellers?.forEach((s, i) => s.sellerIdNumber != null && check(s.sellerIdNumber, `SellerIdNumber (${i + 1})`));
+            product.authorizedPerson?.forEach((a, i) => a.authorizedIdNumber != null && check(a.authorizedIdNumber, `AuthorizedIdNumber (${i + 1})`));
+            product.mortgagors?.forEach((m, i) => m.mortgagorIdNumber != null && check(m.mortgagorIdNumber, `MortgagorIdNumber (${i + 1})`));
+            product.financingCompanies?.forEach((f, i) => f.idNumber != null && check(f.idNumber, `FinancingCompanyId (${i + 1})`));
+        });
+        return { valid: invalidRows.length === 0, invalidRows };
+    };
+
 
     const processFileData = (data, pathname) => {
         if (!data || data.length === 0) {
@@ -345,13 +366,10 @@ const useImport = () => {
                             borrowerEmail: str(r.borrowerEmail),
                         }],
 
-                        // פרטי חתימה
+                        // פרטי חתימה — lawyerName/Email/RegistrationNumber יימולאו אוטומטית בשרת לפי lawyerIdNumber
                         signingDetails: {
                             signingDate: r.signingDate ? new Date(r.signingDate) : undefined,
-                            lawyerName: str(r.lawyerName),
-                            lawyerRegistrationNumber: num(r.lawyerRegistrationNumber),
                             lawyerIdNumber: num(r.lawyerIdNumber),
-                            lawyerEmail: str(r.lawyerEmail),
                             consultant: str(r.consultant),
                             consultantEmail: str(r.consultantEmail),
                             primaryBacker: str(r.primaryBacker),
@@ -361,6 +379,12 @@ const useImport = () => {
                             thirdBacker: str(r.thirdBacker),
                             thirdBackerId: num(r.thirdBackerId),
                         },
+
+                        // חברות מימון (חברה ראשונה מה-Excel)
+                        financingCompanies: (r.financingCompanyName || r.financingCompanyId) ? [{
+                            name: str(r.financingCompanyName),
+                            idNumber: str(r.financingCompanyId),
+                        }] : [],
 
                         // פרטי רישום
                         registrationDetails: {
@@ -461,6 +485,20 @@ const useImport = () => {
 
                     return product;
                 });
+
+                const idValidation = validateProductIds(processedData);
+                if (!idValidation.valid) {
+                    setImportStage('validation_error');
+                    setImportResults({
+                        total: processedData.length,
+                        success: 0,
+                        failure: 0,
+                        errors: [],
+                        validationError: { invalidIdRows: idValidation.invalidRows }
+                    });
+                    notifyError(t("InvalidIsraeliId"));
+                    return;
+                }
             }
 
             setSelectedFile(processedData);

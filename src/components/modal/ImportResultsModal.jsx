@@ -89,19 +89,31 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                 {/* Validation Error State */}
                 {isValidationError && validationError && (
                     <div className="flex flex-col gap-4" style={{ direction: 'rtl' }}>
+                        {validationError.invalidIdRows ? (
+                            <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                <MdErrorOutline className="text-red-500 text-2xl shrink-0" />
+                                <div>
+                                    <p className="font-semibold text-red-700 dark:text-red-400">{t("InvalidIsraeliId")}</p>
+                                    <p className="text-sm text-red-600 dark:text-red-300 mt-0.5">
+                                        {t("InvalidIdRowsInImport")}: {[...new Set(validationError.invalidIdRows.map(r => r.rowIndex))].sort((a, b) => a - b).join(', ')}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                        <>
                         <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                             <MdErrorOutline className="text-red-500 text-2xl shrink-0" />
                             <div>
                                 <p className="font-semibold text-red-700 dark:text-red-400">הקובץ שהועלה אינו תואם לפורמט הנדרש</p>
                                 <p className="text-sm text-red-600 dark:text-red-300 mt-0.5">
-                                    {validationError.recognized.length === 0
+                                    {(validationError.recognized?.length ?? 0) === 0
                                         ? 'לא נמצאה אף עמודה מוכרת — ודא שהכותרות תואמות לשמות הנדרשים'
-                                        : `זוהו ${validationError.recognized.length} עמודות מוכרות מתוך ${validationError.recognized.length + validationError.unrecognized.length} בסך הכל`}
+                                        : `זוהו ${validationError.recognized.length} עמודות מוכרות מתוך ${validationError.recognized.length + (validationError.unrecognized?.length ?? 0)} בסך הכל`}
                                 </p>
                             </div>
                         </div>
 
-                        {validationError.missingRequired.length > 0 && (
+                        {validationError.missingRequired?.length > 0 && (
                             <div>
                                 <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">שדות חובה חסרים:</p>
                                 <div className="flex flex-wrap gap-2">
@@ -114,7 +126,7 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                             </div>
                         )}
 
-                        {validationError.unrecognized.length > 0 && (
+                        {validationError.unrecognized?.length > 0 && (
                             <div>
                                 <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">עמודות לא מוכרות בקובץ:</p>
                                 <div className="flex flex-wrap gap-2">
@@ -144,6 +156,8 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                             </div>
                             <p className="text-xs text-gray-400 mt-1">ירוק = נמצא בקובץ שלך | אפור = לא נמצא</p>
                         </div>
+                        </>
+                        )}
                     </div>
                 )}
 

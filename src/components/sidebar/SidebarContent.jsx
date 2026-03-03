@@ -8,7 +8,7 @@ import TextLogo from "@/components/common/TextLogo";
 import logo from "@/assets/img/logo.jpeg";
 // Icons
 import { IoLogOutOutline } from "react-icons/io5";
-import { FiUsers, FiUser, FiPackage } from "react-icons/fi";
+import { FiUsers, FiUser } from "react-icons/fi";
 import { GoMoon } from "react-icons/go";
 import { MdOutlineWbSunny } from "react-icons/md";
 
@@ -63,10 +63,14 @@ const SidebarContent = () => {
 
   // סינון הקישורים לפי תפקיד המשתמש
   let filteredSidebar = sidebar.filter((route) => {
-    // שמות הקישורים שצריך להסתיר אם היוזר אינו "super-admin"
-    const restrictedRoutes = ["Admins"];
+    // נתיבים גלויים רק ל-super-admin
+    const superAdminOnlyRoutes = ["Admins"];
+    // נתיבים גלויים לאדמינים (admin + super-admin) — לא לעורכי דין
+    const adminOnlyRoutes = ["Settings"];
 
-    return !(restrictedRoutes.includes(route.name) && userInfo?.role !== "super-admin");
+    if (superAdminOnlyRoutes.includes(route.name) && userInfo?.role !== "super-admin") return false;
+    if (adminOnlyRoutes.includes(route.name) && userInfo?.role !== "admin" && userInfo?.role !== "super-admin") return false;
+    return true;
   });
 
   // סינון התפריט במצב פרודקשיין
@@ -189,17 +193,7 @@ const SidebarContent = () => {
                   </>
                 )}
 
-                {userInfo?.email &&
-                  <li className="justify-between font-serif font-medium py-2 px-3 transition-colors duration-150 hover:bg-gray-100 text-gray-500 hover:text-mainColor dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
-                    <NavLink to="/products">
-                      <span className="flex items-center gap-1 text-sm">
-                        <FiPackage size={15} />
-                        <span>{t("SettingsProducts")}</span>
-                      </span>
-                    </NavLink>
-                  </li>
-                }
-
+                {/* הגדרות מוצרים — הוסר מהתפריט (ניתן לגשת דרך סרגל הצד /products) */}
                 {/* Theme toggler */}
                 <li
                   onClick={toggleMode}

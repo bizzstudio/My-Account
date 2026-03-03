@@ -27,10 +27,33 @@ const ExportWord = async (products, isCheck = [], template = null) => {
           },
         }
       );
-      if (!response.ok)
-        throw new Error(`Template fetch failed. Status: ${response.status}`);
-      // שומרים כ-Uint8Array כדי שניתן לעשות slice מרובים ללא ניצול ה-buffer
-      content = new Uint8Array(await response.arrayBuffer());
+      if (!response.ok) {
+        let message = `שגיאה בהורדת התבנית (${response.status})`;
+        try {
+          const body = await response.json();
+          if (body?.message) message = body.message;
+        } catch (_) {}
+        throw new Error(message);
+      }
+      const buffer = await response.arrayBuffer();
+      content = new Uint8Array(buffer);
+      // וידוא שהתגובה היא קובץ docx (ZIP: מתחיל ב-PK) ולא JSON/הודעת שגיאה
+      const isZip = content.length >= 2 && content[0] === 0x50 && content[1] === 0x4b;
+      const ct = response.headers.get("content-type") || "";
+      const tooSmall = content.length < 1000; // קובץ docx מינימלי גדול בהרבה
+      if (!isZip || ct.includes("application/json") || tooSmall) {
+        let msg = "לא התקבל קובץ תבנית תקין מהשרת. ייתכן שאין הרשאה לשימוש בתבנית זו.";
+        try {
+          const text = new TextDecoder().decode(content);
+          if (text.trim().startsWith("{")) {
+            const j = JSON.parse(text);
+            if (j?.message) msg = j.message;
+          } else if (tooSmall && text.length > 0) {
+            msg = "השרת החזיר תגובה קצרה במקום קובץ התבנית. ייתכן שנדרשת הרשאת אדמין.";
+          }
+        } catch (_) {}
+        throw new Error(msg);
+      }
     } else {
       // תבנית ברירת מחדל — מהתיקייה הציבורית
       const response = await fetch(`/template.docx?${Date.now()}`, {
@@ -75,7 +98,15 @@ const ExportWord = async (products, isCheck = [], template = null) => {
         });
 
         if (!res.ok) {
-          console.error("❌ Upload failed for", safeData.borrowerName);
+          let errMsg = `העלאה ל-Drive נכשלה (${res.status})`;
+          try {
+            const errBody = await res.json();
+            if (errBody?.message) errMsg = errBody.message;
+          } catch (_) {
+            const text = await res.text();
+            if (text) errMsg = text.slice(0, 200);
+          }
+          throw new Error(errMsg);
         } else {
           const templateName = template?.name || "תבנית ברירת מחדל";
           uploadedFiles.push({ borrower: safeData.borrowerName, template: templateName });
@@ -108,7 +139,7 @@ const ExportWord = async (products, isCheck = [], template = null) => {
     return { driveLinks, uploadedFiles };
   } catch (err) {
     console.error("Error processing files:", err);
-    return { driveLinks: {}, uploadedFiles: [] };
+    throw err;
   }
 };
 

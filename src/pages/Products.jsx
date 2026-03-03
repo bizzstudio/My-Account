@@ -140,6 +140,61 @@ import {
     );
   };
 
+  // ─── Modal לבחירת עורך דין לפני שליחת לינק (אדמין בלבד) ────────────────────
+  const AdminLawyerSelectModal = ({ lawyers, onSelect, onClose }) => {
+    const [selected, setSelected] = React.useState("");
+
+    const handleConfirm = () => {
+      const lawyer = lawyers.find((l) => l._id === selected);
+      if (!lawyer) return;
+      onSelect(lawyer);
+    };
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" dir="rtl">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+          <h3 className="text-lg font-bold text-gray-800 mb-1">בחר עורך דין</h3>
+          <p className="text-sm text-gray-500 mb-4">הלינק יהיה מקושר לעורך הדין שתבחר</p>
+
+          <select
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-5 focus:outline-none focus:ring-2 focus:ring-[#a57d45]"
+          >
+            <option value="">— בחר עורך דין —</option>
+            {lawyers.map((l) => (
+              <option key={l._id} value={l._id}>
+                {l.name} {l.idNumber ? `— ${l.idNumber}` : ""}
+              </option>
+            ))}
+          </select>
+
+          {lawyers.length === 0 && (
+            <p className="text-xs text-gray-400 mb-4">לא נמצאו עורכי דין במערכת</p>
+          )}
+
+          <div className="flex gap-3 justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              disabled={!selected}
+              onClick={handleConfirm}
+              className="px-5 py-2 bg-[#a57d45] hover:bg-[#8a6535] text-white text-sm font-medium rounded-lg transition disabled:opacity-50"
+            >
+              המשך
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const Products = () => {
     const { state: userState } = useContext(UserContext);
     const { userInfo } = userState;
@@ -156,16 +211,19 @@ import {
     } = useImport();
     const { serviceId, allId } = useToggleDrawer();
   
-    const [isCheck, setIsCheck] = useState([]);
-    const [allAdmins, setAllAdmins] = useState([]);
-    const [productsData, setProductsData] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [resultsPerPage] = useState(20);
-    const [showTemplateModal, setShowTemplateModal] = useState(false);
-    const [driveLinks, setDriveLinks] = useState({});
-    const [consultantLink, setConsultantLink] = useState(null);
+  const [isCheck, setIsCheck] = useState([]);
+  const [allAdmins, setAllAdmins] = useState([]);
+  const [lawyers, setLawyers] = useState([]);
+  const [productsData, setProductsData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [resultsPerPage] = useState(20);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [driveLinks, setDriveLinks] = useState({});
+  const [consultantLink, setConsultantLink] = useState(null);
+  const [consultantLawyerName, setConsultantLawyerName] = useState(null);
+  const [showLawyerSelectModal, setShowLawyerSelectModal] = useState(false);
   
     const filters = useProductFilter();
   
@@ -270,20 +328,34 @@ import {
 
     ];
   
-    // Fetch admins if super-admin
-    const fetchAllAdmins = useCallback(async () => {
-      if (userInfo?.role === "super-admin") {
-        try {
-          const res = await UserServices.getAllUser();
-          setAllAdmins(res || []);
-        } catch (err) {
-          console.error("Error fetching admins:", err);
-        }
+  // Fetch admins if super-admin
+  const fetchAllAdmins = useCallback(async () => {
+    if (userInfo?.role === "super-admin") {
+      try {
+        const res = await UserServices.getAllUser();
+        setAllAdmins(res || []);
+      } catch (err) {
+        console.error("Error fetching admins:", err);
       }
-    }, [userInfo]);
+    }
+  }, [userInfo]);
+
+  // Fetch lawyers if admin (for consultant link modal)
+  const fetchLawyers = useCallback(async () => {
+    if (userInfo?.role === "admin" || userInfo?.role === "super-admin") {
+      try {
+        const res = await UserServices.getAllUser();
+        const lawyerList = (res || []).filter((u) => u.role === "lawyer");
+        setLawyers(lawyerList);
+      } catch (err) {
+        console.error("Error fetching lawyers:", err);
+      }
+    }
+  }, [userInfo]);
   
-    useEffect(() => { fetchAllAdmins(); }, [fetchAllAdmins]);
-    useEffect(() => { setBreadcrumbs([{ href: "/products", label: t("Products") }]); }, []);
+  useEffect(() => { fetchAllAdmins(); }, [fetchAllAdmins]);
+  useEffect(() => { fetchLawyers(); }, [fetchLawyers]);
+  useEffect(() => { setBreadcrumbs([{ href: "/products", label: t("Products") }]); }, []);
   
     // Fetch products
     const fetchProducts = useCallback(async () => {
@@ -414,16 +486,29 @@ import {
           <ProductDrawer id={serviceId} onSuccess={fetchProducts} />
         </MainDrawer>
 
-        {/* חלונית לינק ליועץ */}
-        {consultantLink && (() => {
-          return (
-            <ConsultantLinkModal
-              link={consultantLink}
-              lawyerName={userInfo?.name || ""}
-              onClose={() => setConsultantLink(null)}
-            />
-          );
-        })()}
+      {/* חלונית בחירת עורך דין לאדמין */}
+      {showLawyerSelectModal && (
+        <AdminLawyerSelectModal
+          lawyers={lawyers}
+          onSelect={(lawyer) => {
+            const base = window.location.origin;
+            const link = `${base}/consultant-form?token=${encodeURIComponent(lawyer.idNumber)}&lawyerName=${encodeURIComponent(lawyer.name || "")}`;
+            setConsultantLawyerName(lawyer.name || "");
+            setConsultantLink(link);
+            setShowLawyerSelectModal(false);
+          }}
+          onClose={() => setShowLawyerSelectModal(false)}
+        />
+      )}
+
+      {/* חלונית לינק ליועץ */}
+      {consultantLink && (
+        <ConsultantLinkModal
+          link={consultantLink}
+          lawyerName={consultantLawyerName || userInfo?.name || ""}
+          onClose={() => { setConsultantLink(null); setConsultantLawyerName(null); }}
+        />
+      )}
 
         {showTemplateModal && (
           <TemplateSelectModal
@@ -470,21 +555,26 @@ import {
               />
               <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleSelectFile} style={{ display: 'none' }} />
 
-              {/* כפתור שלח לינק ליועץ — מוצג רק לעורכי דין */}
-              {userInfo?.role === "lawyer" && (
-                <button
-                  type="button"
-                  onClick={() => {
+            {/* כפתור שלח לינק ליועץ — לעורכי דין ולאדמינים */}
+            {(userInfo?.role === "lawyer" || userInfo?.role === "admin" || userInfo?.role === "super-admin") && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (userInfo?.role === "lawyer") {
                     const base = window.location.origin;
                     const link = `${base}/consultant-form?token=${encodeURIComponent(userInfo.idNumber)}&lawyerName=${encodeURIComponent(userInfo.name || "")}`;
+                    setConsultantLawyerName(userInfo.name || "");
                     setConsultantLink(link);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#a57d45] hover:bg-[#8a6535] text-white rounded-lg text-sm font-medium transition"
-                >
-                  <FiLink size={16} />
-                  {t("SendConsultantLink")}
-                </button>
-              )}
+                  } else {
+                    setShowLawyerSelectModal(true);
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-[#a57d45] hover:bg-[#8a6535] text-white rounded-lg text-sm font-medium transition"
+              >
+                <FiLink size={16} />
+                {t("SendConsultantLink")}
+              </button>
+            )}
             </div>
   
             <ProductFilters filters={filters} allAdmins={allAdmins} userInfo={userInfo} onFilterChange={() => setCurrentPage(1)} />

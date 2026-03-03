@@ -34,6 +34,7 @@ const useUserSubmit = (id) => {
     phone: "",
     role: "super-admin",
     idNumber: "",
+    registrationNumber: "",
     status: true,
     image: "",
     joiningDate: dayjs(new Date()).format("YYYY-MM-DD"),
@@ -62,8 +63,9 @@ const useUserSubmit = (id) => {
         password: data.password,
         phone: data.phone,
         role: data.role,
-        idNumber: data.idNumber || undefined,
-        status: data.status,
+        idNumber: data.idNumber != null ? String(data.idNumber).trim() : "",
+        registrationNumber: data.registrationNumber != null ? String(data.registrationNumber).trim() : "",
+        status: data.status === true || data.status === "active" ? "active" : "inactive",
         image: data.image,
       };
 
@@ -120,6 +122,7 @@ const useUserSubmit = (id) => {
           phone: res.phone,
           role: res.role || "super-admin",
           idNumber: res.idNumber || "",
+          registrationNumber: res.registrationNumber || "",
           status: res.status !== undefined ? res.status : true,
           joiningDate: dayjs(res.joiningData).format("YYYY-MM-DD"),
           image: res.image || "",
@@ -152,6 +155,13 @@ const useUserSubmit = (id) => {
     }
     if (id) {
       getUserData();
+    } else {
+      // הוספה: מאתחלים טופס ריק מפורש כדי idNumber ו-registrationNumber יהיו ב-state
+      reset({
+        ...defaultValues,
+        language: lang || "en",
+        joiningDate: dayjs(new Date()).format("YYYY-MM-DD"),
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, reset, isDrawerOpen]);

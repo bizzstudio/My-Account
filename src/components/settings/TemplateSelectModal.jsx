@@ -11,6 +11,7 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
   const [selected, setSelected] = useState({ default: true });
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(null);
 
   useEffect(() => {
     TemplateServices.getAllTemplates()
@@ -36,6 +37,7 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
   const handleExport = async () => {
     try {
       setExporting(true);
+      setExportError(null);
 
       const allLinks = {};
       const allFiles = [];
@@ -60,12 +62,16 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
       } else if (allFiles.length > 1) {
         const lines = allFiles.map(({ borrower, template: tplName }) => `• ${borrower} — ${tplName}`).join("\n");
         alert(`✅ ${allFiles.length} מסמכים הועלו בהצלחה:\n\n${lines}`);
+      } else {
+        setExportError("לא הועלו מסמכים. בדוק את חיבור ה-Drive בהגדרות (הגדרות → ניתוב ל-Drive).");
+        return;
       }
 
       if (onExportDone) onExportDone(allLinks);
       onClose();
     } catch (err) {
       console.error("Export error:", err);
+      setExportError(err?.message || "שגיאה בייצוא");
     } finally {
       setExporting(false);
     }
@@ -125,6 +131,11 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
               ))}
             </div>
 
+            {exportError && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
+                {exportError}
+              </div>
+            )}
             <div className="flex justify-end gap-3">
               <button
                 onClick={onClose}

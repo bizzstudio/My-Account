@@ -29,6 +29,7 @@ import SwitchToggle from "@/components/form/switch/SwitchToggle";
 import YouTubeVideoPreview from "@/components/product/YouTubeVideoPreview";
 import FormSubmitActions from "../form/FormSubmitActions";
 import { CARGO_TYPE_VALUES, PACKAGE_CARGO_TYPE_VALUES, DEFAULT_CARGO_TYPE } from "@/constants/cargoTypes";
+import { isValidIsraeliID } from "@/utils/israeliId";
 
 const ProductDrawer = ({ id, onSuccess }) => {
     const navigate = useNavigate();
@@ -43,9 +44,24 @@ const ProductDrawer = ({ id, onSuccess }) => {
         errors,
         isSubmitting,
         allAdmins,
+        lawyers,
         setValue,
         watch,
     } = useProductSubmit(id, onSuccess);
+
+    const isAdmin = userInfo?.role === "admin" || userInfo?.role === "super-admin";
+    const isLawyer = userInfo?.role === "lawyer";
+
+    // בחירת עורך דין מה-SELECT — ממלאת את כל שדות עורך הדין
+    const handleLawyerSelect = (lawyerId) => {
+        const selected = lawyers.find((l) => l._id === lawyerId);
+        if (!selected) return;
+        setValue("signingDetails.lawyerName", selected.name || "");
+        setValue("signingDetails.lawyerIdNumber", selected.idNumber || "");
+        setValue("signingDetails.lawyerEmail", selected.email || "");
+        setValue("signingDetails.lawyerRegistrationNumber", selected.registrationNumber || "");
+        setValue("_selectedLawyerId", selected._id);
+    };
 
     const productCargoType = watch("cargoType") ?? DEFAULT_CARGO_TYPE;
     const status = watch("status") || "active";
@@ -66,6 +82,16 @@ const ProductDrawer = ({ id, onSuccess }) => {
             setValue("packages", [{ cargoType: DEFAULT_CARGO_TYPE }]);
         }
     }, [id, rawPackages, setValue]);
+
+    // בעריכת תיק: סנכרון בחירת עורך דין לפי פרטי החתימה (אחרי טעינת lawyers)
+    const lawyerName = watch("signingDetails.lawyerName");
+    const selectedLawyerId = watch("_selectedLawyerId");
+    useEffect(() => {
+        if (id && lawyers?.length > 0 && lawyerName && !selectedLawyerId) {
+            const found = lawyers.find((l) => l.name === lawyerName);
+            if (found) setValue("_selectedLawyerId", found._id);
+        }
+    }, [id, lawyers, lawyerName, selectedLawyerId, setValue]);
 
     const packageCargoTypeOptions = PACKAGE_CARGO_TYPE_VALUES.map((value) => ({
         _id: value,
@@ -163,71 +189,60 @@ const ProductDrawer = ({ id, onSuccess }) => {
   >
     <div className="grid grid-cols-12 gap-5 mt-2">
 
-      {/* שם עורך דין — חובה */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("LawyerName")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("LawyerName")}
-            name="signingDetails.lawyerName"
-            type="text"
-            placeholder={t("LawyerName")}
-            isRequired={true}
-          />
-          <Error errorName={errors?.signingDetails?.lawyerName} />
-        </div>
-      </div>
+      {/* שדות נסתרים — שמירת ערכי עורך הדין לשליחת הטופס */}
+      <input type="hidden" {...register("signingDetails.lawyerName")} />
+      <input type="hidden" {...register("signingDetails.lawyerIdNumber")} />
+      <input type="hidden" {...register("signingDetails.lawyerEmail")} />
+      <input type="hidden" {...register("signingDetails.lawyerRegistrationNumber")} />
 
-      {/* מספר ת"ז עורך דין — חובה */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("LawyerIdNumber")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("LawyerIdNumber")}
-            name="signingDetails.lawyerIdNumber"
-            type="number"
-            placeholder={t("LawyerIdNumber")}
-            isRequired={true}
+      {/* אדמין: בחירה מרשימת עורכי דין בלבד — שדה חובה */}
+      {isAdmin && (
+        <div className="flex flex-col gap-1 md:col-span-5 col-span-12">
+          <LabelArea label={t("SelectLawyer")} />
+          <input
+            type="hidden"
+            {...register("_selectedLawyerId", {
+              required: isAdmin ? `${t("SelectLawyer")} ${t("isRequired")}!` : false,
+            })}
           />
-          <Error errorName={errors?.signingDetails?.lawyerIdNumber} />
+          {lawyers.length > 0 ? (
+            <select
+              onChange={(e) => handleLawyerSelect(e.target.value)}
+              value={watch("_selectedLawyerId") || ""}
+              className="border h-12 text-sm focus:outline-none block w-full bg-gray-100 dark:bg-gray-700 border-transparent focus:bg-white rounded-lg px-3 dark:focus:border-gray-600 dark:text-gray-300"
+            >
+              <option value="">{t("SelectLawyerPlaceholder")}</option>
+              {lawyers.map((l) => (
+                <option key={l._id} value={l._id}>
+                  {l.name}{l.idNumber ? ` — ${l.idNumber}` : ""}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-sm text-gray-400">{t("NoLawyersFound")}</p>
+          )}
+          <Error errorName={errors._selectedLawyerId} />
+          {/* הצגת שם עורך דין שנבחר — השם במודגש */}
+          {watch("signingDetails.lawyerName") && (
+            <p className="text-sm text-[#a57d45] mt-1">
+              ✓ <span className="font-bold">{watch("signingDetails.lawyerName")}</span>
+              {watch("signingDetails.lawyerIdNumber") ? ` | ת"ז: ${watch("signingDetails.lawyerIdNumber")}` : ""}
+            </p>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* מספר רישום עורך דין */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("LawyerRegistrationNumber")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("LawyerRegistrationNumber")}
-            name="signingDetails.lawyerRegistrationNumber"
-            type="text"
-            placeholder={t("LawyerRegistrationNumber")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.lawyerRegistrationNumber} />
+      {/* עורך דין: רק שמו שלו */}
+      {isLawyer && (
+        <div className="flex flex-col gap-1 md:col-span-5 col-span-12">
+          <LabelArea label={t("LawyerName")} />
+          <div className="h-12 flex items-center px-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300">
+            {watch("signingDetails.lawyerName") || userInfo?.name || "-"}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* מייל עורך דין */}
-      <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-        <LabelArea label={t("LawyerEmail")} />
-        <div className="col-span-6">
-          <InputArea
-            register={register}
-            label={t("LawyerEmail")}
-            name="signingDetails.lawyerEmail"
-            type="email"
-            placeholder={t("LawyerEmail")}
-            isRequired={false}
-          />
-          <Error errorName={errors?.signingDetails?.lawyerEmail} />
-        </div>
-      </div>
-
-      {/* תאריך חתימה */}
+      {/* תאריך חתימה — לכולם */}
       <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
         <LabelArea label={t("SigningDate")} />
         <div className="col-span-6">
@@ -297,6 +312,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 name={`borrowers[${index}].borrowerName`}
                 type="text"
                 placeholder={t("BorrowerName")}
+                isRequired={false}
               />
               <Error errorName={errors?.borrowers?.[index]?.borrowerName} />
             </div>
@@ -310,8 +326,10 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 register={register}
                 label={t("BorrowerIdNumber")}
                 name={`borrowers[${index}].borrowerIdNumber`}
-                type="number"
+                type="text"
                 placeholder={t("BorrowerIdNumber")}
+                isRequired={false}
+                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
               />
               <Error errorName={errors?.borrowers?.[index]?.borrowerIdNumber} />
             </div>
@@ -327,6 +345,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 name={`borrowers[${index}].borrowerAddress`}
                 type="text"
                 placeholder={t("BorrowerAddress")}
+                isRequired={false}
               />
               <Error errorName={errors?.borrowers?.[index]?.borrowerAddress} />
             </div>
@@ -341,6 +360,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 label={t("BorrowerDateOfBirth")}
                 name={`borrowers[${index}].borrowerDateOfBirth`}
                 type="date"
+                isRequired={false}
               />
               <Error errorName={errors?.borrowers?.[index]?.borrowerDateOfBirth} />
             </div>
@@ -356,6 +376,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 name={`borrowers[${index}].borrowerEmail`}
                 type="email"
                 placeholder={t("BorrowerEmail")}
+                isRequired={false}
               />
               <Error errorName={errors?.borrowers?.[index]?.borrowerEmail} />
             </div>
@@ -486,6 +507,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 type="text"
                 placeholder={t("FinancingCompanyId")}
                 isRequired={false}
+                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
               />
               <Error errorName={errors?.financingCompanies?.[index]?.idNumber} />
             </div>
@@ -928,9 +950,10 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 register={register}
                                 label={t("SellerIdNumber")}
                                 name={`sellers[${index}].sellerIdNumber`}
-                                type="number"
+                                type="text"
                                 placeholder={t("SellerIdNumber")}
                                 isRequired={false}
+                                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
                             />
                             <Error errorName={errors?.sellers?.[index]?.sellerIdNumber} />
                         </div>
@@ -1281,9 +1304,10 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         register={register}
                         label={t("SeniorCreditorIdNumber")}
                         name="seniorCreditor.seniorCreditorIdNumber"
-                        type="number"
+                        type="text"
                         placeholder={t("SeniorCreditorIdNumber")}
                         isRequired={false}
+                        validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
                     />
                     <Error errorName={errors?.seniorCreditor?.seniorCreditorIdNumber} />
                 </div>
@@ -1410,9 +1434,10 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 register={register}
                                 label={t("AuthorizedIdNumber")}
                                 name={`authorizedPerson[${index}].authorizedIdNumber`}
-                                type="number"
+                                type="text"
                                 placeholder={t("AuthorizedIdNumber")}
                                 isRequired={false}
+                                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
                             />
                             <Error
                                 errorName={errors?.authorizedPerson?.[index]?.authorizedIdNumber}
@@ -1523,9 +1548,10 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 register={register}
                                 label={t("MortgagorIdNumber")}
                                 name={`mortgagors[${index}].mortgagorIdNumber`}
-                                type="number"
+                                type="text"
                                 placeholder={t("MortgagorIdNumber")}
                                 isRequired={false}
+                                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
                             />
                             <Error
                                 errorName={errors?.mortgagors?.[index]?.mortgagorIdNumber}

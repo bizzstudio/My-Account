@@ -93,6 +93,10 @@ const UserTable = ({ users, lang, isCheck, setIsCheck, isMobile = false }) => {
               </TableCell>
 
               <TableCell className="text-center">
+                <span className="text-sm font-mono">{user.idNumber || "-"}</span>
+              </TableCell>
+
+              <TableCell className="text-center">
                 <span className="text-sm ">{user.phone}</span>
               </TableCell>
 

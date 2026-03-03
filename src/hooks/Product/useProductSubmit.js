@@ -18,6 +18,7 @@ const useProductSubmit = (id, onSuccess) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allAdmins, setAllAdmins] = useState([]);
+  const [lawyers, setLawyers] = useState([]);
 
   const defaultBorrower = {
     borrowerName: "",
@@ -224,10 +225,11 @@ const useProductSubmit = (id, onSuccess) => {
 
   const getAllUsers = async () => {
     try {
-      if (userInfo?.role === "super-admin") {
-        const res = await UserServices.getAllUser();
-        setAllAdmins(res || []);
-      }
+      const res = await UserServices.getAllUser();
+      const all = res || [];
+      setAllAdmins(all);
+      // רשימת עורכי דין לבחירה ב-ProductDrawer
+      setLawyers(all.filter((u) => u.role === "lawyer"));
     } catch (err) {
       console.error("Error fetching admins:", err);
     }
@@ -240,7 +242,14 @@ const useProductSubmit = (id, onSuccess) => {
       return;
     }
 
-    if (id) getProductData();
+    if (id) {
+      getProductData();
+    } else if (userInfo?.role === "lawyer") {
+      // תיק חדש — עורך דין: מלא אוטומטית את פרטיו
+      setValue("signingDetails.lawyerName", userInfo.name || "");
+      setValue("signingDetails.lawyerIdNumber", userInfo.idNumber || "");
+      setValue("signingDetails.lawyerEmail", userInfo.email || "");
+    }
     getAllUsers();
   }, [id, isDrawerOpen]);
 
@@ -251,6 +260,7 @@ const useProductSubmit = (id, onSuccess) => {
     errors,
     isSubmitting,
     allAdmins,
+    lawyers,
     setValue,
     watch,
   };
