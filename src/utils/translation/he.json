@@ -888,6 +888,9 @@
   "UpdateTutorial": "עדכון מדריך",
   "UpdateTutorialDescription": "ערוך את פרטי המדריך",
   "noTutorialsFound": "לא נמצאו מדריכים",
-  "theSelectedTutorial": "מדריך זה?"
+  "theSelectedTutorial": "מדריך זה?",
+  "NoTutorialsFound": "לא נמצאו מדריכים",
+  "NoTutorialsFoundDescription": "לא נמצאו מדריכים במערכת",
+  "NoTutorialsFoundDescription": "לא נמצאו מדריכים במערכת"
 }
   
