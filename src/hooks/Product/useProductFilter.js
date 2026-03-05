@@ -20,9 +20,9 @@ const useProductFilter = () => {
     const [priceMin, setPriceMin] = useState("");
     const [priceMax, setPriceMax] = useState("");
 
-    // Sort
-    const [sortBy, setSortBy] = useState("createdAt");
-    const [sortOrder, setSortOrder] = useState("desc");
+    // Sort — ברירת מחדל: שם לווה
+    const [sortBy, setSortBy] = useState("borrowerName");
+    const [sortOrder, setSortOrder] = useState("asc");
 
     // Check if any filters are active
     const hasActiveFilters = useCallback(() => {
@@ -37,8 +37,8 @@ const useProductFilter = () => {
             stockMax ||
             priceMin ||
             priceMax ||
-            sortBy !== "createdAt" ||
-            sortOrder !== "desc"
+            sortBy !== "borrowerName" ||
+            sortOrder !== "asc"
         );
     }, [
         searchTerm, selectedStatus, selectedOwner,
@@ -60,8 +60,8 @@ const useProductFilter = () => {
         setStockMax("");
         setPriceMin("");
         setPriceMax("");
-        setSortBy("createdAt");
-        setSortOrder("desc");
+        setSortBy("borrowerName");
+        setSortOrder("asc");
     }, []);
 
     // Build params object for API call

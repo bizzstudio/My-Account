@@ -39,7 +39,7 @@ import {
   
   
   // ─── Modal לשליחת לינק ליועץ ───────────────────────────────────────────────
-  const ConsultantLinkModal = ({ link, lawyerName, onClose }) => {
+  const ConsultantLinkModal = ({ link, lawyerName, lawyerRegistrationNumber, onClose }) => {
     const [email, setEmail] = React.useState("");
     const [sending, setSending] = React.useState(false);
     const [sent, setSent] = React.useState(false);
@@ -73,6 +73,9 @@ import {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" dir="rtl">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
           <h3 className="text-lg font-bold text-gray-800 mb-1">שלח לינק ליועץ משכנתאות</h3>
+          {lawyerRegistrationNumber != null && lawyerRegistrationNumber !== "" && (
+            <p className="text-sm text-gray-600 mb-2">מס׳ רישום עורך הדין: <strong>{lawyerRegistrationNumber}</strong></p>
+          )}
 
           {sent ? (
             <div className="text-center py-6">
@@ -223,6 +226,7 @@ import {
   const [driveLinks, setDriveLinks] = useState({});
   const [consultantLink, setConsultantLink] = useState(null);
   const [consultantLawyerName, setConsultantLawyerName] = useState(null);
+  const [consultantLawyerRegNum, setConsultantLawyerRegNum] = useState(null);
   const [showLawyerSelectModal, setShowLawyerSelectModal] = useState(false);
   
     const filters = useProductFilter();
@@ -492,7 +496,9 @@ import {
           lawyers={lawyers}
           onSelect={(lawyer) => {
             const base = window.location.origin;
-            const link = `${base}/consultant-form?token=${encodeURIComponent(lawyer.idNumber)}&lawyerName=${encodeURIComponent(lawyer.name || "")}`;
+            const token = lawyer.registrationNumber ?? lawyer.idNumber;
+            const link = `${base}/consultant-form?token=${encodeURIComponent(token)}&lawyerName=${encodeURIComponent(lawyer.name || "")}`;
+            setConsultantLawyerRegNum(lawyer.registrationNumber ?? "");
             setConsultantLawyerName(lawyer.name || "");
             setConsultantLink(link);
             setShowLawyerSelectModal(false);
@@ -506,7 +512,8 @@ import {
         <ConsultantLinkModal
           link={consultantLink}
           lawyerName={consultantLawyerName || userInfo?.name || ""}
-          onClose={() => { setConsultantLink(null); setConsultantLawyerName(null); }}
+          lawyerRegistrationNumber={consultantLawyerRegNum ?? userInfo?.registrationNumber ?? ""}
+          onClose={() => { setConsultantLink(null); setConsultantLawyerName(null); setConsultantLawyerRegNum(null); }}
         />
       )}
 
@@ -562,7 +569,9 @@ import {
                 onClick={() => {
                   if (userInfo?.role === "lawyer") {
                     const base = window.location.origin;
-                    const link = `${base}/consultant-form?token=${encodeURIComponent(userInfo.idNumber)}&lawyerName=${encodeURIComponent(userInfo.name || "")}`;
+                    const token = userInfo.registrationNumber ?? userInfo.idNumber;
+                    const link = `${base}/consultant-form?token=${encodeURIComponent(token)}&lawyerName=${encodeURIComponent(userInfo.name || "")}`;
+                    setConsultantLawyerRegNum(userInfo.registrationNumber ?? "");
                     setConsultantLawyerName(userInfo.name || "");
                     setConsultantLink(link);
                   } else {

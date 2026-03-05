@@ -96,8 +96,9 @@ const useImport = () => {
             [t('BorrowerDateOfBirth')]: 'borrowerDateOfBirth',
             [t('BorrowerGender')]: 'borrowerGender',
             [t('BorrowerEmail')]: 'borrowerEmail',
-            // פרטי חתימה — רק ת"ז עורך דין (שאר הפרטים יימשכו אוטומטית מהשרת)
+            // פרטי חתימה — מזהה עורך דין = מספר רישום (שאר הפרטים יימשכו אוטומטית מהשרת)
             [t('SigningDate')]: 'signingDate',
+            [t('LawyerRegistrationNumber')]: 'lawyerRegistrationNumber',
             [t('LawyerIdNumber')]: 'lawyerIdNumber',
             [t('Consultant')]: 'consultant',
             [t('ConsultantEmail')]: 'consultantEmail',
@@ -200,6 +201,7 @@ const useImport = () => {
         [t('BorrowerGender')]: 'borrowerGender',
         [t('BorrowerEmail')]: 'borrowerEmail',
         [t('SigningDate')]: 'signingDate',
+        [t('LawyerRegistrationNumber')]: 'lawyerRegistrationNumber',
         [t('LawyerIdNumber')]: 'lawyerIdNumber',
         [t('Consultant')]: 'consultant',
         [t('ConsultantEmail')]: 'consultantEmail',
@@ -366,9 +368,10 @@ const useImport = () => {
                             borrowerEmail: str(r.borrowerEmail),
                         }],
 
-                        // פרטי חתימה — lawyerName/Email/RegistrationNumber יימולאו אוטומטית בשרת לפי lawyerIdNumber
+                        // פרטי חתימה — מזהה = מספר רישום; lawyerName/Email/IdNumber יימולאו אוטומטית בשרת
                         signingDetails: {
                             signingDate: r.signingDate ? new Date(r.signingDate) : undefined,
+                            lawyerRegistrationNumber: r.lawyerRegistrationNumber != null && r.lawyerRegistrationNumber !== '' ? num(r.lawyerRegistrationNumber) : undefined,
                             lawyerIdNumber: num(r.lawyerIdNumber),
                             consultant: str(r.consultant),
                             consultantEmail: str(r.consultantEmail),

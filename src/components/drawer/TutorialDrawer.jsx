@@ -9,7 +9,6 @@ import { useWatch } from "react-hook-form";
 import Error from "@/components/form/others/Error";
 import Title from "@/components/form/others/Title";
 import InputArea from "@/components/form/input/InputArea";
-import TextAreaCom from "@/components/form/input/TextAreaCom";
 import LabelArea from "@/components/form/selectOption/LabelArea";
 import DrawerButton from "@/components/form/button/DrawerButton";
 import CollapsibleSection from "@/components/common/CollapsibleSection";
@@ -61,18 +60,6 @@ const TutorialDrawer = ({ id }) => {
                                                 placeholder={t("TutorialTitlePlaceholder")}
                                             />
                                             <Error errorName={errors.title} />
-                                        </div>
-
-                                        <div className="flex flex-col gap-1 col-span-12">
-                                            <LabelArea label={t("TutorialDescription")} />
-                                            <TextAreaCom
-                                                register={register}
-                                                label={t("TutorialDescription")}
-                                                name="description"
-                                                placeholder={t("TutorialDescriptionPlaceholder")}
-                                                isRequired={false}
-                                            />
-                                            <Error errorName={errors.description} />
                                         </div>
                                     </div>
                                 </CollapsibleSection>

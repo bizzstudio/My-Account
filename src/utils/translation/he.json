@@ -663,6 +663,7 @@
   "UnsavedChangesWarning": "השינויים לא ישמרו. עדיין רוצה לצאת?",
   "NoProductsInCart":"יש להוסיף לפחות מוצר אחד לעגלה",
   "Search": "חיפוש",
+  "ProductsSearchPlaceholder": "שם לווה, שם עורך דין, שם יועץ",
   "ordersSearchBy":"חיפוש חופשי",
   "ChangeStatus": "שינוי סטטוס",
   "ChangeBulkStatus": "שינוי סטטוס מרובה",

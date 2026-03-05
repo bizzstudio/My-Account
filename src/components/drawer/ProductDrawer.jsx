@@ -83,15 +83,16 @@ const ProductDrawer = ({ id, onSuccess }) => {
         }
     }, [id, rawPackages, setValue]);
 
-    // בעריכת תיק: סנכרון בחירת עורך דין לפי פרטי החתימה (אחרי טעינת lawyers)
-    const lawyerName = watch("signingDetails.lawyerName");
+    // בעריכת תיק: סנכרון בחירת עורך דין לפי מספר רישום (מזהה ראשי)
+    const lawyerRegistrationNumber = watch("signingDetails.lawyerRegistrationNumber");
     const selectedLawyerId = watch("_selectedLawyerId");
     useEffect(() => {
-        if (id && lawyers?.length > 0 && lawyerName && !selectedLawyerId) {
-            const found = lawyers.find((l) => l.name === lawyerName);
+        if (id && lawyers?.length > 0 && lawyerRegistrationNumber != null && lawyerRegistrationNumber !== "" && !selectedLawyerId) {
+            const regStr = String(lawyerRegistrationNumber).trim();
+            const found = lawyers.find((l) => l.registrationNumber != null && String(l.registrationNumber).trim() === regStr);
             if (found) setValue("_selectedLawyerId", found._id);
         }
-    }, [id, lawyers, lawyerName, selectedLawyerId, setValue]);
+    }, [id, lawyers, lawyerRegistrationNumber, selectedLawyerId, setValue]);
 
     const packageCargoTypeOptions = PACKAGE_CARGO_TYPE_VALUES.map((value) => ({
         _id: value,

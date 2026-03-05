@@ -32,13 +32,6 @@ const TutorialCard = ({ tutorial, isAdmin, handleUpdate, handleModalOpen }) => {
                 </h3>
             </div>
 
-            {/* תיאור */}
-            {tutorial.description && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-right leading-relaxed line-clamp-3">
-                    {tutorial.description}
-                </p>
-            )}
-
             {/* סרטון */}
             {tutorial.videoUrl && (
                 <div className="mt-1">

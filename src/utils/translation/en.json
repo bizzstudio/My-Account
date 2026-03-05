@@ -659,6 +659,7 @@
   "UnsavedChangesWarning":"Your changes will not be saved. Are you sure you want to leave?",
   "NoProductsInCart":"Please add at least one product to the cart",
   "Search": "Search",
+  "ProductsSearchPlaceholder": "Borrower name, lawyer name, consultant name",
   "ordersSearchBy":"Free search",
   "ChangeStatus": "Change Status",
   "ChangeBulkStatus": "Bulk Status Change",

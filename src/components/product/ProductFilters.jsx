@@ -1,6 +1,5 @@
 // src/components/product/ProductFilters.jsx
 import React from "react";
-import { Input } from "@windmill/react-ui";
 import { t } from "i18next";
 import { FiFilter } from "react-icons/fi";
 
@@ -8,7 +7,6 @@ import { FiFilter } from "react-icons/fi";
 import LabelArea from "@/components/form/selectOption/LabelArea";
 import SelectWithOptions from "@/components/form/selectOption/SelectWithOptions";
 import CollapsibleSection from "@/components/common/CollapsibleSection";
-import { CARGO_TYPE_VALUES } from "@/constants/cargoTypes";
 
 const ProductFilters = ({
     filters,
@@ -16,12 +14,11 @@ const ProductFilters = ({
     userInfo,
     onFilterChange,
 }) => {
+    // מיון לפי: שם לווה, שם עורך דין, שם יועץ
     const sortByOptions = [
-        { _id: "createdAt", name: t("CreationDate") },
-        { _id: "updatedAt", name: t("UpdateDate") },
-        { _id: "name", name: t("ProductName") },
-       
-       
+        { _id: "borrowerName", name: t("BorrowerName") },
+        { _id: "lawyerName", name: t("LawyerName") },
+        { _id: "consultant", name: t("Consultant") },
     ];
 
     const sortOrderOptions = [
@@ -69,11 +66,7 @@ const ProductFilters = ({
             defaultOpen={false}
         >
             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-               
-
-               
-
-                {/* Sort */}
+                {/* מיון לפי */}
                 <div>
                     <LabelArea label={t("SortBy")} />
                     <SelectWithOptions

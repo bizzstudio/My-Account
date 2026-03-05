@@ -50,7 +50,7 @@ const Input = ({ register, name, type = "text", placeholder, step, registerOptio
 const ConsultantForm = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const lawyerToken = searchParams.get("token"); // ת"ז עורך הדין
+  const lawyerToken = searchParams.get("token"); // מספר רישום עורך הדין (מזהה)
   const lawyerName = searchParams.get("lawyerName") || "";
 
   const idValidate = (v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId");
@@ -76,7 +76,7 @@ const ConsultantForm = () => {
 
   const onSubmit = async (data) => {
     if (!lawyerToken) {
-      setError("קישור לא תקין — חסר מזהה עורך הדין");
+      setError("קישור לא תקין — חסר מספר רישום עורך הדין");
       return;
     }
     setLoading(true);
@@ -127,8 +127,11 @@ const ConsultantForm = () => {
         {/* Header */}
         <div className="bg-[#a57d45] px-8 py-6 text-white">
           <h1 className="text-2xl font-bold">טופס פרטי לווה</h1>
+          {lawyerToken && (
+            <p className="text-xl font-bold mt-2">מס׳ רישום עורך הדין: {lawyerToken}</p>
+          )}
           {lawyerName && (
-            <p className="text-xl font-bold mt-2">עורך דין: {lawyerName}</p>
+            <p className="text-base opacity-90 mt-1">שם עורך הדין: {lawyerName}</p>
           )}
           <p className="text-base font-bold mt-1">
             אנא מלאו את הפרטים הבאים. לאחר השליחה הם יועברו ישירות לעורך הדין.
