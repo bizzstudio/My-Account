@@ -10,8 +10,8 @@ const StandardTableHeader = ({ columns, isCheckAll, handleSelectAll, isLoadingAl
           <TableCell key={col.key} className="text-center">
             {col.key === "checkbox" && handleSelectAll ? (
               <div 
-                className="flex items-center justify-center gap-1" 
-                title={t("SelectAllOrdersInFilter", { count: totalResults })}
+                className="flex items-center justify-center gap-1.5" 
+                title={t("SelectAllOrdersInFilter", { count: totalResults }) || "בחירת הכול"}
               >
                 <CheckBox
                   type="checkbox"
@@ -20,6 +20,7 @@ const StandardTableHeader = ({ columns, isCheckAll, handleSelectAll, isLoadingAl
                   handleClick={handleSelectAll}
                   isChecked={isCheckAll}
                 />
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">{t("SelectAll") || "הכל"}</span>
                 {isLoadingAllIds && (
                   <div className="animate-spin h-3 w-3 border-2 border-blue-500 border-t-transparent rounded-full" />
                 )}

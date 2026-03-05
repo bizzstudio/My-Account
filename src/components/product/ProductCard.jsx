@@ -23,9 +23,9 @@ const ProductCard = ({ product, isCheck, setIsCheck, handleClick, toggleDrawerDa
         <CheckBox
           type="checkbox"
           name={product?._id}
-          id={product?._id}
+          id={String(product?._id)}
           handleClick={handleClick}
-          isChecked={isCheck?.includes(product?._id)}
+          isChecked={isCheck?.includes(String(product?._id))}
         />
         <EditDeleteButton
           id={product._id}
@@ -77,7 +77,7 @@ const ProductCard = ({ product, isCheck, setIsCheck, handleClick, toggleDrawerDa
 
         <div className="flex justify-between items-center gap-2 py-1">
           <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("primaryBacker")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{signingDetails.primaryBacker || "-"}</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{signingDetails.primaryBacker || product.financingCompanies?.[0]?.name || "-"}</span>
         </div>
 
   

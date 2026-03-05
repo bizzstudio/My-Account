@@ -159,9 +159,9 @@ const UserDrawer = ({ id }) => {
                 </div>
               </div>
 
-              {/* תעודת זהות */}
+              {/* תעודת זהות, עורך דין */}
               <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-                <LabelArea label={`${t("LawyerIdNumber")} (${t("ForLawyersOnly")})`} />
+                <LabelArea label={`${t("LawyerIdNumber")}, (${t("ForLawyersOnly")})`} />
                 <div className="col-span-6">
                   <InputArea
                     register={register}
@@ -176,9 +176,9 @@ const UserDrawer = ({ id }) => {
                 </div>
               </div>
 
-              {/* מספר רישום עורך דין */}
+              {/* מספר רישום, עורך דין */}
               <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-                <LabelArea label={`${t("LawyerRegistrationNumber")} (${t("ForLawyersOnly")})`} />
+                <LabelArea label={`${t("LawyerRegistrationNumber")}, (${t("ForLawyersOnly")})`} />
                 <div className="col-span-6">
                   <InputArea
                     register={register}

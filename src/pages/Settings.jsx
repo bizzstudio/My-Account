@@ -40,9 +40,7 @@ const LEGEND_SECTIONS = [
   {
     title: "לווים",
     items: [
-      { key: "{borrowerName}", label: "שם פרטי לווה" },
-      { key: "{borrowerFamily}", label: "שם משפחה לווה" },
-      { key: "{borrowerIdType}", label: "סוג תעודה מזהה" },
+      { key: "{borrowerName}", label: "שם הלווה" },
       { key: "{borrowerIdNumber}", label: "מספר תעודת זהות לווה" },
       { key: "{borrowerAddress}", label: "כתובת לווה" },
       { key: "{borrowerDateOfBirth}", label: "תאריך לידה" },

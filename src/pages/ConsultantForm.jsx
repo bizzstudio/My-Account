@@ -131,7 +131,7 @@ const ConsultantForm = () => {
             <p className="text-xl font-bold mt-2">מס׳ רישום עורך הדין: {lawyerToken}</p>
           )}
           {lawyerName && (
-            <p className="text-base opacity-90 mt-1">שם עורך הדין: {lawyerName}</p>
+            <p className="text-xl font-bold mt-2">שם עורך הדין: {lawyerName}</p>
           )}
           <p className="text-base font-bold mt-1">
             אנא מלאו את הפרטים הבאים. לאחר השליחה הם יועברו ישירות לעורך הדין.

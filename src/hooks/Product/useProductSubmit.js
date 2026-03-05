@@ -22,7 +22,6 @@ const useProductSubmit = (id, onSuccess) => {
 
   const defaultBorrower = {
     borrowerName: "",
-    borrowerIdType: "",
     borrowerIdNumber: "",
     borrowerAddress: "",
     borrowerDateOfBirth: "",
@@ -177,7 +176,7 @@ const useProductSubmit = (id, onSuccess) => {
       const res = await ProductServices.getProductById(id);
       if (!res) return;
 
-      // 🔹 Signing Details – nested object like registrationDetails
+      // 🔹 Signing Details – תאריך לפורמט input date
       const signingDetails = res.signingDetails || {};
       const updatedSigningDetails = { ...signingDetails };
       if (updatedSigningDetails.signingDate) {
@@ -185,39 +184,56 @@ const useProductSubmit = (id, onSuccess) => {
           updatedSigningDetails.signingDate
         ).toISOString().split("T")[0];
       }
-      setValue("signingDetails", updatedSigningDetails);
 
-      // 🔹 Registration Details
-      setValue("registrationDetails", res.registrationDetails || {});
+      // 🔹 כל המערכים — שומרים את כל האיברים (לווים, הלוואות, מוכרים וכו')
+      const loansMapped = (res.loans && res.loans.length > 0)
+        ? res.loans.map((l) => ({
+            ...defaultLoan,
+            ...l,
+            loanCreation: l.loanCreation
+              ? new Date(l.loanCreation).toISOString().split("T")[0]
+              : "",
+          }))
+        : [defaultLoan];
 
-      // 🔹 Borrowers – array with date conversion
-      setValue(
-        "borrowers",
-        res.borrowers?.map((b) => ({
-          ...b,
-          borrowerDateOfBirth: b.borrowerDateOfBirth
-            ? new Date(b.borrowerDateOfBirth).toISOString().split("T")[0]
-            : "",
-        })) || [defaultBorrower]
-      );
+      // תמיכה גם ב-borrower ביחיד (אם הבקאנד מחזיר כך) וגם במערך borrowers
+      const borrowersRaw = Array.isArray(res.borrowers)
+        ? res.borrowers
+        : res.borrower
+          ? [res.borrower]
+          : [];
+      const borrowersCount = borrowersRaw.length;
+      console.log("[עריכת תיק] לווים שהתקבלו מהשרת:", borrowersCount, borrowersCount !== 1 ? "— אמורים להופיע כולם בעריכה" : "— אם יש יותר מלווה אחד בתיק, תקן בבקאנד (GET /products/:id)");
 
-      // 🔹 Loans – array with date conversion
-      setValue(
-        "loans",
-        res.loans?.map((l) => ({
-          ...l,
-          loanCreation: l.loanCreation
-            ? new Date(l.loanCreation).toISOString().split("T")[0]
-            : "",
-        })) || [defaultLoan]
-      );
+      const borrowersMappedFinal =
+        borrowersRaw.length > 0
+          ? borrowersRaw.map((b) => ({
+              ...defaultBorrower,
+              ...b,
+              borrowerDateOfBirth: b.borrowerDateOfBirth
+                ? new Date(b.borrowerDateOfBirth).toISOString().split("T")[0]
+                : "",
+            }))
+          : [defaultBorrower];
 
-      setValue("authorizedPerson", res.authorizedPerson || [defaultAuthorized]);
-      setValue("mortgagors", res.mortgagors || [defaultMortgagor]);
-      setValue("sellers", res.sellers || [defaultSeller]);
-      setValue("financingCompanies", res.financingCompanies || []);
-      setValue("transcriptText", res.transcriptText || "");
-      setValue("facebookFeedData", res.facebookFeedData || "");
+      const formData = {
+        signingDetails: updatedSigningDetails,
+        registrationDetails: res.registrationDetails || {},
+        projectDetails: res.projectDetails || {},
+        borrowerBankAccount: res.borrowerBankAccount || {},
+        seniorCreditor: res.seniorCreditor || {},
+        borrowers: borrowersMappedFinal,
+        loans: loansMapped,
+        authorizedPerson: res.authorizedPerson?.length ? res.authorizedPerson : [defaultAuthorized],
+        mortgagors: res.mortgagors?.length ? res.mortgagors : [defaultMortgagor],
+        sellers: res.sellers?.length ? res.sellers : [defaultSeller],
+        financingCompanies: res.financingCompanies || [],
+        transcriptText: res.transcriptText || "",
+        facebookFeedData: res.facebookFeedData || "",
+      };
+
+      // החלפה מלאה של מצב הטופס כדי שכל הלווים יוצגו
+      reset(formData, { keepDefaultValues: false });
     } catch (err) {
       notifyApiResponse(err, false);
     }

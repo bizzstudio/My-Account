@@ -11,6 +11,7 @@ import notifyApiResponse from "@/utils/notifyApiResponse";
 import { notifyError, notifySuccess } from "@/utils/toast";
 import { useTranslation } from "react-i18next";
 import { isValidIsraeliID } from "@/utils/israeliId";
+import { getHeaderToFieldMap, CANONICAL_EXCEL_HEADERS } from "@/constants/excelCanonicalHeaders";
 
 const useImport = () => {
     const { t } = useTranslation();
@@ -67,7 +68,11 @@ const useImport = () => {
                         const workbook = XLSX.read(data, { type: "array" });
                         const sheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[sheetName];
-                        const json = XLSX.utils.sheet_to_json(worksheet);
+                        // header: 2 = array of arrays, כדי לתמוך בכותרות כפולות (שם פרטי לווה פעמיים = לווה 1 ולווה 2)
+                        const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 2, defval: "" });
+                        const json = Array.isArray(rawRows) && rawRows.length > 0 && Array.isArray(rawRows[0])
+                            ? buildRowsFromDuplicateHeaders(rawRows)
+                            : XLSX.utils.sheet_to_json(worksheet);
                         setImportStage('processing');
                         processFileData(json, "/products");
                     };
@@ -83,6 +88,29 @@ const useImport = () => {
             }
         }
     };
+
+    // Normalize header key: trim, remove BOM/RTL/LTR, first line only, collapse spaces (Excel/CSV sometimes add these)
+    const normalizeHeaderKey = (key) => {
+        if (key == null) return '';
+        let s = String(key)
+            .replace(/^\uFEFF/, '')
+            .replace(/\u200E|\u200F|\u202A|\u202B|\u202C|\u202D|\u202E/g, '')
+            .trim()
+            .replace(/\s+/g, ' ');
+        const firstLine = s.split(/\r?\n/)[0]?.trim() ?? s;
+        return firstLine.replace(/\s+/g, ' ');
+    };
+
+    // מחזיר ערך מהשורה המקורית אם אחד מהכותרות האפשריות מתאים (גיבוי כש־map לא תפס)
+    const getFromRow = (row, possibleNormalizedHeaders) => {
+        if (!row || typeof row !== 'object') return undefined;
+        for (const key of Object.keys(row)) {
+            if (possibleNormalizedHeaders.includes(normalizeHeaderKey(key))) return row[key];
+        }
+        return undefined;
+    };
+
+    // כותרות אקסל — מקור אמת אחד: src/constants/excelCanonicalHeaders.js (כותרת אחת לכל שדה)
 
     // Helper function to map Hebrew column names to model field paths
     const mapProductColumnNames = (row) => {
@@ -180,17 +208,76 @@ const useImport = () => {
             [t('MinimumWithdrawal')]: 'minimumWithdrawal',
             [t('ContractorName')]: 'contractorName',
             [t('Architect')]: 'architect',
+            ...getHeaderToFieldMap(),
         };
 
         const mappedRow = {};
         for (const [key, value] of Object.entries(row)) {
-            const fieldName = columnMap[key] || key;
+            const normalizedKey = normalizeHeaderKey(key);
+            const fieldName = columnMap[normalizedKey] || columnMap[key] || key;
             mappedRow[fieldName] = value;
         }
         return mappedRow;
     };
 
-    // בניית מפת כל השמות הידועים (עברית → שם שדה)
+    // כותרות שמופיעות פעמיים באותו קובץ (בלי 1/2) — מיפוי לפי סדר: הופעה ראשונה = לווה 1, שנייה = לווה 2
+    const DUPLICATE_HEADER_FIELDS = {
+        'שם פרטי לווה': ['borrowerName', 'borrowerFirstName_2'],
+        'שם משפחה לווה': ['borrowerFamily', 'borrowerFamily_2'],
+        'מספר תעודת זהות לווה': ['borrowerIdNumber', 'borrowerIdNumber_2'],
+        'תעודת זהות לווה': ['borrowerIdNumber', 'borrowerIdNumber_2'],
+        'כתובת לווה': ['borrowerAddress', 'borrowerAddress_2'],
+        'סוג זיהוי לווה': ['borrowerIdType', 'borrowerIdType_2'],
+        'סוג לווה': ['borrowerIdType', 'borrowerIdType_2'],
+    };
+
+    // בודק אם השורה נראית כמו שורת כותרות (מכילה מילות מפתח כמו שם, לווה, יועץ)
+    const looksLikeHeaderRow = (row) => {
+        if (!row || !Array.isArray(row)) return false;
+        const str = (v) => String(v ?? '').trim();
+        return row.some((cell) => {
+            const n = normalizeHeaderKey(cell);
+            return n && (n.includes('שם') || n.includes('לווה') || n.includes('יועץ') || n.includes('תעודת') || n.includes('כתובת') || n.includes('חתימה') || n.includes('עורך'));
+        });
+    };
+
+    // המרת שורות אקסל (מערך מערכים) לאובייקטים — כותרות כפולות ממופות לפי סדר. אם שורה 1 לא נראית כותרת (למשל כותרת כללית), משתמשים בשורה 2
+    const buildRowsFromDuplicateHeaders = (rawRows) => {
+        if (!rawRows?.length || !Array.isArray(rawRows[0])) return [];
+        let headerRowIndex = 0;
+        if (!looksLikeHeaderRow(rawRows[0]) && rawRows.length > 1 && looksLikeHeaderRow(rawRows[1])) {
+            headerRowIndex = 1;
+        }
+        const headerRow = rawRows[headerRowIndex];
+        const columnMap = buildColumnMap();
+        const occurrence = {};
+        const indexToField = {};
+        for (let j = 0; j < headerRow.length; j++) {
+            const normalized = normalizeHeaderKey(headerRow[j]);
+            let fieldName;
+            if (DUPLICATE_HEADER_FIELDS[normalized]) {
+                const idx = occurrence[normalized] ?? 0;
+                const fields = DUPLICATE_HEADER_FIELDS[normalized];
+                fieldName = fields[Math.min(idx, fields.length - 1)];
+                occurrence[normalized] = idx + 1;
+            } else {
+                fieldName = columnMap[normalized] || columnMap[headerRow[j]] || (normalized || String(j));
+            }
+            indexToField[j] = fieldName;
+        }
+        const result = [];
+        for (let i = headerRowIndex + 1; i < rawRows.length; i++) {
+            const rowArr = rawRows[i];
+            const obj = {};
+            for (let j = 0; j < (rowArr?.length ?? 0); j++) {
+                if (indexToField[j] != null) obj[indexToField[j]] = rowArr[j];
+            }
+            result.push(obj);
+        }
+        return result;
+    };
+
+    // בניית מפת כל השמות הידועים (עברית → שם שדה) — כולל כותרות חלופיות לולידציה
     const buildColumnMap = () => ({
         [t('BorrowerName')]: 'borrowerName',
         [t('BorrowerFamily')]: 'borrowerFamily',
@@ -273,23 +360,72 @@ const useImport = () => {
         [t('MinimumWithdrawal')]: 'minimumWithdrawal',
         [t('ContractorName')]: 'contractorName',
         [t('Architect')]: 'architect',
+        ...getHeaderToFieldMap(),
     });
 
-    // ולידציה של כותרות הקובץ לפני עיבוד
+    // מציע כותרת תקנית לכותרת לא מוכרת (לפי מילות מפתח) — כדי להציג ללקוח "השם צריך להיות X"
+    const suggestCanonicalForWrongHeader = (wrongHeader) => {
+        const n = normalizeHeaderKey(wrongHeader);
+        if (!n) return null;
+        if (n.includes('יועץ') && !n.includes('אימייל')) return CANONICAL_EXCEL_HEADERS.consultant;
+        if (n.includes('אימייל') && n.includes('יועץ')) return CANONICAL_EXCEL_HEADERS.consultantEmail;
+        if (n.includes('חברת מימון')) {
+            const has2 = /2|שני/.test(n), has3 = /3|שלישי/.test(n);
+            const isId = n.includes('מזהה') || n.includes('מספר');
+            if (has3) return isId ? CANONICAL_EXCEL_HEADERS.financingCompanyId_3 : CANONICAL_EXCEL_HEADERS.financingCompanyName_3;
+            if (has2) return isId ? CANONICAL_EXCEL_HEADERS.financingCompanyId_2 : CANONICAL_EXCEL_HEADERS.financingCompanyName_2;
+            return isId ? CANONICAL_EXCEL_HEADERS.financingCompanyId : CANONICAL_EXCEL_HEADERS.financingCompanyName;
+        }
+        if ((n.includes('שם') && n.includes('לווה')) || n.includes('שם הלווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerFirstName_2 : CANONICAL_EXCEL_HEADERS.borrowerName;
+        if (n.includes('משפחה') && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerFamily_2 : CANONICAL_EXCEL_HEADERS.borrowerFamily;
+        if ((n.includes('תעודת') || n.includes('ת.ז') || n.includes('זהות')) && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerIdNumber_2 : CANONICAL_EXCEL_HEADERS.borrowerIdNumber;
+        if (n.includes('כתובת') && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerAddress_2 : CANONICAL_EXCEL_HEADERS.borrowerAddress;
+        if ((n.includes('סוג זיהוי') || n.includes('סוג לווה')) && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerIdType_2 : CANONICAL_EXCEL_HEADERS.borrowerIdType;
+        if (n.includes('עורך דין') || n.includes('עורך הדין')) {
+            if (n.includes('רישיון') || n.includes('רישום')) return CANONICAL_EXCEL_HEADERS.lawyerRegistrationNumber;
+            if (n.includes('תעודת') || n.includes('זהות')) return CANONICAL_EXCEL_HEADERS.lawyerIdNumber;
+            return CANONICAL_EXCEL_HEADERS.lawyerName;
+        }
+        if (n.includes('תאריך') && n.includes('חתימה')) return CANONICAL_EXCEL_HEADERS.signingDate;
+        if (n.includes('גוש')) return CANONICAL_EXCEL_HEADERS.block;
+        if (n.includes('חלקה') && !n.includes('תת')) return CANONICAL_EXCEL_HEADERS.plot;
+        if (n.includes('תת חלקה')) return CANONICAL_EXCEL_HEADERS.subPlot;
+        if (n.includes('מגרש')) return CANONICAL_EXCEL_HEADERS.land;
+        if (n.includes('תוכנית')) return CANONICAL_EXCEL_HEADERS.plan;
+        if (n.includes('רמ"י') || n.includes('חוזה')) return CANONICAL_EXCEL_HEADERS.contract;
+        if (n.includes('משכנת') && !n.includes('ח.פ')) return CANONICAL_EXCEL_HEADERS.mortgageName;
+        if (n.includes('ח.פ') && n.includes('משכנת')) return CANONICAL_EXCEL_HEADERS.mortgageCompanyId;
+        if (n.includes('לשכה')) return CANONICAL_EXCEL_HEADERS.office;
+        if (n.includes('סכום') && n.includes('הלוואה')) return /2|שני/.test(n) ? CANONICAL_EXCEL_HEADERS.loanAmount_2 : /3|שלישי/.test(n) ? CANONICAL_EXCEL_HEADERS.loanAmount_3 : CANONICAL_EXCEL_HEADERS.loanAmount;
+        if (n.includes('נושה בכיר')) return n.includes('מ.ז') || n.includes('מזהה') ? CANONICAL_EXCEL_HEADERS.seniorCreditorIdNumber : n.includes('סוג') ? CANONICAL_EXCEL_HEADERS.seniorCreditorIdType : CANONICAL_EXCEL_HEADERS.seniorCreditorName;
+        if (n.includes('חשבון') && n.includes('לווה')) return CANONICAL_EXCEL_HEADERS.borrowerAccountNumber;
+        if (n.includes('סניף') && n.includes('לווה')) return CANONICAL_EXCEL_HEADERS.borrowerBranchCode;
+        if (n.includes('בנק') && n.includes('לווה')) return CANONICAL_EXCEL_HEADERS.borrowerBankName;
+        if (n.includes('מוכר')) return /2|שני/.test(n) ? (n.includes('כתובת') ? CANONICAL_EXCEL_HEADERS.sellerAddress_2 : n.includes('מס זיהוי') ? CANONICAL_EXCEL_HEADERS.sellerIdNumber_2 : n.includes('סוג') ? CANONICAL_EXCEL_HEADERS.sellerIdType_2 : CANONICAL_EXCEL_HEADERS.sellerName_2) : /3|שלישי/.test(n) ? (n.includes('כתובת') ? CANONICAL_EXCEL_HEADERS.sellerAddress_3 : n.includes('מס זיהוי') ? CANONICAL_EXCEL_HEADERS.sellerIdNumber_3 : n.includes('סוג') ? CANONICAL_EXCEL_HEADERS.sellerIdType_3 : CANONICAL_EXCEL_HEADERS.sellerName_3) : (n.includes('כתובת') ? CANONICAL_EXCEL_HEADERS.sellerAddress : n.includes('מס זיהוי') ? CANONICAL_EXCEL_HEADERS.sellerIdNumber : n.includes('סוג') ? CANONICAL_EXCEL_HEADERS.sellerIdType : CANONICAL_EXCEL_HEADERS.sellerName);
+        if (n.includes('מורשה')) return /2|שני/.test(n) ? (n.includes('ת.ז') ? CANONICAL_EXCEL_HEADERS.authorizedIdNumber_2 : CANONICAL_EXCEL_HEADERS.authorizedName_2) : /3|שלישי/.test(n) ? (n.includes('ת.ז') ? CANONICAL_EXCEL_HEADERS.authorizedIdNumber_3 : CANONICAL_EXCEL_HEADERS.authorizedName_3) : (n.includes('ת.ז') ? CANONICAL_EXCEL_HEADERS.authorizedIdNumber : CANONICAL_EXCEL_HEADERS.authorizedName);
+        if (n.includes('ממשכן')) return /2|שני/.test(n) ? (n.includes('משפחה') ? CANONICAL_EXCEL_HEADERS.mortgagorFamily_2 : n.includes('זיהוי') && !n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdType_2 : n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdNumber_2 : CANONICAL_EXCEL_HEADERS.mortgagorDetails_2) : /3|שלישי/.test(n) ? (n.includes('משפחה') ? CANONICAL_EXCEL_HEADERS.mortgagorFamily_3 : n.includes('זיהוי') && !n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdType_3 : n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdNumber_3 : CANONICAL_EXCEL_HEADERS.mortgagorDetails_3) : (n.includes('משפחה') ? CANONICAL_EXCEL_HEADERS.mortgagorFamily : n.includes('זיהוי') && !n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdType : n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdNumber : CANONICAL_EXCEL_HEADERS.mortgagorDetails);
+        if (n.includes('סעיף')) return CANONICAL_EXCEL_HEADERS.clause;
+        return null;
+    };
+
+    // ולידציה של כותרות הקובץ לפני עיבוד (מכיר גם כותרות עבריות וגם שמות שדות אחרי המרה — buildRowsFromDuplicateHeaders)
     const validateColumns = (data) => {
-        if (!data || data.length === 0) return { valid: false, missingRequired: [], unrecognized: [], recognized: [] };
+        if (!data || data.length === 0) return { valid: false, missingRequired: [], unrecognized: [], recognized: [], unrecognizedDetails: [] };
 
         const columnMap = buildColumnMap();
         const knownColumns = Object.keys(columnMap);
+        const knownFields = new Set([...knownColumns, ...Object.values(columnMap)]);
 
         const fileColumns = Object.keys(data[0]);
-        const recognized = fileColumns.filter(col => knownColumns.includes(col));
-        const unrecognized = fileColumns.filter(col => !knownColumns.includes(col));
+        const recognized = fileColumns.filter(col => knownFields.has(normalizeHeaderKey(col)));
+        const unrecognized = fileColumns.filter(col => !knownFields.has(normalizeHeaderKey(col)));
+        const unrecognizedDetails = unrecognized.map(col => ({
+            wrong: col,
+            suggested: suggestCanonicalForWrongHeader(col),
+        }));
 
-        // הקובץ תקין אם לפחות עמודה אחת מוכרת
         const valid = recognized.length > 0;
-
-        return { valid, missingRequired: [], unrecognized, recognized, allExpected: knownColumns };
+        return { valid, missingRequired: [], unrecognized, recognized, allExpected: knownColumns, unrecognizedDetails };
     };
 
     // Helper to parse arrays from string
@@ -309,7 +445,7 @@ const useImport = () => {
                 if (str.length === 0) return;
                 if (!isValidIsraeliID(value)) invalidRows.push({ rowIndex: rowIndex + 1, fieldKey });
             };
-            product.borrowers?.[0]?.borrowerIdNumber != null && check(product.borrowers[0].borrowerIdNumber, 'BorrowerIdNumber');
+            product.borrowers?.forEach((b, i) => b.borrowerIdNumber != null && check(b.borrowerIdNumber, `BorrowerIdNumber (${i + 1})`));
             product.signingDetails?.lawyerIdNumber != null && check(product.signingDetails.lawyerIdNumber, 'LawyerIdNumber');
             product.seniorCreditor?.seniorCreditorIdNumber != null && check(product.seniorCreditor.seniorCreditorIdNumber, 'SeniorCreditorIdNumber');
             product.sellers?.forEach((s, i) => s.sellerIdNumber != null && check(s.sellerIdNumber, `SellerIdNumber (${i + 1})`));
@@ -345,6 +481,7 @@ const useImport = () => {
                             unrecognized: validation.unrecognized,
                             recognized: validation.recognized,
                             allExpected: validation.allExpected,
+                            unrecognizedDetails: validation.unrecognizedDetails,
                         }
                     });
                     return;
@@ -352,44 +489,167 @@ const useImport = () => {
                 const num = (v) => (v !== undefined && v !== '' ? Number(v) : undefined);
                 const str = (v) => (v !== undefined && v !== '' ? String(v).trim() : undefined);
 
+                // שם מאוחד: לווה 1 = שם הלווה / שם פרטי+משפחה 1; לווה 2 = שם_2 או שם פרטי+משפחה (בלי 1)
+                const borrowerFullName = (r, i) => {
+                    if (i === 1) {
+                        const one = str(r.borrowerName);
+                        const fam = str(r.borrowerFamily);
+                        if (one || fam) return [one, fam].filter(Boolean).join(' ').trim();
+                        return [str(r.borrowerFirstName_2), str(r.borrowerFamily_2)].filter(Boolean).join(' ').trim() || '';
+                    }
+                    if (i === 2) {
+                        const n2 = str(r.borrowerName_2);
+                        if (n2) return n2;
+                        return [str(r.borrowerFirstName_2), str(r.borrowerFamily_2)].filter(Boolean).join(' ').trim() || '';
+                    }
+                    return str(r[`borrowerName_${i}`]) || '';
+                };
+
+                // כותרות חלופיות ללווה 2–5 לקריאה ישירה מהשורה (גיבוי כש־map לא תפס)
+                const BORROWER_ALT_HEADERS = (i) => ({
+                    name: [`שם לווה ${i}`, `שם לווה${i}`, `שם הלווה ${i}`, `שם הלווה${i}`],
+                    idNumber: [`תעודת זהות לווה ${i}`, `תעודת זהות לווה${i}`, `מספר תעודת זהות לווה ${i}`, `מספר תעודת זהות לווה${i}`, `ת.ז. לווה ${i}`, `ת.ז. לווה${i}`],
+                    address: [`כתובת לווה ${i}`, `כתובת לווה${i}`],
+                });
+
                 processedData = data.map((row) => {
-                    const r = mapProductColumnNames(row);
+                    let r = mapProductColumnNames(row);
+
+                    // קובץ עם לווה אחד בלבד (רק עמודות בלי "1"): מעבירים _2 ל־_1
+                    const hasFirstBorrowerColumns = str(r.borrowerName) || str(r.borrowerFamily) || r.borrowerIdNumber != null;
+                    if (!hasFirstBorrowerColumns && (str(r.borrowerFirstName_2) || str(r.borrowerFamily_2) || r.borrowerIdNumber_2 != null)) {
+                        r = {
+                            ...r,
+                            borrowerName: r.borrowerFirstName_2,
+                            borrowerFamily: r.borrowerFamily_2,
+                            borrowerIdNumber: r.borrowerIdNumber_2,
+                            borrowerAddress: r.borrowerAddress_2,
+                            borrowerIdType: r.borrowerIdType_2,
+                            borrowerFirstName_2: undefined,
+                            borrowerFamily_2: undefined,
+                            borrowerIdNumber_2: undefined,
+                            borrowerAddress_2: undefined,
+                            borrowerIdType_2: undefined,
+                        };
+                    }
+
+                    // לווים — עד 5. לווה 1 ו־2: תמיכה בשם פרטי+משפחה (עם או בלי סיומת 1)
+                    const borrowers = [];
+                    for (let i = 1; i <= 5; i++) {
+                        let name = i <= 2 ? borrowerFullName(r, i) : str(r[`borrowerName_${i}`]);
+                        let idNum = i === 1 ? num(r.borrowerIdNumber) : num(r[`borrowerIdNumber_${i}`]);
+                        let address = i === 1 ? str(r.borrowerAddress) : str(r[`borrowerAddress_${i}`]);
+                        let dob = i === 1 ? r.borrowerDateOfBirth : r[`borrowerDateOfBirth_${i}`];
+                        let gender = i === 1 ? str(r.borrowerGender) : str(r[`borrowerGender_${i}`]);
+                        let email = i === 1 ? str(r.borrowerEmail) : str(r[`borrowerEmail_${i}`]);
+                        if (i >= 2) {
+                            if (name === undefined) name = str(getFromRow(row, BORROWER_ALT_HEADERS(i).name));
+                            if (idNum == null) idNum = num(getFromRow(row, BORROWER_ALT_HEADERS(i).idNumber));
+                            if (address === undefined) address = str(getFromRow(row, BORROWER_ALT_HEADERS(i).address));
+                        }
+                        const hasAnyValue = !!(name || idNum != null || address || (dob != null && dob !== '') || gender || email);
+                        const shouldAdd = i === 1 ? (name || idNum != null) : hasAnyValue;
+                        if (shouldAdd) {
+                            borrowers.push({
+                                borrowerName: name || '',
+                                borrowerIdNumber: idNum,
+                                borrowerAddress: address,
+                                borrowerDateOfBirth: dob ? new Date(dob) : undefined,
+                                borrowerGender: gender,
+                                borrowerEmail: email,
+                            });
+                        }
+                    }
+                    if (borrowers.length === 0) borrowers.push({ borrowerName: '', borrowerIdNumber: undefined, borrowerAddress: undefined, borrowerDateOfBirth: undefined, borrowerGender: undefined, borrowerEmail: undefined });
+
+                    // הלוואות — 1–3
+                    const loans = [];
+                    for (let i = 1; i <= 3; i++) {
+                        const amount = i === 1 ? num(r.loanAmount) : num(r[`loanAmount_${i}`]);
+                        const loanNum = i === 1 ? num(r.loanNumber) : num(r[`loanNumber_${i}`]);
+                        if (amount != null || loanNum != null) {
+                            loans.push({
+                                loanAmount: amount,
+                                loanChange: i === 1 ? str(r.loanChange) : str(r[`loanChange_${i}`]),
+                                clause: str(r.clause),
+                                loanPlan: i === 1 ? str(r.loanPlan) : str(r[`loanPlan_${i}`]),
+                                loanMonths: i === 1 ? num(r.loanMonths) : num(r[`loanMonths_${i}`]),
+                                loanInterestRate: i === 1 ? num(r.loanInterestRate) : num(r[`loanInterestRate_${i}`]),
+                                adjustedLoan: i === 1 ? num(r.adjustedLoan) : num(r[`adjustedLoan_${i}`]),
+                                realLoan: i === 1 ? num(r.realLoan) : num(r[`realLoan_${i}`]),
+                                primeMargin: i === 1 ? num(r.primeMargin) : num(r[`primeMargin_${i}`]),
+                                loanCreation: (i === 1 ? r.loanCreation : r[`loanCreation_${i}`]) ? new Date(i === 1 ? r.loanCreation : r[`loanCreation_${i}`]) : undefined,
+                                loanNumber: loanNum,
+                                mortgageNumber: i === 1 ? num(r.mortgageNumber) : num(r[`mortgageNumber_${i}`]),
+                            });
+                        }
+                    }
+
+                    // חברות מימון — 1–3 (מהעמודות שם + מזהה)
+                    const financingCompanies = [];
+                    for (let i = 1; i <= 3; i++) {
+                        const fName = i === 1 ? str(r.financingCompanyName) : str(r[`financingCompanyName_${i}`]);
+                        const fId = i === 1 ? str(r.financingCompanyId) : str(r[`financingCompanyId_${i}`]);
+                        if (fName || fId) financingCompanies.push({ name: fName, idNumber: fId });
+                    }
+
+                    // מוכרים — 1–3
+                    const sellers = [];
+                    for (let i = 1; i <= 3; i++) {
+                        const sName = i === 1 ? str(r.sellerName) : str(r[`sellerName_${i}`]);
+                        if (sName != null) {
+                            sellers.push({
+                                sellerName: sName,
+                                sellerIdType: i === 1 ? str(r.sellerIdType) : str(r[`sellerIdType_${i}`]),
+                                sellerIdNumber: i === 1 ? num(r.sellerIdNumber) : num(r[`sellerIdNumber_${i}`]),
+                                sellerAddress: i === 1 ? str(r.sellerAddress) : str(r[`sellerAddress_${i}`]),
+                            });
+                        }
+                    }
+
+                    // מורשים — 1–3
+                    const authorizedPerson = [];
+                    for (let i = 1; i <= 3; i++) {
+                        const aName = i === 1 ? str(r.authorizedName) : str(r[`authorizedName_${i}`]);
+                        const aId = i === 1 ? num(r.authorizedIdNumber) : num(r[`authorizedIdNumber_${i}`]);
+                        if (aName != null || aId != null) authorizedPerson.push({ authorizedName: aName, authorizedIdNumber: aId });
+                    }
+
+                    // משכנים — 1–3
+                    const mortgagors = [];
+                    for (let i = 1; i <= 3; i++) {
+                        const mDet = i === 1 ? str(r.mortgagorDetails) : str(r[`mortgagorDetails_${i}`]);
+                        const mFam = i === 1 ? str(r.mortgagorFamily) : str(r[`mortgagorFamily_${i}`]);
+                        const mId = i === 1 ? num(r.mortgagorIdNumber) : num(r[`mortgagorIdNumber_${i}`]);
+                        if (mDet != null || mFam != null || mId != null) {
+                            mortgagors.push({
+                                mortgagorDetails: mDet,
+                                mortgagorFamily: mFam,
+                                mortgagorIdType: i === 1 ? str(r.mortgagorIdType) : str(r[`mortgagorIdType_${i}`]),
+                                mortgagorIdNumber: mId,
+                            });
+                        }
+                    }
 
                     const product = {
-                        // לווה ראשון
-                        borrowers: [{
-                            borrowerName: str(r.borrowerName) || '',
-                            borrowerFamily: str(r.borrowerFamily),
-                            borrowerIdType: str(r.borrowerIdType),
-                            borrowerIdNumber: num(r.borrowerIdNumber),
-                            borrowerAddress: str(r.borrowerAddress),
-                            borrowerDateOfBirth: r.borrowerDateOfBirth ? new Date(r.borrowerDateOfBirth) : undefined,
-                            borrowerGender: str(r.borrowerGender),
-                            borrowerEmail: str(r.borrowerEmail),
-                        }],
+                        borrowers,
 
-                        // פרטי חתימה — מזהה = מספר רישום; lawyerName/Email/IdNumber יימולאו אוטומטית בשרת
                         signingDetails: {
                             signingDate: r.signingDate ? new Date(r.signingDate) : undefined,
                             lawyerRegistrationNumber: r.lawyerRegistrationNumber != null && r.lawyerRegistrationNumber !== '' ? num(r.lawyerRegistrationNumber) : undefined,
                             lawyerIdNumber: num(r.lawyerIdNumber),
                             consultant: str(r.consultant),
                             consultantEmail: str(r.consultantEmail),
-                            primaryBacker: str(r.primaryBacker),
-                            primaryBackerId: num(r.primaryBackerId),
-                            secondaryBacker: str(r.secondaryBacker),
-                            secondaryBackerId: num(r.secondaryBackerId),
-                            thirdBacker: str(r.thirdBacker),
-                            thirdBackerId: num(r.thirdBackerId),
+                            primaryBacker: str(r.primaryBacker || r.financingCompanyName),
+                            primaryBackerId: num(r.primaryBackerId ?? r.financingCompanyId),
+                            secondaryBacker: str(r.secondaryBacker || r.financingCompanyName_2),
+                            secondaryBackerId: num(r.secondaryBackerId ?? r.financingCompanyId_2),
+                            thirdBacker: str(r.thirdBacker || r.financingCompanyName_3),
+                            thirdBackerId: num(r.thirdBackerId ?? r.financingCompanyId_3),
                         },
 
-                        // חברות מימון (חברה ראשונה מה-Excel)
-                        financingCompanies: (r.financingCompanyName || r.financingCompanyId) ? [{
-                            name: str(r.financingCompanyName),
-                            idNumber: str(r.financingCompanyId),
-                        }] : [],
+                        financingCompanies,
 
-                        // פרטי רישום
                         registrationDetails: {
                             block: str(r.block),
                             plot: str(r.plot),
@@ -414,59 +674,24 @@ const useImport = () => {
                             settlement: str(r.settlement),
                         },
 
-                        // הלוואה ראשונה
-                        loans: (r.loanAmount || r.loanNumber) ? [{
-                            loanAmount: num(r.loanAmount),
-                            loanChange: str(r.loanChange),
-                            clause: str(r.clause),
-                            loanPlan: str(r.loanPlan),
-                            loanMonths: num(r.loanMonths),
-                            loanInterestRate: num(r.loanInterestRate),
-                            adjustedLoan: num(r.adjustedLoan),
-                            realLoan: num(r.realLoan),
-                            primeMargin: num(r.primeMargin),
-                            loanCreation: r.loanCreation ? new Date(r.loanCreation) : undefined,
-                            loanNumber: num(r.loanNumber),
-                            mortgageNumber: num(r.mortgageNumber),
-                        }] : [],
+                        loans,
 
-                        // נושה בכיר
                         seniorCreditor: {
                             seniorCreditorName: str(r.seniorCreditorName),
                             seniorCreditorIdType: str(r.seniorCreditorIdType),
                             seniorCreditorIdNumber: num(r.seniorCreditorIdNumber),
                         },
 
-                        // חשבון בנק
                         borrowerBankAccount: {
                             borrowerAccountNumber: num(r.borrowerAccountNumber),
                             borrowerBranchCode: num(r.borrowerBranchCode),
                             borrowerBankName: str(r.borrowerBankName),
                         },
 
-                        // מוכרים
-                        sellers: (r.sellerName) ? [{
-                            sellerName: str(r.sellerName),
-                            sellerIdType: str(r.sellerIdType),
-                            sellerIdNumber: num(r.sellerIdNumber),
-                            sellerAddress: str(r.sellerAddress),
-                        }] : [],
+                        sellers,
+                        authorizedPerson,
+                        mortgagors,
 
-                        // מורשים
-                        authorizedPerson: (r.authorizedName) ? [{
-                            authorizedName: str(r.authorizedName),
-                            authorizedIdNumber: num(r.authorizedIdNumber),
-                        }] : [],
-
-                        // משכנים
-                        mortgagors: (r.mortgagorDetails || r.mortgagorFamily) ? [{
-                            mortgagorDetails: str(r.mortgagorDetails),
-                            mortgagorFamily: str(r.mortgagorFamily),
-                            mortgagorIdType: str(r.mortgagorIdType),
-                            mortgagorIdNumber: num(r.mortgagorIdNumber),
-                        }] : [],
-
-                        // פרטי פרויקט
                         projectDetails: {
                             tamAgreementDate: r.tamAgreementDate ? new Date(r.tamAgreementDate) : undefined,
                             appraiser: str(r.appraiser),

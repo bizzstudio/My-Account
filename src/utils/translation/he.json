@@ -82,6 +82,7 @@
   "FullName": "שם מלא",
   "Email": "אימייל",
   "Password": "סיסמה",
+  "PasswordLeaveBlankToKeep": "השאר ריק כדי לשמור על הסיסמה הקיימת",
   "Contact Number": "מספר טלפון",
   "UserJoiningDate": "תאריך הצטרפות",
   "User Role": "תפקיד עורך דין",

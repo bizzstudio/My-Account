@@ -281,8 +281,6 @@ const ProductDrawer = ({ id, onSuccess }) => {
               ...current,
               {
                 borrowerName: "",
-                borrowerFamily: "",
-                borrowerIdType: "",
                 borrowerIdNumber: "",
                 borrowerAddress: "",
                 borrowerDateOfBirth: "",

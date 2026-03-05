@@ -81,9 +81,9 @@ const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false, driveL
                 <CheckBox
                   type="checkbox"
                   name={product?._id}
-                  id={product?._id}
+                  id={String(product?._id)}
                   handleClick={handleClick}
-                  isChecked={isCheck?.includes(product?._id)}
+                  isChecked={isCheck?.includes(String(product?._id))}
                 />
               </TableCell>
 
@@ -116,13 +116,13 @@ const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false, driveL
                 {product.borrowers?.[0]?.borrowerIdNumber || "-"}
               </TableCell>
               <TableCell className="text-center">
-                {product.signingDetails.lawyerName || "-"}
+                {product.signingDetails?.lawyerName || "-"}
               </TableCell>
               <TableCell className="text-center">
-                {product.signingDetails.consultant || "-"}
+                {product.signingDetails?.consultant || "-"}
               </TableCell>
               <TableCell className="text-center">
-                {product.signingDetails.primaryBacker || "-"}
+                {(product.signingDetails?.primaryBacker || product.financingCompanies?.[0]?.name) || "-"}
               </TableCell>
 
               {/* Drive folder link */}

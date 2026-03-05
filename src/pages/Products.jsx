@@ -11,6 +11,7 @@ import {
   
   import useExport from "@/hooks/useExport";
   import useImport from "@/hooks/useImport";
+  import { getCanonicalHeader } from "@/constants/excelCanonicalHeaders";
   import useProductFilter from "@/hooks/Product/useProductFilter";
   import TableLoading from "@/components/preloader/TableLoading";
   import ProductsTable from "@/components/product/ProductsTable";
@@ -73,6 +74,9 @@ import {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" dir="rtl">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
           <h3 className="text-lg font-bold text-gray-800 mb-1">שלח לינק ליועץ משכנתאות</h3>
+          {lawyerName && (
+            <p className="text-xl font-bold text-gray-800 mb-2">שם עורך הדין: {lawyerName}</p>
+          )}
           {lawyerRegistrationNumber != null && lawyerRegistrationNumber !== "" && (
             <p className="text-sm text-gray-600 mb-2">מס׳ רישום עורך הדין: <strong>{lawyerRegistrationNumber}</strong></p>
           )}
@@ -232,103 +236,101 @@ import {
     const filters = useProductFilter();
   
     const productFields = [
-  // ===== קבוצה 2: פרטי חתימה =====
-  { key: "signingDetails.signingDate", label: t("SigningDate") },
-  { key: "signingDetails.lawyerName", label: t("LawyerName") },
-  { key: "signingDetails.lawyerRegistrationNumber", label: t("LawyerRegistrationNumber") },
-  { key: "signingDetails.lawyerIdNumber", label: t("LawyerIdNumber") },
-  { key: "signingDetails.consultant", label: t("Consultant") },
-  { key: "signingDetails.primaryBacker", label: t("PrimaryBacker") },
-  { key: "signingDetails.primaryBackerId", label: t("PrimaryBackerId") },
-  { key: "signingDetails.secondaryBacker", label: t("SecondaryBacker") },
-  { key: "signingDetails.secondaryBackerId", label: t("SecondaryBackerId") },
-  { key: "signingDetails.thirdBacker", label: t("ThirdBacker") },
-  { key: "signingDetails.thirdBackerId", label: t("ThirdBackerId") },
+  // ===== פרטי חתימה =====
+  { key: "signingDetails.signingDate", label: getCanonicalHeader("signingDetails.signingDate") || t("SigningDate") },
+  { key: "signingDetails.lawyerName", label: getCanonicalHeader("signingDetails.lawyerName") || t("LawyerName") },
+  { key: "signingDetails.lawyerRegistrationNumber", label: getCanonicalHeader("signingDetails.lawyerRegistrationNumber") || t("LawyerRegistrationNumber") },
+  { key: "signingDetails.lawyerIdNumber", label: getCanonicalHeader("signingDetails.lawyerIdNumber") || t("LawyerIdNumber") },
+  { key: "signingDetails.consultant", label: getCanonicalHeader("signingDetails.consultant") || t("Consultant") },
+  { key: "signingDetails.primaryBacker", label: getCanonicalHeader("signingDetails.primaryBacker") || t("PrimaryBacker") },
+  { key: "signingDetails.primaryBackerId", label: getCanonicalHeader("signingDetails.primaryBackerId") || t("PrimaryBackerId") },
+  { key: "signingDetails.secondaryBacker", label: getCanonicalHeader("signingDetails.secondaryBacker") || t("SecondaryBacker") },
+  { key: "signingDetails.secondaryBackerId", label: getCanonicalHeader("signingDetails.secondaryBackerId") || t("SecondaryBackerId") },
+  { key: "signingDetails.thirdBacker", label: getCanonicalHeader("signingDetails.thirdBacker") || t("ThirdBacker") },
+  { key: "signingDetails.thirdBackerId", label: getCanonicalHeader("signingDetails.thirdBackerId") || t("ThirdBackerId") },
 
-  // ===== קבוצה 3: לווים =====
-  { key: "borrowers.borrowerName", label: t("BorrowerName") },
-  { key: "borrowers.borrowerFamily", label: t("BorrowerFamily") },
-  { key: "borrowers.borrowerIdType", label: t("BorrowerIdType") },
-  { key: "borrowers.borrowerIdNumber", label: t("BorrowerIdNumber") },
-  { key: "borrowers.borrowerAddress", label: t("BorrowerAddress") },
-  { key: "borrowers.borrowerDateOfBirth", label: t("BorrowerDateOfBirth") },
-  { key: "borrowers.borrowerGender", label: t("BorrowerGender") },
-  { key: "borrowers.borrowerEmail", label: t("BorrowerEmail") },
+  // ===== לווים =====
+  { key: "borrowers.borrowerName", label: getCanonicalHeader("borrowers.borrowerName") || t("BorrowerName") },
+  { key: "borrowers.borrowerIdNumber", label: getCanonicalHeader("borrowers.borrowerIdNumber") || t("BorrowerIdNumber") },
+  { key: "borrowers.borrowerAddress", label: getCanonicalHeader("borrowers.borrowerAddress") || t("BorrowerAddress") },
+  { key: "borrowers.borrowerDateOfBirth", label: getCanonicalHeader("borrowers.borrowerDateOfBirth") || t("BorrowerDateOfBirth") },
+  { key: "borrowers.borrowerGender", label: getCanonicalHeader("borrowers.borrowerGender") || t("BorrowerGender") },
+  { key: "borrowers.borrowerEmail", label: getCanonicalHeader("borrowers.borrowerEmail") || t("BorrowerEmail") },
 
-  // ===== קבוצה 4: פרטי רישום =====
-  { key: "registrationDetails.block", label: t("Block") },
-  { key: "registrationDetails.plot", label: t("Plot") },
-  { key: "registrationDetails.subPlot", label: t("SubPlot") },
-  { key: "registrationDetails.land", label: t("Land") },
-  { key: "registrationDetails.plan", label: t("Plan") },
-  { key: "registrationDetails.contract", label: t("Contract") },
-  { key: "registrationDetails.mortgageName", label: t("MortgageName") },
-  { key: "registrationDetails.mortgageCompanyId", label: t("MortgageCompanyId") },
-  { key: "registrationDetails.office", label: t("Office") },
-  { key: "registrationDetails.plotArea", label: t("PlotArea") },
-  { key: "registrationDetails.right", label: t("Right") },
-  { key: "registrationDetails.parts", label: t("Parts") },
-  { key: "registrationDetails.propertyType", label: t("PropertyType") },
-  { key: "registrationDetails.street", label: t("Street") },
-  { key: "registrationDetails.houseNumber", label: t("HouseNumber") },
-  { key: "registrationDetails.apartmentNumber", label: t("ApartmentNumber") },
-  { key: "registrationDetails.floor", label: t("Floor") },
-  { key: "registrationDetails.direction", label: t("Direction") },
-  { key: "registrationDetails.entrance", label: t("Entrance") },
-  { key: "registrationDetails.unit", label: t("Unit") },
-  { key: "registrationDetails.settlement", label: t("Settlement") },
+  // ===== פרטי רישום =====
+  { key: "registrationDetails.block", label: getCanonicalHeader("registrationDetails.block") || t("Block") },
+  { key: "registrationDetails.plot", label: getCanonicalHeader("registrationDetails.plot") || t("Plot") },
+  { key: "registrationDetails.subPlot", label: getCanonicalHeader("registrationDetails.subPlot") || t("SubPlot") },
+  { key: "registrationDetails.land", label: getCanonicalHeader("registrationDetails.land") || t("Land") },
+  { key: "registrationDetails.plan", label: getCanonicalHeader("registrationDetails.plan") || t("Plan") },
+  { key: "registrationDetails.contract", label: getCanonicalHeader("registrationDetails.contract") || t("Contract") },
+  { key: "registrationDetails.mortgageName", label: getCanonicalHeader("registrationDetails.mortgageName") || t("MortgageName") },
+  { key: "registrationDetails.mortgageCompanyId", label: getCanonicalHeader("registrationDetails.mortgageCompanyId") || t("MortgageCompanyId") },
+  { key: "registrationDetails.office", label: getCanonicalHeader("registrationDetails.office") || t("Office") },
+  { key: "registrationDetails.plotArea", label: getCanonicalHeader("registrationDetails.plotArea") || t("PlotArea") },
+  { key: "registrationDetails.right", label: getCanonicalHeader("registrationDetails.right") || t("Right") },
+  { key: "registrationDetails.parts", label: getCanonicalHeader("registrationDetails.parts") || t("Parts") },
+  { key: "registrationDetails.propertyType", label: getCanonicalHeader("registrationDetails.propertyType") || t("PropertyType") },
+  { key: "registrationDetails.street", label: getCanonicalHeader("registrationDetails.street") || t("Street") },
+  { key: "registrationDetails.houseNumber", label: getCanonicalHeader("registrationDetails.houseNumber") || t("HouseNumber") },
+  { key: "registrationDetails.apartmentNumber", label: getCanonicalHeader("registrationDetails.apartmentNumber") || t("ApartmentNumber") },
+  { key: "registrationDetails.floor", label: getCanonicalHeader("registrationDetails.floor") || t("Floor") },
+  { key: "registrationDetails.direction", label: getCanonicalHeader("registrationDetails.direction") || t("Direction") },
+  { key: "registrationDetails.entrance", label: getCanonicalHeader("registrationDetails.entrance") || t("Entrance") },
+  { key: "registrationDetails.unit", label: getCanonicalHeader("registrationDetails.unit") || t("Unit") },
+  { key: "registrationDetails.settlement", label: getCanonicalHeader("registrationDetails.settlement") || t("Settlement") },
 
-  // ===== קבוצה 5: מוכרים =====
-  { key: "sellers.sellerName", label: t("SellerName") },
-  { key: "sellers.sellerIdType", label: t("SellerIdType") },
-  { key: "sellers.sellerIdNumber", label: t("SellerIdNumber") },
-  { key: "sellers.sellerAddress", label: t("SellerAddress") },
+  // ===== מוכרים =====
+  { key: "sellers.sellerName", label: getCanonicalHeader("sellers.sellerName") || t("SellerName") },
+  { key: "sellers.sellerIdType", label: getCanonicalHeader("sellers.sellerIdType") || t("SellerIdType") },
+  { key: "sellers.sellerIdNumber", label: getCanonicalHeader("sellers.sellerIdNumber") || t("SellerIdNumber") },
+  { key: "sellers.sellerAddress", label: getCanonicalHeader("sellers.sellerAddress") || t("SellerAddress") },
 
-  // ===== קבוצה 6: הלוואות =====
-  { key: "loans.loanAmount", label: t("LoanAmount") },
-  { key: "loans.loanChange", label: t("LoanChange") },
-  { key: "loans.clause", label: t("Clause") },
-  { key: "loans.loanPlan", label: t("LoanPlan") },
-  { key: "loans.loanMonths", label: t("LoanMonths") },
-  { key: "loans.loanInterestRate", label: t("LoanInterestRate") },
-  { key: "loans.adjustedLoan", label: t("AdjustedLoan") },
-  { key: "loans.realLoan", label: t("RealLoan") },
-  { key: "loans.primeMargin", label: t("PrimeMargin") },
-  { key: "loans.loanCreation", label: t("LoanCreation") },
-  { key: "loans.loanNumber", label: t("LoanNumber") },
-  { key: "loans.mortgageNumber", label: t("MortgageNumber") },
+  // ===== הלוואות =====
+  { key: "loans.loanAmount", label: getCanonicalHeader("loans.loanAmount") || t("LoanAmount") },
+  { key: "loans.loanChange", label: getCanonicalHeader("loans.loanChange") || t("LoanChange") },
+  { key: "loans.clause", label: getCanonicalHeader("loans.clause") || t("Clause") },
+  { key: "loans.loanPlan", label: getCanonicalHeader("loans.loanPlan") || t("LoanPlan") },
+  { key: "loans.loanMonths", label: getCanonicalHeader("loans.loanMonths") || t("LoanMonths") },
+  { key: "loans.loanInterestRate", label: getCanonicalHeader("loans.loanInterestRate") || t("LoanInterestRate") },
+  { key: "loans.adjustedLoan", label: getCanonicalHeader("loans.adjustedLoan") || t("AdjustedLoan") },
+  { key: "loans.realLoan", label: getCanonicalHeader("loans.realLoan") || t("RealLoan") },
+  { key: "loans.primeMargin", label: getCanonicalHeader("loans.primeMargin") || t("PrimeMargin") },
+  { key: "loans.loanCreation", label: getCanonicalHeader("loans.loanCreation") || t("LoanCreation") },
+  { key: "loans.loanNumber", label: getCanonicalHeader("loans.loanNumber") || t("LoanNumber") },
+  { key: "loans.mortgageNumber", label: getCanonicalHeader("loans.mortgageNumber") || t("MortgageNumber") },
 
-  // ===== קבוצה 7: נושה בכיר =====
-  { key: "seniorCreditor.seniorCreditorName", label: t("SeniorCreditorName") },
-  { key: "seniorCreditor.seniorCreditorIdType", label: t("SeniorCreditorIdType") },
-  { key: "seniorCreditor.seniorCreditorIdNumber", label: t("SeniorCreditorIdNumber") },
+  // ===== נושה בכיר =====
+  { key: "seniorCreditor.seniorCreditorName", label: getCanonicalHeader("seniorCreditor.seniorCreditorName") || t("SeniorCreditorName") },
+  { key: "seniorCreditor.seniorCreditorIdType", label: getCanonicalHeader("seniorCreditor.seniorCreditorIdType") || t("SeniorCreditorIdType") },
+  { key: "seniorCreditor.seniorCreditorIdNumber", label: getCanonicalHeader("seniorCreditor.seniorCreditorIdNumber") || t("SeniorCreditorIdNumber") },
 
-  // ===== קבוצה 8: חשבון בנק =====
-  { key: "borrowerBankAccount.borrowerAccountNumber", label: t("AccountNumber") },
-  { key: "borrowerBankAccount.borrowerBranchCode", label: t("BranchCode") },
-  { key: "borrowerBankAccount.borrowerBankName", label: t("BankName") },
+  // ===== חשבון בנק =====
+  { key: "borrowerBankAccount.borrowerAccountNumber", label: getCanonicalHeader("borrowerBankAccount.borrowerAccountNumber") || t("AccountNumber") },
+  { key: "borrowerBankAccount.borrowerBranchCode", label: getCanonicalHeader("borrowerBankAccount.borrowerBranchCode") || t("BranchCode") },
+  { key: "borrowerBankAccount.borrowerBankName", label: getCanonicalHeader("borrowerBankAccount.borrowerBankName") || t("BankName") },
 
-  // ===== קבוצה 9: מורשים =====
-  { key: "authorizedPerson.authorizedName", label: t("AuthorizedName") },
-  { key: "authorizedPerson.authorizedIdNumber", label: t("AuthorizedIdNumber") },
+  // ===== מורשים =====
+  { key: "authorizedPerson.authorizedName", label: getCanonicalHeader("authorizedPerson.authorizedName") || t("AuthorizedName") },
+  { key: "authorizedPerson.authorizedIdNumber", label: getCanonicalHeader("authorizedPerson.authorizedIdNumber") || t("AuthorizedIdNumber") },
 
-  { key: "mortgagors.mortgagorDetails", label: t("MortgagorDetails") },
-  { key: "mortgagors.mortgagorFamily", label: t("MortgagorFamily") },
-  { key: "mortgagors.mortgagorIdType", label: t("MortgagorIdType") },
-  { key: "mortgagors.mortgagorIdNumber", label: t("MortgagorIdNumber") },
+  { key: "mortgagors.mortgagorDetails", label: getCanonicalHeader("mortgagors.mortgagorDetails") || t("MortgagorDetails") },
+  { key: "mortgagors.mortgagorFamily", label: getCanonicalHeader("mortgagors.mortgagorFamily") || t("MortgagorFamily") },
+  { key: "mortgagors.mortgagorIdType", label: getCanonicalHeader("mortgagors.mortgagorIdType") || t("MortgagorIdType") },
+  { key: "mortgagors.mortgagorIdNumber", label: getCanonicalHeader("mortgagors.mortgagorIdNumber") || t("MortgagorIdNumber") },
 
-  // ===== קבוצה 10: פרטי פרויקט =====
-  { key: "projectDetails.tamAgreementDate", label: t("TamAgreementDate") },
-  { key: "projectDetails.appraiser", label: t("Appraiser") },
-  { key: "projectDetails.supervisor", label: t("Supervisor") },
-  { key: "projectDetails.additionalFloors", label: t("AdditionalFloors") },
-  { key: "projectDetails.projectUnits", label: t("ProjectUnits") },
-  { key: "projectDetails.transferFees", label: t("TransferFees") },
-  { key: "projectDetails.ltv", label: t("LTV") },
-  { key: "projectDetails.projectValue", label: t("ProjectValue") },
-  { key: "projectDetails.minimumWithdrawal", label: t("MinimumWithdrawal") },
-  { key: "projectDetails.contractorName", label: t("ContractorName") },
-  { key: "projectDetails.architect", label: t("Architect") },
+  // ===== פרטי פרויקט =====
+  { key: "projectDetails.tamAgreementDate", label: getCanonicalHeader("projectDetails.tamAgreementDate") || t("TamAgreementDate") },
+  { key: "projectDetails.appraiser", label: getCanonicalHeader("projectDetails.appraiser") || t("Appraiser") },
+  { key: "projectDetails.supervisor", label: getCanonicalHeader("projectDetails.supervisor") || t("Supervisor") },
+  { key: "projectDetails.additionalFloors", label: getCanonicalHeader("projectDetails.additionalFloors") || t("AdditionalFloors") },
+  { key: "projectDetails.projectUnits", label: getCanonicalHeader("projectDetails.projectUnits") || t("ProjectUnits") },
+  { key: "projectDetails.transferFees", label: getCanonicalHeader("projectDetails.transferFees") || t("TransferFees") },
+  { key: "projectDetails.ltv", label: getCanonicalHeader("projectDetails.ltv") || t("LTV") },
+  { key: "projectDetails.projectValue", label: getCanonicalHeader("projectDetails.projectValue") || t("ProjectValue") },
+  { key: "projectDetails.minimumWithdrawal", label: getCanonicalHeader("projectDetails.minimumWithdrawal") || t("MinimumWithdrawal") },
+  { key: "projectDetails.contractorName", label: getCanonicalHeader("projectDetails.contractorName") || t("ContractorName") },
+  { key: "projectDetails.architect", label: getCanonicalHeader("projectDetails.architect") || t("Architect") },
 
     ];
   
@@ -419,7 +421,7 @@ import {
     const handleExportToExcel = () => {
       let dataToExport = products;
       if (isCheck.length > 0) dataToExport = products.filter(p => isCheck.includes(p._id));
-      exportToExcel(dataToExport, productFields, t("ProductsMortgageFiles"));
+      exportToExcel(dataToExport, productFields, "תיקי משכנתאות");
     };
   
     // ✅ מחיקה מיידית – פריט בודד או מרובים – כולל עדכון מיידי של הטבלה
@@ -598,16 +600,26 @@ import {
           <>
             <TableContainer className="mb-8 rounded-b-lg hidden md:block">
               <StandardTable>
-                <StandardTableHeader columns={[
-                  { key: "checkbox" },
-                  { key: "actions", label: t("Actions") },
-                  { key: "borrowerName", label: t("Image") },
-                  { key: "borrowerIdNumber", label: t("BorrowerIdNumber") },
-                  { key: "lawyerName", label: t("LawyerName") },
-                  { key: "consultant", label: t("Consultant") },
-                  { key: "primaryBacker", label: t("PrimaryBacker") },
-                  { key: "driveFolder", label: t("DriveFolder") },
-                ]} />
+                <StandardTableHeader
+                  columns={[
+                    { key: "checkbox" },
+                    { key: "actions", label: t("Actions") },
+                    { key: "borrowerName", label: t("Image") },
+                    { key: "borrowerIdNumber", label: t("BorrowerIdNumber") },
+                    { key: "lawyerName", label: t("LawyerName") },
+                    { key: "consultant", label: t("Consultant") },
+                    { key: "primaryBacker", label: t("PrimaryBacker") },
+                    { key: "driveFolder", label: t("DriveFolder") },
+                  ]}
+                  handleSelectAll={(e) => {
+                    if (e?.target?.checked) {
+                      setIsCheck(products.map((p) => String(p._id)));
+                    } else {
+                      setIsCheck([]);
+                    }
+                  }}
+                  isCheckAll={products?.length > 0 && products.every((p) => isCheck.includes(String(p._id)))}
+                />
                 <ProductsTable
                   products={products}
                   isCheck={isCheck}

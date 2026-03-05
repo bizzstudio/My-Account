@@ -126,16 +126,21 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                             </div>
                         )}
 
-                        {validationError.unrecognized?.length > 0 && (
+                        {validationError.unrecognizedDetails?.length > 0 && (
                             <div>
-                                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">עמודות לא מוכרות בקובץ:</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {validationError.unrecognized.map((col) => (
-                                        <span key={col} className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-sm">
-                                            ⚠ {col}
-                                        </span>
+                                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">כותרות לא תקינות — יש לתקן באקסל:</p>
+                                <ul className="space-y-2 list-none">
+                                    {validationError.unrecognizedDetails.map(({ wrong, suggested }) => (
+                                        <li key={wrong} className="flex flex-wrap items-baseline gap-1 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm">
+                                            <span className="font-medium text-amber-800 dark:text-amber-300">שם לא תקין לכותרת &quot;{wrong}&quot;</span>
+                                            {suggested ? (
+                                                <span className="text-gray-700 dark:text-gray-300">— השם צריך להיות <strong className="text-green-700 dark:text-green-400">&quot;{suggested}&quot;</strong></span>
+                                            ) : (
+                                                <span className="text-gray-600 dark:text-gray-400">— עיין ברשימת הכותרות התקניות למטה</span>
+                                            )}
+                                        </li>
                                     ))}
-                                </div>
+                                </ul>
                             </div>
                         )}
 

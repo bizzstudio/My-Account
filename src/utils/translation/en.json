@@ -78,6 +78,7 @@
   "FullName": "Full Name",
   "Email": "Email",
   "Password": "Password",
+  "PasswordLeaveBlankToKeep": "Leave blank to keep current password",
   "Contact Number": "Phone Number",
   "AdminJoiningDate": "Join Date",
   "Admin Role": "Admin Role",

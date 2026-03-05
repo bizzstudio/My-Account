@@ -103,7 +103,7 @@ const User = () => {
                   <TableCell className="text-center">{t("UserImage")}</TableCell>
                   <TableCell className="text-center">{t("UserNameTbl")}</TableCell>
                   <TableCell className="text-center">{t("UserEmailTbl")}</TableCell>
-                  <TableCell className="text-center">{t("LawyerIdNumber")}</TableCell>
+                  <TableCell className="text-center">{t("LawyerIdNumber")},</TableCell>
                   <TableCell className="text-center">{t("UserContactTbl")}</TableCell>
                   <TableCell className="text-center">{t("UserJoiningDateTbl")}</TableCell>
                   <TableCell className="text-center">{t("UserRoleTbl")}</TableCell>
