@@ -11,6 +11,9 @@ const TutorialCard = ({ tutorial, isAdmin, handleUpdate, handleModalOpen }) => {
             <div className="flex items-start justify-between gap-2">
                 {isAdmin && (
                     <div className="flex gap-2 flex-shrink-0">
+                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 text-right leading-snug">
+                    {tutorial.title}
+                </h3>
                         <button
                             onClick={() => handleUpdate(tutorial._id)}
                             className="p-1.5 rounded-md text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
@@ -27,9 +30,6 @@ const TutorialCard = ({ tutorial, isAdmin, handleUpdate, handleModalOpen }) => {
                         </button>
                     </div>
                 )}
-                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 text-right leading-snug">
-                    {tutorial.title}
-                </h3>
             </div>
 
             {/* סרטון */}
