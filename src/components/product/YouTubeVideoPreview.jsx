@@ -34,31 +34,23 @@ const YouTubeVideoPreview = ({ url }) => {
         );
     }
 
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0`;
     const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
     return (
         <div className="w-full">
-            <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                <iframe
-                    className="absolute top-0 left-0 w-full h-full rounded-md"
-                    src={embedUrl}
-                    title="YouTube video player"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
+            <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block relative w-full rounded-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                style={{ paddingBottom: "56.25%" }}
+            >
+                <img
+                    src={thumbnailUrl}
+                    alt=""
+                    className="absolute top-0 left-0 w-full h-full object-cover rounded-md"
                 />
-            </div>
-            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:underline break-all"
-                >
-                    {url}
-                </a>
-            </div>
+            </a>
         </div>
     );
 };
