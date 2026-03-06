@@ -34,7 +34,7 @@ const YouTubeVideoPreview = ({ url }) => {
         );
     }
 
-    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0`;
     const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
     return (
