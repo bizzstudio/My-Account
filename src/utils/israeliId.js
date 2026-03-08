@@ -42,6 +42,31 @@ export function isValidIsraeliID(id) {
 }
 
 /**
+ * Validation for passport number (מספר דרכון).
+ * Accepts alphanumeric, typical length 5–20.
+ * @param {string|number} value - Raw input
+ * @returns {boolean} true if looks like a valid passport number
+ */
+export function isValidPassportNumber(value) {
+  if (value === undefined || value === null) return false;
+  const str = String(value).trim();
+  if (str.length === 0) return false;
+  if (str.length < 5 || str.length > 20) return false;
+  return /^[A-Za-z0-9]+$/.test(str);
+}
+
+/**
+ * Valid if Israeli ID (9 digits + check digit) OR passport number.
+ * Use for fields that can be either ת.ז or דרכון.
+ */
+export function isValidIsraeliIdOrPassport(value) {
+  if (value === undefined || value === null) return true;
+  const str = String(value).trim();
+  if (str.length === 0) return true;
+  return isValidIsraeliID(value) || isValidPassportNumber(value);
+}
+
+/**
  * For required ID fields: empty is invalid.
  * For optional ID fields: empty is valid, non-empty must be valid ID.
  */

@@ -10,7 +10,7 @@ import ProductServices from "@/services/ProductServices";
 import notifyApiResponse from "@/utils/notifyApiResponse";
 import { notifyError, notifySuccess } from "@/utils/toast";
 import { useTranslation } from "react-i18next";
-import { isValidIsraeliID } from "@/utils/israeliId";
+import { isValidIsraeliIdOrPassport } from "@/utils/israeliId";
 import { getHeaderToFieldMap, CANONICAL_EXCEL_HEADERS } from "@/constants/excelCanonicalHeaders";
 
 const useImport = () => {
@@ -70,11 +70,15 @@ const useImport = () => {
                         const worksheet = workbook.Sheets[sheetName];
                         // header: 2 = array of arrays, כדי לתמוך בכותרות כפולות (שם פרטי לווה פעמיים = לווה 1 ולווה 2)
                         const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 2, defval: "" });
-                        const json = Array.isArray(rawRows) && rawRows.length > 0 && Array.isArray(rawRows[0])
-                            ? buildRowsFromDuplicateHeaders(rawRows)
-                            : XLSX.utils.sheet_to_json(worksheet);
-                        setImportStage('processing');
-                        processFileData(json, "/products");
+                        if (Array.isArray(rawRows) && rawRows.length > 0 && Array.isArray(rawRows[0])) {
+                            const { rows, totalDataRows } = buildRowsFromDuplicateHeaders(rawRows);
+                            setImportStage('processing');
+                            processFileData(rows, "/products", { totalDataRows });
+                        } else {
+                            const json = XLSX.utils.sheet_to_json(worksheet);
+                            setImportStage('processing');
+                            processFileData(json, "/products");
+                        }
                     };
                     fileReader.readAsArrayBuffer(file);
                 } else {
@@ -242,8 +246,9 @@ const useImport = () => {
     };
 
     // המרת שורות אקסל (מערך מערכים) לאובייקטים — כותרות כפולות ממופות לפי סדר. אם שורה 1 לא נראית כותרת (למשל כותרת כללית), משתמשים בשורה 2
+    // מחזיר { rows, totalDataRows } — totalDataRows = מספר השורות אחרי שורת הכותרת (להצגת סה"כ נכון)
     const buildRowsFromDuplicateHeaders = (rawRows) => {
-        if (!rawRows?.length || !Array.isArray(rawRows[0])) return [];
+        if (!rawRows?.length || !Array.isArray(rawRows[0])) return { rows: [], totalDataRows: 0 };
         let headerRowIndex = 0;
         if (!looksLikeHeaderRow(rawRows[0]) && rawRows.length > 1 && looksLikeHeaderRow(rawRows[1])) {
             headerRowIndex = 1;
@@ -274,7 +279,8 @@ const useImport = () => {
             }
             result.push(obj);
         }
-        return result;
+        const totalDataRows = rawRows.length - (headerRowIndex + 1);
+        return { rows: result, totalDataRows };
     };
 
     // בניית מפת כל השמות הידועים (עברית → שם שדה) — כולל כותרות חלופיות לולידציה
@@ -363,10 +369,28 @@ const useImport = () => {
         ...getHeaderToFieldMap(),
     });
 
+    // מיפוי מפורש: כותרת לא תקינה → כותרת תקנית (בלי "עיין ברשימה למטה")
+    const EXPLICIT_HEADER_REPLACEMENTS = {
+        'מסד': CANONICAL_EXCEL_HEADERS.block,
+        'מרשם': CANONICAL_EXCEL_HEADERS.office,
+        'תמורה': CANONICAL_EXCEL_HEADERS.transferFees,
+        'ת.ח. הסכם מכר': CANONICAL_EXCEL_HEADERS.contract,
+        'פריים': CANONICAL_EXCEL_HEADERS.primeMargin,
+        'פיגורים': CANONICAL_EXCEL_HEADERS.adjustedLoan,
+        'פיגורים מתואמת': CANONICAL_EXCEL_HEADERS.adjustedLoan,
+        'שם משפחה לווה1': CANONICAL_EXCEL_HEADERS.borrowerName,
+        'שם משפחה לווה 1': CANONICAL_EXCEL_HEADERS.borrowerName,
+        'לווה סוג זיהוי 1': CANONICAL_EXCEL_HEADERS.borrowerIdType,
+        'לווה סוג זיהוי 2': CANONICAL_EXCEL_HEADERS.borrowerIdType_2,
+        'לווה סוג זיהוי1': CANONICAL_EXCEL_HEADERS.borrowerIdType,
+        'לווה סוג זיהוי2': CANONICAL_EXCEL_HEADERS.borrowerIdType_2,
+    };
+
     // מציע כותרת תקנית לכותרת לא מוכרת (לפי מילות מפתח) — כדי להציג ללקוח "השם צריך להיות X"
     const suggestCanonicalForWrongHeader = (wrongHeader) => {
         const n = normalizeHeaderKey(wrongHeader);
         if (!n) return null;
+        if (EXPLICIT_HEADER_REPLACEMENTS[n]) return EXPLICIT_HEADER_REPLACEMENTS[n];
         if (n.includes('יועץ') && !n.includes('אימייל')) return CANONICAL_EXCEL_HEADERS.consultant;
         if (n.includes('אימייל') && n.includes('יועץ')) return CANONICAL_EXCEL_HEADERS.consultantEmail;
         if (n.includes('חברת מימון')) {
@@ -435,7 +459,7 @@ const useImport = () => {
         return value.split(',').map(item => item.trim()).filter(Boolean);
     };
 
-    // Validate Israeli ID in product rows; return { valid, invalidRows: [{ rowIndex, fieldKey }] }
+    // Validate Israeli ID in product rows; return { invalidRows: [{ rowIndex, fieldKey }] }
     const validateProductIds = (products) => {
         const invalidRows = [];
         products.forEach((product, rowIndex) => {
@@ -443,7 +467,7 @@ const useImport = () => {
                 if (value === undefined || value === null || value === '') return;
                 const str = String(value).trim().replace(/\D/g, '');
                 if (str.length === 0) return;
-                if (!isValidIsraeliID(value)) invalidRows.push({ rowIndex: rowIndex + 1, fieldKey });
+                if (!isValidIsraeliIdOrPassport(value)) invalidRows.push({ rowIndex: rowIndex + 1, fieldKey });
             };
             product.borrowers?.forEach((b, i) => b.borrowerIdNumber != null && check(b.borrowerIdNumber, `BorrowerIdNumber (${i + 1})`));
             product.signingDetails?.lawyerIdNumber != null && check(product.signingDetails.lawyerIdNumber, 'LawyerIdNumber');
@@ -453,11 +477,24 @@ const useImport = () => {
             product.mortgagors?.forEach((m, i) => m.mortgagorIdNumber != null && check(m.mortgagorIdNumber, `MortgagorIdNumber (${i + 1})`));
             product.financingCompanies?.forEach((f, i) => f.idNumber != null && check(f.idNumber, `FinancingCompanyId (${i + 1})`));
         });
-        return { valid: invalidRows.length === 0, invalidRows };
+        return { invalidRows };
+    };
+
+    // שורות ללא מספר רישום עורך דין — דילוג, נספרות כנכשלו. בודק גם 0, NaN, מחרוזת ריקה/רווחים
+    const getRowsMissingLawyerRegistration = (products) => {
+        const missing = [];
+        products.forEach((product, rowIndex) => {
+            const v = product.signingDetails?.lawyerRegistrationNumber;
+            const isEmpty = v === undefined || v === null || v === '' || v === 0 ||
+                (typeof v === 'number' && (isNaN(v) || !Number.isFinite(v))) ||
+                (typeof v === 'string' && String(v).trim() === '');
+            if (isEmpty) missing.push(rowIndex + 1);
+        });
+        return missing;
     };
 
 
-    const processFileData = (data, pathname) => {
+    const processFileData = (data, pathname, options = {}) => {
         if (!data || data.length === 0) {
             notifyError(t("emptyFile"));
             return;
@@ -466,9 +503,12 @@ const useImport = () => {
         try {
             let processedData = [];
             let invalidRowIndices = [];
+            let skippedMissingLawyerRegRows = [];
+            let unrecognizedHeadersDetails = [];
+            const { totalDataRows: optionTotalDataRows } = options;
 
             if (pathname === "/products") {
-                // ולידציה של כותרות
+                // ולידציה של כותרות — חוסמים רק אם אין אף עמודה מוכרת
                 const validation = validateColumns(data);
                 if (!validation.valid) {
                     setImportStage('validation_error');
@@ -486,6 +526,9 @@ const useImport = () => {
                         }
                     });
                     return;
+                }
+                if (validation.unrecognizedDetails?.length > 0) {
+                    unrecognizedHeadersDetails = validation.unrecognizedDetails;
                 }
                 const num = (v) => (v !== undefined && v !== '' ? Number(v) : undefined);
                 const str = (v) => (v !== undefined && v !== '' ? String(v).trim() : undefined);
@@ -637,7 +680,12 @@ const useImport = () => {
 
                         signingDetails: {
                             signingDate: r.signingDate ? new Date(r.signingDate) : undefined,
-                            lawyerRegistrationNumber: r.lawyerRegistrationNumber != null && r.lawyerRegistrationNumber !== '' ? num(r.lawyerRegistrationNumber) : undefined,
+                            lawyerRegistrationNumber: (() => {
+                                const raw = r.lawyerRegistrationNumber;
+                                if (raw === undefined || raw === null || String(raw).trim() === '') return undefined;
+                                const n = num(raw);
+                                return n != null && Number.isFinite(n) ? n : undefined;
+                            })(),
                             lawyerIdNumber: num(r.lawyerIdNumber),
                             consultant: str(r.consultant),
                             consultantEmail: str(r.consultantEmail),
@@ -661,6 +709,7 @@ const useImport = () => {
                             mortgageName: str(r.mortgageName),
                             mortgageCompanyId: str(r.mortgageCompanyId),
                             office: str(r.office),
+                            registry: str(r.registry),
                             plotArea: str(r.plotArea),
                             right: str(r.right),
                             parts: str(r.parts),
@@ -716,10 +765,11 @@ const useImport = () => {
                 });
 
                 const idValidation = validateProductIds(processedData);
-                const invalidRowIndices = [...new Set((idValidation.invalidRows || []).map((r) => r.rowIndex))];
-                const dataToImport = invalidRowIndices.length > 0
-                    ? processedData.filter((_, index) => !invalidRowIndices.includes(index + 1))
-                    : processedData;
+                const invalidIdRowIndices = [...new Set((idValidation.invalidRows || []).map((r) => r.rowIndex))];
+                const missingLawyerRegRowIndices = getRowsMissingLawyerRegistration(processedData);
+                // שורות בלי ת.ז. תקינה או בלי מספר רישום עורך דין — לא מייבאים, נספרות כנכשלו
+                const allSkippedRowIndices = [...new Set([...invalidIdRowIndices, ...missingLawyerRegRowIndices])];
+                const dataToImport = processedData.filter((_, index) => !allSkippedRowIndices.includes(index + 1));
 
                 if (dataToImport.length === 0) {
                     setImportStage('validation_error');
@@ -728,28 +778,34 @@ const useImport = () => {
                         success: 0,
                         failure: 0,
                         errors: [],
-                        validationError: { invalidIdRows: idValidation.invalidRows }
+                        validationError: {
+                            invalidIdRows: idValidation.invalidRows,
+                            missingLawyerRegRows: missingLawyerRegRowIndices,
+                        }
                     });
                     notifyError(t("InvalidIsraeliId"));
                     return;
                 }
 
-                if (invalidRowIndices.length > 0) {
-                    notifyError(t("InvalidIsraeliId") + " — " + (invalidRowIndices.length) + " " + t("InvalidIdRowsSkipped") + ": " + invalidRowIndices.sort((a, b) => a - b).join(", "));
-                }
-
                 processedData = dataToImport;
+                invalidRowIndices = invalidIdRowIndices;
+                skippedMissingLawyerRegRows = missingLawyerRegRowIndices;
             }
 
             setSelectedFile(processedData);
-            // Update modal to show file is ready for upload
             setImportStage(null);
+            const totalRowsInFile = pathname === "/products"
+                ? (optionTotalDataRows != null ? optionTotalDataRows : data.length)
+                : processedData.length;
             setImportResults({
                 total: processedData.length,
+                totalRowsInFile,
                 success: 0,
                 failure: 0,
                 errors: [],
-                skippedIdRows: invalidRowIndices || []
+                skippedIdRows: invalidRowIndices || [],
+                skippedMissingLawyerRegRows: skippedMissingLawyerRegRows || [],
+                unrecognizedHeadersDetails: unrecognizedHeadersDetails || []
             });
             notifySuccess(t("fileProcessed"));
         } catch (error) {
@@ -811,12 +867,13 @@ const useImport = () => {
                     });
 
                     // Set import results for modal
-                    setImportResults({
+                    setImportResults(prev => ({
+                        ...prev,
                         success: successCount,
                         failure: failureCount,
                         total: totalCount,
                         errors: errors
-                    });
+                    }));
                     setImportStage('completed');
 
                     setIsUpdate(true);
@@ -872,12 +929,13 @@ const useImport = () => {
                         });
                     }
 
-                    setImportResults({
+                    setImportResults(prev => ({
+                        ...prev,
                         success: successCount,
                         failure: failureCount,
                         total: totalCount,
                         errors: errors
-                    });
+                    }));
                     setImportStage('completed');
                 }
                 notifyApiResponse(err, false);

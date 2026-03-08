@@ -31,6 +31,9 @@ import FormSubmitActions from "../form/FormSubmitActions";
 import { CARGO_TYPE_VALUES, PACKAGE_CARGO_TYPE_VALUES, DEFAULT_CARGO_TYPE } from "@/constants/cargoTypes";
 import { isValidIsraeliID } from "@/utils/israeliId";
 
+/** שמות מהאקסל — מוצגים בעריכת מוצר (רק השם המקורי) */
+const EXCEL_LABEL = { block: "מסד", office: "לשכה", registry: "מרשם", contract: "ת.ח. הסכם מכר", transferFees: "תמורה", primeMargin: "פריים", adjustedLoan: "מתואמת/פיגורים" };
+
 const ProductDrawer = ({ id, onSuccess }) => {
     const navigate = useNavigate();
     const { state: userState } = useContext(UserContext);
@@ -215,7 +218,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
               <option value="">{t("SelectLawyerPlaceholder")}</option>
               {lawyers.map((l) => (
                 <option key={l._id} value={l._id}>
-                  {l.name}{l.idNumber ? ` — ${l.idNumber}` : ""}
+                  {l.name}
                 </option>
               ))}
             </select>
@@ -227,7 +230,6 @@ const ProductDrawer = ({ id, onSuccess }) => {
           {watch("signingDetails.lawyerName") && (
             <p className="text-sm text-[#a57d45] mt-1">
               ✓ <span className="font-bold">{watch("signingDetails.lawyerName")}</span>
-              {watch("signingDetails.lawyerIdNumber") ? ` | ת"ז: ${watch("signingDetails.lawyerIdNumber")}` : ""}
             </p>
           )}
         </div>
@@ -538,13 +540,13 @@ const ProductDrawer = ({ id, onSuccess }) => {
     <CollapsibleSection
         title={t("RegistrationDetails")}
         icon={<MdEditNote size={24} className="mt-1" />}
-        defaultfalse
+        defaultOpen={false}
     >
         <div className="grid grid-cols-12 gap-5 mt-2">
             
-            {/* Block */}
+            {/* Block — מסד */}
             <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-                <LabelArea label={t("Block")} />
+                <LabelArea label={EXCEL_LABEL.block} />
                 <div className="col-span-6">
                     <InputArea
                         register={register}
@@ -623,9 +625,9 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 </div>
             </div>
 
-            {/* Contract */}
+            {/* Contract — ת.ח. הסכם מכר */}
             <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-                <LabelArea label={t("Contract")} />
+                <LabelArea label={EXCEL_LABEL.contract} />
                 <div className="col-span-6">
                     <InputArea
                         register={register}
@@ -671,19 +673,35 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 </div>
             </div>
 
-            {/* Office */}
+            {/* Office — לשכה */}
             <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
-                <LabelArea label={t("Office")} />
+                <LabelArea label={EXCEL_LABEL.office} />
                 <div className="col-span-6">
                     <InputArea
                         register={register}
-                        label={t("Office")}
+                        label={EXCEL_LABEL.office}
                         name="registrationDetails.office"
                         type="text"
-                        placeholder={t("Office")}
+                        placeholder={EXCEL_LABEL.office}
                         isRequired={false}
                     />
                     <Error errorName={errors?.registrationDetails?.office} />
+                </div>
+            </div>
+
+            {/* Registry — מרשם */}
+            <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                <LabelArea label={EXCEL_LABEL.registry} />
+                <div className="col-span-6">
+                    <InputArea
+                        register={register}
+                        label={EXCEL_LABEL.registry}
+                        name="registrationDetails.registry"
+                        type="text"
+                        placeholder={EXCEL_LABEL.registry}
+                        isRequired={false}
+                    />
+                    <Error errorName={errors?.registrationDetails?.registry} />
                 </div>
             </div>
 
@@ -1002,7 +1020,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
     <CollapsibleSection
         title={t("Loans")}
         icon={<MdEditNote size={24} className="mt-1" />}
-        defaultfalse
+        defaultOpen={false}
     >
         <div className="flex flex-col gap-2 mt-2">
             {/* כפתור להוספה */}
@@ -1134,9 +1152,9 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* Adjusted Loan */}
+                    {/* Adjusted Loan — מתואמת/פיגורים */}
                     <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                        <LabelArea label={t("AdjustedLoan")} />
+                        <LabelArea label={EXCEL_LABEL.adjustedLoan} />
                         <div className="col-span-6">
                             <InputArea
                                 register={register}
@@ -1168,9 +1186,9 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* Prime Margin */}
+                    {/* Prime Margin — פריים */}
                     <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                        <LabelArea label={t("PrimeMargin")} />
+                        <LabelArea label={EXCEL_LABEL.primeMargin} />
                         <div className="col-span-6">
                             <InputArea
                                 register={register}
@@ -1586,7 +1604,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
     <CollapsibleSection
         title={t("ProjectDetails")}
         icon={<MdEditNote size={24} className="mt-1" />}
-        defaultfalse
+        defaultOpen={false}
     >
         <div className="grid grid-cols-12 gap-5 mt-2">
 
@@ -1670,9 +1688,9 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 </div>
             </div>
 
-            {/* Transfer Fees */}
+            {/* Transfer Fees — תמורה */}
             <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                <LabelArea label={t("TransferFees")} />
+                <LabelArea label={EXCEL_LABEL.transferFees} />
                 <div className="col-span-6">
                     <InputArea
                         register={register}

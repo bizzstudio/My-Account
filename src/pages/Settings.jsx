@@ -18,7 +18,7 @@ const LEGEND_SECTIONS = [
     title: "פרטי עורך דין",
     items: [
       { key: "{lawyerName}", label: "שם עורך הדין" },
-      { key: "{lawyerRegistrationNumber}", label: "מספר רישיון עורך דין" },
+      { key: "{lawyerRegistrationNumber}", label: "מספר רישום עורך דין" },
       { key: "{lawyerIdNumber}", label: "תעודת זהות עורך דין" },
       { key: "{lawyerEmail}", label: "אימייל עורך דין" },
     ],

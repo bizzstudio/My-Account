@@ -36,17 +36,11 @@ import {
   import UserServices from "@/services/UserServices";
   import StandardTable from "@/components/table/StandardTable";
   import StandardTableHeader from "@/components/table/StandardTableHeader";
+  import notifyApiResponse from "@/utils/notifyApiResponse";
+  import { notifySuccess } from "@/utils/toast";
 
   const SEARCH_FETCH_LIMIT = 2000;
 
-  /** חיפוש טקסט בכל שדות האובייקט (כולל מקוננים) */
-  const productMatchesSearch = (product, term) => {
-    if (!term || !product) return false;
-    const text = JSON.stringify(product);
-    return text.toLowerCase().includes(term.toLowerCase().trim());
-  };
-  
-  
   // ─── Modal לשליחת לינק ליועץ ───────────────────────────────────────────────
   const ConsultantLinkModal = ({ link, lawyerName, lawyerRegistrationNumber, onClose }) => {
     const [email, setEmail] = React.useState("");
@@ -179,7 +173,7 @@ import {
             <option value="">— בחר עורך דין —</option>
             {lawyers.map((l) => (
               <option key={l._id} value={l._id}>
-                {l.name} {l.idNumber ? `— ${l.idNumber}` : ""}
+                {l.name}
               </option>
             ))}
           </select>
@@ -213,7 +207,7 @@ import {
   const Products = () => {
     const { state: userState } = useContext(UserContext);
     const { userInfo } = userState;
-    const { toggleDrawer, setBreadcrumbs, isUpdate, setIsUpdate } = useContext(SidebarContext);
+    const { toggleDrawer, setBreadcrumbs, isUpdate, setIsUpdate, isDrawerOpen } = useContext(SidebarContext);
     const { exportToExcel } = useExport();
     const {
       handleSelectFile,
@@ -224,9 +218,10 @@ import {
       importStage,
       handleCloseImportModal,
     } = useImport();
-    const { serviceId, allId } = useToggleDrawer();
+    const { serviceId, allId, handleDeleteMany } = useToggleDrawer();
   
   const [isCheck, setIsCheck] = useState([]);
+  const [isLoadingAllIds, setIsLoadingAllIds] = useState(false);
   const [allAdmins, setAllAdmins] = useState([]);
   const [lawyers, setLawyers] = useState([]);
   const [productsData, setProductsData] = useState(null);
@@ -371,23 +366,21 @@ import {
   useEffect(() => { fetchLawyers(); }, [fetchLawyers]);
   useEffect(() => { setBreadcrumbs([{ href: "/products", label: t("Products") }]); }, []);
   
-    // Fetch products — כשמופעל חיפוש: מושכים עד SEARCH_FETCH_LIMIT רשומות ומסננים בצד הלקוח
+    const lastSearchRef = useRef("");
+    // Fetch products — חיפוש מתבצע בשרת (כולל תיקים בלי מספר רישום לאדמין)
     const fetchProducts = useCallback(async () => {
       try {
         setLoading(true);
         setError(null);
-        const hasSearch = !!(filters.searchTerm && filters.searchTerm.trim());
-        const body = hasSearch
-          ? filters.buildParams(1, SEARCH_FETCH_LIMIT, userInfo)
-          : filters.buildParams(currentPage, resultsPerPage, userInfo);
+        const searchTerm = filters.searchTerm && filters.searchTerm.trim();
+        const searchJustChanged = searchTerm !== lastSearchRef.current;
+        if (searchTerm) lastSearchRef.current = searchTerm;
+        else lastSearchRef.current = "";
+        const pageToUse = searchJustChanged ? 1 : currentPage;
+        const body = filters.buildParams(pageToUse, resultsPerPage, userInfo);
         const res = await ProductServices.getAllProducts(body);
-        if (hasSearch) {
-          const term = filters.searchTerm.trim();
-          const filtered = (res?.products || []).filter((p) => productMatchesSearch(p, term));
-          setProductsData({ products: filtered, totalDoc: filtered.length });
-        } else {
-          setProductsData(res);
-        }
+        setProductsData(res);
+        if (searchJustChanged) setCurrentPage(1);
       } catch (err) {
         console.error("fetchProducts error:", err);
         setError(err?.message || "Error");
@@ -396,14 +389,7 @@ import {
       }
     }, [filters.buildParams, filters.searchTerm, currentPage, resultsPerPage, userInfo]);
   
-    const lastSearchRef = useRef("");
     useEffect(() => {
-      const hasSearch = !!(filters.searchTerm && filters.searchTerm.trim());
-      if (hasSearch && lastSearchRef.current === filters.searchTerm) {
-        return;
-      }
-      if (hasSearch) lastSearchRef.current = filters.searchTerm;
-      else lastSearchRef.current = "";
       fetchProducts();
       if (isUpdate) setIsUpdate(false);
     }, [
@@ -425,12 +411,7 @@ import {
   
     const rawProducts = productsData?.products || [];
     const totalResults = productsData?.totalDoc || 0;
-    const products = useMemo(() => {
-      if (filters.searchTerm && filters.searchTerm.trim()) {
-        return rawProducts.slice((currentPage - 1) * resultsPerPage, currentPage * resultsPerPage);
-      }
-      return rawProducts;
-    }, [rawProducts, currentPage, resultsPerPage, filters.searchTerm]);
+    const products = rawProducts;
 
     // טעינת קישורי דרייב לכל המוצרים בדף הנוכחי
     useEffect(() => {
@@ -452,64 +433,27 @@ import {
       exportToExcel(dataToExport, productFields, "תיקי משכנתאות");
     };
   
-    // ✅ מחיקה מיידית – פריט בודד או מרובים – כולל עדכון מיידי של הטבלה
+    // מחיקה – שליחה לשרת + רענון מהשרת
     const handleDeleteSelected = async (ids = null) => {
-  try {
-    const idsToDelete = ids || isCheck;
+      const rawIds = ids || isCheck;
+      if (!rawIds || rawIds.length === 0) return;
 
-    console.log("🟡 Delete clicked");
-    console.log("IDs to delete:", idsToDelete);
-    console.log("Before delete - productsData:", productsData);
+      const idsToDelete = rawIds.map((id) => String(id));
 
-    if (!idsToDelete || idsToDelete.length === 0) {
-      console.log("❌ No IDs selected");
-      return;
-    }
-
-    // מחיקה מהשרת
-    let res;
-    if (idsToDelete.length === 1) {
-      // אם רק מוצר אחד
-      res = await ProductServices.deleteProduct(idsToDelete[0]);
-    } else {
-      // אם יותר ממוצר אחד
-      res = await ProductServices.deleteManyProducts({ ids: idsToDelete });
-      
-
-    }
-    
-    console.log("🟢 Server delete response:", res);
-    
-        console.log("🟢 Server delete response:", res);
-
-    // עדכון לוקאלי של ה-state
-    setProductsData(prev => {
-      if (!prev || !prev.products) {
-        console.log("❌ prev or prev.products is null");
-        return prev;
+      try {
+        if (idsToDelete.length === 1) {
+          await ProductServices.deleteProduct(idsToDelete[0]);
+        } else {
+          await ProductServices.deleteManyProducts({ ids: idsToDelete });
+        }
+        setIsCheck([]);
+        await fetchProducts();
+        notifySuccess(idsToDelete.length === 1 ? t("ProductDeleted") : t("ProductsDeleted"));
+      } catch (err) {
+        console.error("Delete products error:", err?.response?.data || err?.message);
+        notifyApiResponse(err, false);
       }
-
-      const updatedProducts = prev.products.filter(
-        p => !idsToDelete.includes(p._id)
-      );
-
-      console.log("🟢 Updated products after filter:", updatedProducts);
-
-      return {
-        ...prev,
-        products: updatedProducts,
-        totalDoc: prev.totalDoc - idsToDelete.length,
-      };
-    });
-
-    // ניקוי בחירה
-    setIsCheck([]);
-
-    console.log("🟢 Delete finished");
-  } catch (err) {
-    console.error("🔴 Error deleting products:", err);
-  }
-};
+    };
 
   
     return (
@@ -517,7 +461,7 @@ import {
         <PageTitle>{t("ProductsPageTitle")}</PageTitle>
   
         <MainDrawer width="100vw">
-          <ProductDrawer id={serviceId} onSuccess={fetchProducts} />
+          <ProductDrawer key={isDrawerOpen ? `product-${serviceId}` : "product-closed"} id={serviceId} onSuccess={fetchProducts} />
         </MainDrawer>
 
       {/* חלונית בחירת עורך דין לאדמין */}
@@ -558,7 +502,7 @@ import {
   
         {isCheck?.length >= 1 && (
           <DeleteModal
-            ids={allId}
+            ids={[...isCheck]}
             setIsCheck={setIsCheck}
             title={t("theSelectedProducts")}
             table="products"
@@ -583,7 +527,7 @@ import {
       { label: <div className="flex items-center gap-1"><FiPlus size={20} /> {t("AddProduct")}</div>, onClick: toggleDrawer },
       { label: <div className="flex items-center gap-1.5"><FiDownload size={17} /> {isCheck.length > 0 ? t("ExportSelected") : t("ExportToExcel")}</div>, onClick: handleExportToExcel, disabled: !products || products.length === 0 },
       { label: <div className="flex items-center gap-1.5"><FiUpload size={17} /> {t("ImportFromExcel")}</div>, onClick: () => fileInputRef.current?.click(), disabled: false },
-      { label: <div className="flex items-center gap-1.5"><FiTrash2 size={17} /> {t("Delete")}</div>, onClick: () => handleDeleteSelected(),  disabled: isCheck.length < 1 },
+      { label: <div className="flex items-center gap-1.5"><FiTrash2 size={17} /> {t("Delete")}</div>, onClick: () => window.confirm(t("ConfirmDeleteSelected")) ? handleDeleteSelected() : null,  disabled: isCheck.length < 1 },
       { label: <div className="flex items-center gap-1.5"><FiDownload size={17} /> {t("ExportToWord")}</div>, 
         onClick: () => setShowTemplateModal(true),
         disabled: !products || products.length === 0
@@ -639,14 +583,33 @@ import {
                     { key: "primaryBacker", label: t("PrimaryBacker") },
                     { key: "driveFolder", label: t("DriveFolder") },
                   ]}
-                  handleSelectAll={(e) => {
+                  handleSelectAll={async (e) => {
                     if (e?.target?.checked) {
-                      setIsCheck(products.map((p) => String(p._id)));
+                      const hasSearch = !!(filters.searchTerm && filters.searchTerm.trim());
+                      if (hasSearch) {
+                        setIsCheck(rawProducts.map((p) => String(p._id)));
+                      } else {
+                        if (totalResults === 0) return;
+                        setIsLoadingAllIds(true);
+                        try {
+                          const limit = Math.min(totalResults, 10000);
+                          const body = filters.buildParams(1, limit, userInfo);
+                          const res = await ProductServices.getAllProducts(body);
+                          const ids = (res?.products || []).map((p) => String(p._id));
+                          setIsCheck(ids);
+                        } catch (err) {
+                          console.error("Select all IDs error:", err);
+                        } finally {
+                          setIsLoadingAllIds(false);
+                        }
+                      }
                     } else {
                       setIsCheck([]);
                     }
                   }}
-                  isCheckAll={products?.length > 0 && products.every((p) => isCheck.includes(String(p._id)))}
+                  isCheckAll={totalResults > 0 && isCheck.length === totalResults}
+                  isLoadingAllIds={isLoadingAllIds}
+                  totalResults={totalResults}
                 />
                 <ProductsTable
                   products={products}

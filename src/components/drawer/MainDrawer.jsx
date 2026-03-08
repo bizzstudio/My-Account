@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import Drawer from "rc-drawer";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { useLocation } from "react-router-dom";
 
@@ -16,12 +16,19 @@ const MainDrawer = ({ children, width }) => {
   const dir = lang === 'he' ? 'rtl' : 'ltr';
 
   const [drawerWidth, setDrawerWidth] = useState(null);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     if (width) {
       setDrawerWidth(width);
     }
   }, [width]);
+
+  useEffect(() => {
+    if (isDrawerOpen) {
+      requestAnimationFrame(() => { scrollRef.current?.scrollTo(0, 0); });
+    }
+  }, [isDrawerOpen]);
 
   return (
     <Drawer
@@ -43,8 +50,8 @@ const MainDrawer = ({ children, width }) => {
           <FiX />
         </button>
 
-        {/* אזור עם פס גלילה */}
-        <div className="flex flex-col w-full h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+        {/* אזור עם פס גלילה — נגלל לראש בכל פתיחת דרואר */}
+        <div ref={scrollRef} className="flex flex-col w-full h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
           {children}
         </div>
 

@@ -34,7 +34,7 @@ const ProductFilters = ({
         <CollapsibleSection
             title={t("Filters")}
             icon={<FiFilter size={20} className="mt-1" />}
-            defaultOpen={false}
+            defaultOpen={true}
         >
             <div className="flex flex-wrap items-end gap-3">
                 <div className="flex-1 min-w-[200px]">

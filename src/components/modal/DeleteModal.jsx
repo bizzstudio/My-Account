@@ -101,16 +101,21 @@ const DeleteModal = ({ id, ids, setIsCheck, title, table = '', trainings = [], o
           notifyApiResponse(res, true);
         }
       } else if (table === "products") {
-        if (ids) {
-          const res = await ProductServices.deleteManyProducts({ ids: ids });
+        if (ids && Array.isArray(ids) && ids.length > 0) {
+          const idsToSend = ids.map((id) => String(id));
+          const res = await ProductServices.deleteManyProducts({ ids: idsToSend });
           setIsUpdate(true);
           notifyApiResponse(res, true);
+          if (onSuccess) onSuccess();
+        } else if (ids && Array.isArray(ids) && ids.length === 0) {
+          setIsSubmitting(false);
+          return;
         } else {
-          const res = await ProductServices.deleteProduct(id);
+          const res = await ProductServices.deleteProduct(id ? String(id) : id);
           setIsUpdate(true);
           notifyApiResponse(res, true);
+          if (onSuccess) onSuccess();
         }
-        if (onSuccess) onSuccess();
       } else if (table === "guides") {
         if (ids) {
           const res = await GuideServices.deleteManyGuides({ ids: ids });

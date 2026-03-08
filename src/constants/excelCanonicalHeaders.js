@@ -20,7 +20,7 @@ export const CANONICAL_EXCEL_HEADERS = {
   // חתימה, עורך דין, יועץ, חברת מימון
   signingDate: 'תאריך חתימה',
   lawyerName: 'שם עורך הדין',
-  lawyerRegistrationNumber: 'מספר רישיון עורך דין',
+  lawyerRegistrationNumber: 'מספר רישום עורך דין',
   lawyerIdNumber: 'תעודת זהות עורך דין',
   consultant: 'שם יועץ',
   consultantEmail: 'אימייל יועץ',
@@ -155,11 +155,33 @@ export function getCanonicalHeader(fieldKey) {
   return CANONICAL_EXCEL_HEADERS[flat] ?? '';
 }
 
+/** כותרות חלופיות מהאקסל של המשתמש — מוכרות כתקניות, לא מוצגות כ"לא תקינות" */
+const ALTERNATIVE_EXCEL_HEADERS = {
+  'מסד': 'block',
+  'שם משפחה לווה1': 'borrowerName',
+  'שם משפחה לווה 1': 'borrowerName',
+  'לווה סוג זיהוי 1': 'borrowerIdType',
+  'לווה סוג זיהוי 2': 'borrowerIdType_2',
+  'לווה סוג זיהוי1': 'borrowerIdType',
+  'לווה סוג זיהוי2': 'borrowerIdType_2',
+  'מרשם': 'registry',
+  'תמורה': 'transferFees',
+  'ת.ח. הסכם מכר': 'contract',
+  'פריים': 'primeMargin',
+  'פיגורים': 'adjustedLoan',
+  'פיגורים מתואמת': 'adjustedLoan',
+  'מס רישום עורך דין': 'lawyerRegistrationNumber',
+  'רישום עורך דין': 'lawyerRegistrationNumber',
+};
+
 /** מפת כותרת → שדה (לשימוש בייבוא) */
 export function getHeaderToFieldMap() {
   const out = {};
   for (const [field, header] of Object.entries(CANONICAL_EXCEL_HEADERS)) {
     if (header && !(header in out)) out[header] = field;
+  }
+  for (const [altHeader, field] of Object.entries(ALTERNATIVE_EXCEL_HEADERS)) {
+    if (!(altHeader in out)) out[altHeader] = field;
   }
   return out;
 }

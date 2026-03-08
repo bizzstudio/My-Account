@@ -43,10 +43,10 @@ const UserDrawer = ({ id }) => {
           />
         )}
       </div>
-      <Card className="overflow-y-auto flex-grow w-full max-h-full !border-none">
-        <CardBody>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="px-6 pt-2 flex-grow scrollbar-hide w-full max-h-full pb-28 grid grid-cols-12 gap-5">
+      <Card className="flex-grow w-full flex flex-col min-h-0 !border-none">
+        <CardBody className="flex flex-col min-h-0 p-0">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-grow min-h-0">
+            <div className="px-6 pt-2 pb-28 grid grid-cols-12 gap-5 overflow-y-auto flex-grow min-h-0 max-h-[calc(100vh-180px)] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
 
               <div className="flex flex-col gap-1  col-span-12">
                 <LabelArea label={t("UserImage")} />

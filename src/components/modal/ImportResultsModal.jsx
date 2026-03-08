@@ -22,8 +22,17 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
     const failureCount = results?.failure || 0;
     const errors = results?.errors || [];
     const totalCount = results?.total || 0;
+    const totalRowsInFile = results?.totalRowsInFile;
+    const skippedIdRows = results?.skippedIdRows || [];
+    const skippedMissingLawyerRegRows = results?.skippedMissingLawyerRegRows || [];
+    const unrecognizedHeadersDetails = results?.unrecognizedHeadersDetails || [];
 
-    const hasFailures = failureCount > 0;
+    // שורות שנכשלו (לא ייובאו) = ת.ז. לא תקינה + חסר מספר רישום עורך דין (ללא כפילות)
+    const skippedCount = new Set([...skippedIdRows, ...skippedMissingLawyerRegRows]).size;
+    const displayTotal = totalRowsInFile != null ? totalRowsInFile : (totalCount + skippedCount);
+    const displayFailure = failureCount + skippedCount;
+
+    const hasFailures = displayFailure > 0;
     const hasSuccess = successCount > 0;
     const isProcessing = isLoading || stage === 'processing' || stage === 'uploading';
     const isCompleted = stage === 'completed' && !isLoading;
@@ -89,15 +98,30 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                 {/* Validation Error State */}
                 {isValidationError && validationError && (
                     <div className="flex flex-col gap-4" style={{ direction: 'rtl' }}>
-                        {validationError.invalidIdRows ? (
-                            <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                                <MdErrorOutline className="text-red-500 text-2xl shrink-0" />
-                                <div>
-                                    <p className="font-semibold text-red-700 dark:text-red-400">{t("InvalidIsraeliId")}</p>
-                                    <p className="text-sm text-red-600 dark:text-red-300 mt-0.5">
-                                        {t("InvalidIdRowsInImport")}: {[...new Set(validationError.invalidIdRows.map(r => r.rowIndex))].sort((a, b) => a - b).join(', ')}
-                                    </p>
-                                </div>
+                        {(validationError.invalidIdRows?.length > 0 || validationError.missingLawyerRegRows?.length > 0) ? (
+                            <div className="flex flex-col gap-2">
+                                {validationError.invalidIdRows?.length > 0 && (
+                                    <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                        <MdErrorOutline className="text-red-500 text-2xl shrink-0" />
+                                        <div>
+                                            <p className="font-semibold text-red-700 dark:text-red-400">{t("InvalidIsraeliId")}</p>
+                                            <p className="text-sm text-red-600 dark:text-red-300 mt-0.5">
+                                                {t("InvalidIdRowsInImport")}: {[...new Set(validationError.invalidIdRows.map(r => r.rowIndex))].sort((a, b) => a - b).join(', ')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                                {validationError.missingLawyerRegRows?.length > 0 && (
+                                    <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                        <MdErrorOutline className="text-red-500 text-2xl shrink-0" />
+                                        <div>
+                                            <p className="font-semibold text-red-700 dark:text-red-400">{t("MissingLawyerRegInImport")}</p>
+                                            <p className="text-sm text-red-600 dark:text-red-300 mt-0.5">
+                                                שורות: {validationError.missingLawyerRegRows.sort((a, b) => a - b).join(', ')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                         <>
@@ -128,15 +152,16 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
 
                         {validationError.unrecognizedDetails?.length > 0 && (
                             <div>
-                                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">כותרות לא תקינות — יש לתקן באקסל:</p>
+                                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("InvalidHeadersInImport")}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{t("InvalidHeadersReplaceWith")}</p>
                                 <ul className="space-y-2 list-none">
                                     {validationError.unrecognizedDetails.map(({ wrong, suggested }) => (
                                         <li key={wrong} className="flex flex-wrap items-baseline gap-1 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm">
-                                            <span className="font-medium text-amber-800 dark:text-amber-300">שם לא תקין לכותרת &quot;{wrong}&quot;</span>
+                                            <span className="font-medium text-amber-800 dark:text-amber-300">{t("InvalidHeaderColumn")}: &quot;{wrong}&quot;</span>
                                             {suggested ? (
-                                                <span className="text-gray-700 dark:text-gray-300">— השם צריך להיות <strong className="text-green-700 dark:text-green-400">&quot;{suggested}&quot;</strong></span>
+                                                <span className="text-gray-700 dark:text-gray-300">→ {t("ReplaceWith")}: <strong className="text-green-700 dark:text-green-400">&quot;{suggested}&quot;</strong></span>
                                             ) : (
-                                                <span className="text-gray-600 dark:text-gray-400">— עיין ברשימת הכותרות התקניות למטה</span>
+                                                <span className="text-gray-600 dark:text-gray-400">→ {t("SeeValidHeadersBelow")}</span>
                                             )}
                                         </li>
                                     ))}
@@ -168,18 +193,67 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
 
                 {/* Ready State - File processed and ready for upload */}
                 {isReady && (
-                    <div className="mb-6 text-center py-8">
-                        <div className="flex flex-col items-center gap-4">
-                            <MdCheckCircle className="text-4xl text-green-500 dark:text-green-400" />
-                            <div>
-                                <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                                    {t("FileReadyForUpload")}
-                                </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                                    {t("FileReadyDescription", { count: totalCount })}
-                                </p>
-                            </div>
+                    <div className="mb-6">
+                        <div className="text-center py-6">
+                            <MdCheckCircle className="text-4xl text-green-500 dark:text-green-400 mx-auto mb-3" />
+                            <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                                {t("FileReadyForUpload")}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                                {t("FileReadyDescription", { count: displayTotal ?? totalCount })}
+                            </p>
                         </div>
+                        {/* תמיד מציגים פירוט: שורות שייובאו vs שורות שנכשלו */}
+                        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg text-right">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                סה&quot;כ שורות בקובץ: <strong>{displayTotal ?? totalCount}</strong>
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                שורות שייובאו: <strong className="text-green-600 dark:text-green-400">{totalCount}</strong>
+                                {skippedCount > 0 && (
+                                    <span className="mr-3">
+                                        | שורות שנכשלו (לא ייובאו): <strong className="text-red-600 dark:text-red-400">{skippedCount}</strong>
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                        {(skippedIdRows.length > 0 || skippedMissingLawyerRegRows.length > 0 || unrecognizedHeadersDetails.length > 0) && (
+                            <div className="mt-4 space-y-3">
+                                {unrecognizedHeadersDetails.length > 0 && (
+                                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-right">
+                                        <p className="font-semibold text-amber-800 dark:text-amber-300 mb-2">{t("InvalidHeadersInImport")}</p>
+                                        <p className="text-sm text-amber-700 dark:text-amber-400 mb-2">{t("InvalidHeadersReplaceWith")}</p>
+                                        <ul className="list-none space-y-1 text-sm">
+                                            {unrecognizedHeadersDetails.map(({ wrong, suggested }) => (
+                                                <li key={wrong}>
+                                                    <span className="text-amber-800 dark:text-amber-300">&quot;{wrong}&quot;</span>
+                                                    {suggested ? (
+                                                        <span className="text-gray-700 dark:text-gray-300"> → {t("ReplaceWith")}: <strong className="text-green-700 dark:text-green-400">&quot;{suggested}&quot;</strong></span>
+                                                    ) : (
+                                                        <span className="text-gray-600 dark:text-gray-400"> → {t("SeeValidHeadersBelow")}</span>
+                                                    )}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                {(skippedIdRows.length > 0 || skippedMissingLawyerRegRows.length > 0) && (
+                                    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-right space-y-2">
+                                        <p className="font-semibold text-red-800 dark:text-red-300 mb-2">{t("SkippedRowsNotUploaded")} — אילו שורות נכשלו ולמה:</p>
+                                        {skippedIdRows.length > 0 && (
+                                            <p className="text-sm text-red-700 dark:text-red-400">
+                                                {t("InvalidIdRowsInImport")} — שורות: {[...skippedIdRows].sort((a, b) => a - b).join(", ")}
+                                            </p>
+                                        )}
+                                        {skippedMissingLawyerRegRows.length > 0 && (
+                                            <p className="text-sm text-red-700 dark:text-red-400">
+                                                {t("MissingLawyerRegInImport")} — שורות: {[...skippedMissingLawyerRegRows].sort((a, b) => a - b).join(", ")}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -188,7 +262,7 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                     <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalCount}</div>
+                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{displayTotal}</div>
                                 <div className="text-sm text-gray-600 dark:text-gray-400">{t("TotalRows")}</div>
                             </div>
                         </div>
@@ -200,15 +274,15 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                         </div>
                         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{failureCount}</div>
+                                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{displayFailure}</div>
                                 <div className="text-sm text-gray-600 dark:text-gray-400">{t("Failed")}</div>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Success Message - Only show when completed */}
-                {isCompleted && hasSuccess && failureCount === 0 && (
+                {/* Success Message - Only show when completed (no yellow boxes) */}
+                {isCompleted && hasSuccess && displayFailure === 0 && (
                     <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                         <div className="flex items-center gap-2 text-right">
                             <MdCheckCircle className="text-green-500 dark:text-green-400 text-xl" />
@@ -216,6 +290,19 @@ const ImportResultsModal = ({ isOpen, onClose, results, isLoading, stage, onUplo
                                 {t("AllItemsImportedSuccessfully")}
                             </p>
                         </div>
+                    </div>
+                )}
+
+                {/* Rows skipped before upload (invalid ID / missing lawyer reg) - show which and why */}
+                {isCompleted && (skippedIdRows.length > 0 || skippedMissingLawyerRegRows.length > 0) && (
+                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-right">
+                        <p className="font-semibold text-red-800 dark:text-red-300 mb-2">{t("SkippedRowsNotUploaded")} — אילו שורות נכשלו ולמה:</p>
+                        {skippedIdRows.length > 0 && (
+                            <p className="text-sm text-red-700 dark:text-red-400">{t("InvalidIdRowsInImport")} — שורות: {skippedIdRows.sort((a, b) => a - b).join(", ")}</p>
+                        )}
+                        {skippedMissingLawyerRegRows.length > 0 && (
+                            <p className="text-sm text-red-700 dark:text-red-400">{t("MissingLawyerRegInImport")} — שורות: {skippedMissingLawyerRegRows.sort((a, b) => a - b).join(", ")}</p>
+                        )}
                     </div>
                 )}
 

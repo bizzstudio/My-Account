@@ -30,7 +30,7 @@ import useToggleDrawer from "@/hooks/useToggleDrawer";
 import CustomPagination from "@/components/ui/CustomPagination";
 const User = () => {
   const { state } = useContext(UserContext);
-  const { toggleDrawer, lang, setBreadcrumbs } = useContext(SidebarContext);
+  const { toggleDrawer, lang, setBreadcrumbs, isDrawerOpen } = useContext(SidebarContext);
   const { serviceId } = useToggleDrawer();
 
   const { userInfo } = state;
@@ -71,7 +71,7 @@ const User = () => {
       <PageTitle>{t("UserPageTitle")} </PageTitle>
 
       <MainDrawer width="540px">
-        <UserDrawer id={serviceId} />
+        <UserDrawer key={isDrawerOpen ? `user-${serviceId}` : "user-closed"} id={serviceId} />
       </MainDrawer>
 
       <Card className="min-w-0 shadow-xs bg-white dark:bg-gray-800 mb-5">
