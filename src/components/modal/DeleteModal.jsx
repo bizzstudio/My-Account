@@ -176,9 +176,15 @@ const DeleteModal = ({ id, ids, setIsCheck, title, table = '', trainings = [], o
           <FiTrash2 />
         </span>
           <h2 className="text-xl font-medium mb-2">
-            {location.pathname === "/admins" ? t("DeleteModalH2Lawyer") : t("DeleteModalH2")} <span className="text-red-500"></span>?
+            {table === "products" && ids?.length > 1
+              ? t("ConfirmDeleteSelected")
+              : location.pathname === "/admins"
+                ? t("DeleteModalH2Lawyer") + "?"
+                : t("DeleteModalH2") + "?"}
           </h2>
-          <p>{location.pathname === "/admins" ? t("DeleteModalPtagLawyer") : t("DeleteModalPtag")}</p>
+          {!(table === "products" && ids?.length > 1) && (
+            <p>{location.pathname === "/admins" ? t("DeleteModalPtagLawyer") : t("DeleteModalPtag")}</p>
+          )}
           {hasFutureTrainings && (
             <p className="mt-4 text-sm text-orange-600 dark:text-orange-400 font-medium">
               {t("TrainingCancelConfirmMessage")}
