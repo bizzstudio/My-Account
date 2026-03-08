@@ -465,6 +465,7 @@ const useImport = () => {
 
         try {
             let processedData = [];
+            let invalidRowIndices = [];
 
             if (pathname === "/products") {
                 // ולידציה של כותרות
@@ -715,7 +716,12 @@ const useImport = () => {
                 });
 
                 const idValidation = validateProductIds(processedData);
-                if (!idValidation.valid) {
+                const invalidRowIndices = [...new Set((idValidation.invalidRows || []).map((r) => r.rowIndex))];
+                const dataToImport = invalidRowIndices.length > 0
+                    ? processedData.filter((_, index) => !invalidRowIndices.includes(index + 1))
+                    : processedData;
+
+                if (dataToImport.length === 0) {
                     setImportStage('validation_error');
                     setImportResults({
                         total: processedData.length,
@@ -727,6 +733,12 @@ const useImport = () => {
                     notifyError(t("InvalidIsraeliId"));
                     return;
                 }
+
+                if (invalidRowIndices.length > 0) {
+                    notifyError(t("InvalidIsraeliId") + " — " + (invalidRowIndices.length) + " " + t("InvalidIdRowsSkipped") + ": " + invalidRowIndices.sort((a, b) => a - b).join(", "));
+                }
+
+                processedData = dataToImport;
             }
 
             setSelectedFile(processedData);
@@ -736,7 +748,8 @@ const useImport = () => {
                 total: processedData.length,
                 success: 0,
                 failure: 0,
-                errors: []
+                errors: [],
+                skippedIdRows: invalidRowIndices || []
             });
             notifySuccess(t("fileProcessed"));
         } catch (error) {

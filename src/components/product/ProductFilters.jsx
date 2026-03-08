@@ -1,11 +1,8 @@
 // src/components/product/ProductFilters.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { t } from "i18next";
 import { FiFilter } from "react-icons/fi";
 
-// Internal imports
-import LabelArea from "@/components/form/selectOption/LabelArea";
-import SelectWithOptions from "@/components/form/selectOption/SelectWithOptions";
 import CollapsibleSection from "@/components/common/CollapsibleSection";
 
 const ProductFilters = ({
@@ -14,50 +11,24 @@ const ProductFilters = ({
     userInfo,
     onFilterChange,
 }) => {
-    // מיון לפי: שם לווה, שם עורך דין, שם יועץ
-    const sortByOptions = [
-        { _id: "borrowerName", name: t("BorrowerName") },
-        { _id: "lawyerName", name: t("LawyerName") },
-        { _id: "consultant", name: t("Consultant") },
-    ];
+    const [inputValue, setInputValue] = useState(filters.searchTerm || "");
 
-    const sortOrderOptions = [
-        { _id: "desc", name: t("Descending") },
-        { _id: "asc", name: t("Ascending") },
-    ];
+    useEffect(() => {
+        setInputValue(filters.searchTerm || "");
+    }, [filters.searchTerm]);
 
-    const handleFilterChange = (setter, value) => {
-        setter(value);
-        if (onFilterChange) {
-            onFilterChange();
-        }
+    const handleApplyFilter = () => {
+        filters.setSearchTerm(inputValue.trim());
+        if (onFilterChange) onFilterChange();
     };
 
-    // Destructure filters for easier access
-    const {
-        selectedStatus,
-        setSelectedStatus,
-        selectedOwner,
-        setSelectedOwner,
-        filterCargoType,
-        setFilterCargoType,
-        filterAutoShipment,
-        setFilterAutoShipment,
-        filterIsWarehouse,
-        setFilterIsWarehouse,
-        stockMin,
-        setStockMin,
-        stockMax,
-        setStockMax,
-        priceMin,
-        setPriceMin,
-        priceMax,
-        setPriceMax,
-        sortBy,
-        setSortBy,
-        sortOrder,
-        setSortOrder,
-    } = filters;
+    const handleClearSearch = () => {
+        setInputValue("");
+        filters.setSearchTerm("");
+        if (onFilterChange) onFilterChange();
+    };
+
+    const hasSearch = !!(filters.searchTerm && filters.searchTerm.trim());
 
     return (
         <CollapsibleSection
@@ -65,30 +36,37 @@ const ProductFilters = ({
             icon={<FiFilter size={20} className="mt-1" />}
             defaultOpen={false}
         >
-            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-                {/* מיון לפי */}
-                <div>
-                    <LabelArea label={t("SortBy")} />
-                    <SelectWithOptions
-                        options={sortByOptions}
-                        value={sortBy}
-                        onChange={(value) => handleFilterChange(setSortBy, value)}
-                        placeholder={t("SelectSortBy")}
-                        valueKey="_id"
-                        labelKey="name"
+            <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[200px]">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {t("Search")}
+                    </label>
+                    <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleApplyFilter()}
+                        placeholder={t("ProductsFreeSearchPlaceholder")}
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#a57d45]"
                     />
                 </div>
-
-                <div>
-                    <LabelArea label={t("SortOrder")} />
-                    <SelectWithOptions
-                        options={sortOrderOptions}
-                        value={sortOrder}
-                        onChange={(value) => handleFilterChange(setSortOrder, value)}
-                        placeholder={t("SelectSortOrder")}
-                        valueKey="_id"
-                        labelKey="name"
-                    />
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={handleApplyFilter}
+                        className="px-4 py-2 bg-[#a57d45] hover:bg-[#8a6535] text-white rounded-lg text-sm font-medium transition"
+                    >
+                        {t("FilterButton")}
+                    </button>
+                    {hasSearch && (
+                        <button
+                            type="button"
+                            onClick={handleClearSearch}
+                            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                        >
+                            {t("ClearSearch")}
+                        </button>
+                    )}
                 </div>
             </div>
         </CollapsibleSection>

@@ -5,7 +5,7 @@ import {
     TableContainer,
     TableFooter,
   } from "@windmill/react-ui";
-  import React, { useContext, useEffect, useState, useCallback } from "react";
+  import React, { useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
   import { FiPlus, FiTrash2, FiDownload, FiUpload, FiLink } from "react-icons/fi";
   import { t } from "i18next";
   
@@ -36,7 +36,15 @@ import {
   import UserServices from "@/services/UserServices";
   import StandardTable from "@/components/table/StandardTable";
   import StandardTableHeader from "@/components/table/StandardTableHeader";
-  
+
+  const SEARCH_FETCH_LIMIT = 2000;
+
+  /** חיפוש טקסט בכל שדות האובייקט (כולל מקוננים) */
+  const productMatchesSearch = (product, term) => {
+    if (!term || !product) return false;
+    const text = JSON.stringify(product);
+    return text.toLowerCase().includes(term.toLowerCase().trim());
+  };
   
   
   // ─── Modal לשליחת לינק ליועץ ───────────────────────────────────────────────
@@ -363,25 +371,39 @@ import {
   useEffect(() => { fetchLawyers(); }, [fetchLawyers]);
   useEffect(() => { setBreadcrumbs([{ href: "/products", label: t("Products") }]); }, []);
   
-    // Fetch products
+    // Fetch products — כשמופעל חיפוש: מושכים עד SEARCH_FETCH_LIMIT רשומות ומסננים בצד הלקוח
     const fetchProducts = useCallback(async () => {
       try {
         setLoading(true);
         setError(null);
-        console.log("🔍 DEBUG userInfo:", { role: userInfo?.role, idNumber: userInfo?.idNumber, _id: userInfo?._id });
-        const body = filters.buildParams(currentPage, resultsPerPage, userInfo);
+        const hasSearch = !!(filters.searchTerm && filters.searchTerm.trim());
+        const body = hasSearch
+          ? filters.buildParams(1, SEARCH_FETCH_LIMIT, userInfo)
+          : filters.buildParams(currentPage, resultsPerPage, userInfo);
         const res = await ProductServices.getAllProducts(body);
-        console.log("🔍 DEBUG products count:", res?.totalDoc, "| products:", res?.products?.length);
-        setProductsData(res);
+        if (hasSearch) {
+          const term = filters.searchTerm.trim();
+          const filtered = (res?.products || []).filter((p) => productMatchesSearch(p, term));
+          setProductsData({ products: filtered, totalDoc: filtered.length });
+        } else {
+          setProductsData(res);
+        }
       } catch (err) {
         console.error("fetchProducts error:", err);
         setError(err?.message || "Error");
       } finally {
         setLoading(false);
       }
-    }, [filters.buildParams, currentPage, resultsPerPage, userInfo]);
+    }, [filters.buildParams, filters.searchTerm, currentPage, resultsPerPage, userInfo]);
   
+    const lastSearchRef = useRef("");
     useEffect(() => {
+      const hasSearch = !!(filters.searchTerm && filters.searchTerm.trim());
+      if (hasSearch && lastSearchRef.current === filters.searchTerm) {
+        return;
+      }
+      if (hasSearch) lastSearchRef.current = filters.searchTerm;
+      else lastSearchRef.current = "";
       fetchProducts();
       if (isUpdate) setIsUpdate(false);
     }, [
@@ -401,8 +423,14 @@ import {
       isUpdate,
     ]);
   
-    const products = productsData?.products || [];
+    const rawProducts = productsData?.products || [];
     const totalResults = productsData?.totalDoc || 0;
+    const products = useMemo(() => {
+      if (filters.searchTerm && filters.searchTerm.trim()) {
+        return rawProducts.slice((currentPage - 1) * resultsPerPage, currentPage * resultsPerPage);
+      }
+      return rawProducts;
+    }, [rawProducts, currentPage, resultsPerPage, filters.searchTerm]);
 
     // טעינת קישורי דרייב לכל המוצרים בדף הנוכחי
     useEffect(() => {
