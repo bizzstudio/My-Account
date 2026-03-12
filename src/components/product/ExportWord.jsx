@@ -91,8 +91,11 @@ const ExportWord = async (products, isCheck = [], template = null) => {
         formData.append("productId", product._id || "");
 
         // שם הקובץ עובר כ-query param מקודד כדי לתמוך בעברית בצורה אמינה
+        // שימוש ב-base של הבקאנד (כמו שאר הבקשות) — כך ב-Vercel הבקשה מגיעה ל-backend ולא לפרונט
+        const apiBase = import.meta.env.VITE_APP_API_BASE_URL || "";
+        const backendOrigin = apiBase.replace(/\/api\/?$/, "");
         const encodedFileName = encodeURIComponent(`${templateFileName}.docx`);
-        const res = await fetch(`/api/upload-to-drive?fileName=${encodedFileName}`, {
+        const res = await fetch(`${backendOrigin}/api/upload-to-drive?fileName=${encodedFileName}`, {
           method: "POST",
           body: formData,
         });
