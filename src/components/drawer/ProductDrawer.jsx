@@ -300,6 +300,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
             setValue("borrowers", [
               ...current,
               {
+                _clientKey: globalThis.crypto?.randomUUID?.() ?? `b-${Date.now()}-${Math.random()}`,
                 borrowerName: "",
                 borrowerIdNumber: "",
                 borrowerAddress: "",
@@ -319,7 +320,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
       {/* מערך של Borrowers */}
       {(watch("borrowers") || []).map((borrower, index) => (
         <div
-          key={index}
+          key={borrower._id || borrower._clientKey || `borrower-row-${index}`}
           className="grid grid-cols-12 gap-5 p-2 border rounded-md bg-gray-50 dark:bg-gray-800"
         >
           {/* Borrower Name */}
@@ -423,8 +424,11 @@ const ProductDrawer = ({ id, onSuccess }) => {
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer shrink-0">
                 <input
                   type="checkbox"
+                  value="true"
                   className="rounded border-gray-300 text-mainColor focus:ring-mainColor"
-                  {...register(`borrowers[${index}].borrowerIsMortgagor`)}
+                  {...register(`borrowers[${index}].borrowerIsMortgagor`, {
+                    setValueAs: (v) => v === true || v === "true" || v === "on",
+                  })}
                 />
                 {t("BorrowerIsMortgagor")}
               </label>

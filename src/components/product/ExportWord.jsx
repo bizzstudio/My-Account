@@ -137,6 +137,7 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
               body: JSON.stringify({
                 id: template?._id || "default",
                 name: templateName,
+                singleDocument: singleDocumentPerProduct,
               }),
             }
           ).catch(() => {});

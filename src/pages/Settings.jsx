@@ -41,6 +41,13 @@ const LEGEND_SECTIONS = [
   {
     title: "לווים",
     items: [
+      { key: "{borrowerName}", label: "שם לווה (של הקובץ הנוכחי בייצוא)" },
+      { key: "{borrowerIdNumber}", label: "מספר תעודת זהות לווה" },
+      { key: "{borrowerAddress}", label: "כתובת לווה" },
+      { key: "{borrowerDateOfBirth}", label: "תאריך לידה" },
+      { key: "{borrowerGender}", label: "מין" },
+      { key: "{borrowerEmail}", label: "אימייל לווה" },
+      { key: "{borrowerIsMortgagor}", label: "ממשכן (כן / לא)" },
       { key: "{borrowerName1} … {borrowerName5}", label: "כל הלווים — שם לפי סדר ברשימת הלווים בתיק" },
       { key: "{mortgagorName1} … {mortgagorName5}", label: "רק ממשכנים — שם לפי סדר (מסומנים «ממשכן» בלבד)" },
       { key: "{nonMortgagorName1} … {nonMortgagorName5}", label: "רק לא ממשכנים — שם לפי סדר" },

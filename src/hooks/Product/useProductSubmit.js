@@ -106,7 +106,9 @@ const useProductSubmit = (id, onSuccess) => {
       const fullProduct = { ...productData, _id: productId };
       for (const tpl of exportedTemplates) {
         const templateArg = tpl.id === "default" ? null : { _id: tpl.id, name: tpl.name };
-        ExportWord([fullProduct], [], templateArg).catch(console.error);
+        ExportWord([fullProduct], [], templateArg, {
+          singleDocumentPerProduct: Boolean(tpl.singleDocument),
+        }).catch(console.error);
       }
     } catch (err) {
       console.error("re-export failed:", err);
@@ -130,11 +132,14 @@ const useProductSubmit = (id, onSuccess) => {
           ...restData.projectDetails,
           tamAgreementDate: convertDate(restData.projectDetails?.tamAgreementDate),
         },
-        borrowers: restData.borrowers?.map((b) => ({
-          ...b,
-          borrowerDateOfBirth: convertDate(b.borrowerDateOfBirth),
-          borrowerIsMortgagor: isBorrowerMortgagorFlag(b),
-        })),
+        borrowers: restData.borrowers?.map((b) => {
+          const { _clientKey: _ck, ...rest } = b;
+          return {
+            ...rest,
+            borrowerDateOfBirth: convertDate(b.borrowerDateOfBirth),
+            borrowerIsMortgagor: isBorrowerMortgagorFlag(b),
+          };
+        }),
         loans: data.loans?.map((l) => ({
           ...l,
           loanCreation: convertDate(l.loanCreation),
@@ -213,6 +218,8 @@ const useProductSubmit = (id, onSuccess) => {
               borrowerDateOfBirth: b.borrowerDateOfBirth
                 ? new Date(b.borrowerDateOfBirth).toISOString().split("T")[0]
                 : "",
+              /** בוליאני אחיד — מונע צ'קבוקס ממשכן שקופץ בגלל מחרוזת מהשרת */
+              borrowerIsMortgagor: isBorrowerMortgagorFlag(b),
             }))
           : [defaultBorrower];
 
