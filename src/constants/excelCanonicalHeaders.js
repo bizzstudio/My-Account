@@ -7,16 +7,12 @@
 export const CANONICAL_EXCEL_HEADERS = {
   // לווים 1
   borrowerName: 'שם פרטי לווה 1',
-  borrowerFamily: 'שם משפחה לווה 1',
   borrowerIdNumber: 'מספר תעודת זהות לווה 1',
   borrowerAddress: 'כתובת לווה 1',
-  borrowerIdType: 'סוג זיהוי לווה 1',
   // לווים 2
   borrowerFirstName_2: 'שם פרטי לווה 2',
-  borrowerFamily_2: 'שם משפחה לווה 2',
   borrowerIdNumber_2: 'מספר תעודת זהות לווה 2',
   borrowerAddress_2: 'כתובת לווה 2',
-  borrowerIdType_2: 'סוג זיהוי לווה 2',
   // חתימה, עורך דין, יועץ, חברת מימון
   signingDate: 'תאריך חתימה',
   lawyerName: 'שם עורך הדין',
@@ -160,10 +156,6 @@ const ALTERNATIVE_EXCEL_HEADERS = {
   'מסד': 'block',
   'שם משפחה לווה1': 'borrowerName',
   'שם משפחה לווה 1': 'borrowerName',
-  'לווה סוג זיהוי 1': 'borrowerIdType',
-  'לווה סוג זיהוי 2': 'borrowerIdType_2',
-  'לווה סוג זיהוי1': 'borrowerIdType',
-  'לווה סוג זיהוי2': 'borrowerIdType_2',
   'מרשם': 'registry',
   'תמורה': 'transferFees',
   'ת.ח. הסכם מכר': 'contract',

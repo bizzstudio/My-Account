@@ -41,6 +41,8 @@ const LEGEND_SECTIONS = [
     title: "לווים",
     items: [
       { key: "{borrowerName}", label: "שם הלווה" },
+      { key: "{borrowerFamily}", label: "שם משפחת לווה" },
+      { key: "{borrowerIdType}", label: "סוג מזהה לווה" },
       { key: "{borrowerIdNumber}", label: "מספר תעודת זהות לווה" },
       { key: "{borrowerAddress}", label: "כתובת לווה" },
       { key: "{borrowerDateOfBirth}", label: "תאריך לידה" },
@@ -302,7 +304,7 @@ const Settings = () => {
                       className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#a57d45]"
                     />
                     <p className="text-xs text-gray-400 mt-1">
-                      המזהה מופיע ב-URL של תיקיית Drive לאחר "folders/"
+                      המזהה מופיע ב-URL לאחר &quot;folders/&quot; — גם אם התיקייה נמצאת בתוך תיקיות אחסון שיתופיות (Shared drive).
                     </p>
                   </div>
 

@@ -1,6 +1,14 @@
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import Cookies from "js-cookie";
+import { buildWordTemplateData } from "@/utils/buildWordTemplateData";
+
+// מנקה token מתווים לא חוקיים ב-header (שורה חדשה, רווח מיותר) — מונע "Invalid character in header content [Authorization]"
+const safeAuthHeader = (token) => {
+  if (!token || typeof token !== "string") return "";
+  const t = token.replace(/\s+/g, " ").trim();
+  return t ? `Bearer ${t}` : "";
+};
 
 // מחזיר מפה של { productId: driveFolderLink } לשימוש בשליחת מייל
 const ExportWord = async (products, isCheck = [], template = null) => {
@@ -18,11 +26,12 @@ const ExportWord = async (products, isCheck = [], template = null) => {
     if (template) {
       // תבנית שהועלתה על ידי האדמין — מורידים מהדרייב דרך הבקאנד
       const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
+      const authHeader = safeAuthHeader(tokenHolder?.token);
       const response = await fetch(
         `${import.meta.env.VITE_APP_API_BASE_URL}/templates/${template._id}/file`,
         {
           headers: {
-            Authorization: tokenHolder ? `Bearer ${tokenHolder.token}` : "",
+            ...(authHeader && { Authorization: authHeader }),
             "Cache-Control": "no-cache",
           },
         }
@@ -68,17 +77,15 @@ const ExportWord = async (products, isCheck = [], template = null) => {
       const borrowers = product.borrowers?.length ? product.borrowers : [{}];
 
       for (let borrower of borrowers) {
-        const safeData = {
-          borrowerName: borrower.borrowerName || "-",
-          borrowerIdNumber: borrower.borrowerIdNumber || "-",
-          borrowerFamily: borrower.borrowerFamily || "-",
-          borrowerAddress: borrower.borrowerAddress || "-",
-          borrowerEmail: borrower.borrowerEmail || "-",
-        };
+        const safeData = buildWordTemplateData(product, borrower);
 
         // יצירת עותק חדש לכל איטרציה — מונע ניצול ה-buffer המקורי
         const zip = new PizZip(new Uint8Array(content));
-        const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+        const doc = new Docxtemplater(zip, {
+          paragraphLoop: true,
+          linebreaks: true,
+          nullGetter: () => "-",
+        });
         await doc.renderAsync(safeData);
 
         const blob = doc.getZip().generate({ type: "blob" });
@@ -101,32 +108,34 @@ const ExportWord = async (products, isCheck = [], template = null) => {
         });
 
         if (!res.ok) {
+          // קריאה אחת בלבד ל-body — אחרת "body stream already read"
+          const text = await res.text();
           let errMsg = `העלאה ל-Drive נכשלה (${res.status})`;
           try {
-            const errBody = await res.json();
+            const errBody = JSON.parse(text);
             if (errBody?.message) errMsg = errBody.message;
           } catch (_) {
-            const text = await res.text();
             if (text) errMsg = text.slice(0, 200);
           }
           throw new Error(errMsg);
         } else {
           const templateName = template?.name || "תבנית ברירת מחדל";
           uploadedFiles.push({ borrower: safeData.borrowerName, template: templateName });
-          const data = await res.json();
+          const data = JSON.parse(await res.text());
           if (data?.folder?.webViewLink) {
             driveLinks[product._id] = data.folder.webViewLink;
           }
           // שמירת תבנית שיוצאה על המוצר לצורך עדכון אוטומטי בעתיד
           if (product._id) {
             const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
+            const authHeader = safeAuthHeader(tokenHolder?.token);
             fetch(
               `${import.meta.env.VITE_APP_API_BASE_URL}/products/${product._id}/exported-templates`,
               {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  Authorization: tokenHolder ? `Bearer ${tokenHolder.token}` : "",
+                  ...(authHeader && { Authorization: authHeader }),
                 },
                 body: JSON.stringify({
                   id: template?._id || "default",

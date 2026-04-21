@@ -121,9 +121,7 @@ const useImport = () => {
         const columnMap = {
             // לווה
             [t('BorrowerName')]: 'borrowerName',
-            [t('BorrowerFamily')]: 'borrowerFamily',
             [t('BorrowerIdNumber')]: 'borrowerIdNumber',
-            [t('BorrowerIdType')]: 'borrowerIdType',
             [t('BorrowerAddress')]: 'borrowerAddress',
             [t('BorrowerDateOfBirth')]: 'borrowerDateOfBirth',
             [t('BorrowerGender')]: 'borrowerGender',
@@ -227,12 +225,9 @@ const useImport = () => {
     // כותרות שמופיעות פעמיים באותו קובץ (בלי 1/2) — מיפוי לפי סדר: הופעה ראשונה = לווה 1, שנייה = לווה 2
     const DUPLICATE_HEADER_FIELDS = {
         'שם פרטי לווה': ['borrowerName', 'borrowerFirstName_2'],
-        'שם משפחה לווה': ['borrowerFamily', 'borrowerFamily_2'],
         'מספר תעודת זהות לווה': ['borrowerIdNumber', 'borrowerIdNumber_2'],
         'תעודת זהות לווה': ['borrowerIdNumber', 'borrowerIdNumber_2'],
         'כתובת לווה': ['borrowerAddress', 'borrowerAddress_2'],
-        'סוג זיהוי לווה': ['borrowerIdType', 'borrowerIdType_2'],
-        'סוג לווה': ['borrowerIdType', 'borrowerIdType_2'],
     };
 
     // בודק אם השורה נראית כמו שורת כותרות (מכילה מילות מפתח כמו שם, לווה, יועץ)
@@ -286,9 +281,7 @@ const useImport = () => {
     // בניית מפת כל השמות הידועים (עברית → שם שדה) — כולל כותרות חלופיות לולידציה
     const buildColumnMap = () => ({
         [t('BorrowerName')]: 'borrowerName',
-        [t('BorrowerFamily')]: 'borrowerFamily',
         [t('BorrowerIdNumber')]: 'borrowerIdNumber',
-        [t('BorrowerIdType')]: 'borrowerIdType',
         [t('BorrowerAddress')]: 'borrowerAddress',
         [t('BorrowerDateOfBirth')]: 'borrowerDateOfBirth',
         [t('BorrowerGender')]: 'borrowerGender',
@@ -380,10 +373,6 @@ const useImport = () => {
         'פיגורים מתואמת': CANONICAL_EXCEL_HEADERS.adjustedLoan,
         'שם משפחה לווה1': CANONICAL_EXCEL_HEADERS.borrowerName,
         'שם משפחה לווה 1': CANONICAL_EXCEL_HEADERS.borrowerName,
-        'לווה סוג זיהוי 1': CANONICAL_EXCEL_HEADERS.borrowerIdType,
-        'לווה סוג זיהוי 2': CANONICAL_EXCEL_HEADERS.borrowerIdType_2,
-        'לווה סוג זיהוי1': CANONICAL_EXCEL_HEADERS.borrowerIdType,
-        'לווה סוג זיהוי2': CANONICAL_EXCEL_HEADERS.borrowerIdType_2,
     };
 
     // מציע כותרת תקנית לכותרת לא מוכרת (לפי מילות מפתח) — כדי להציג ללקוח "השם צריך להיות X"
@@ -401,10 +390,11 @@ const useImport = () => {
             return isId ? CANONICAL_EXCEL_HEADERS.financingCompanyId : CANONICAL_EXCEL_HEADERS.financingCompanyName;
         }
         if ((n.includes('שם') && n.includes('לווה')) || n.includes('שם הלווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerFirstName_2 : CANONICAL_EXCEL_HEADERS.borrowerName;
-        if (n.includes('משפחה') && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerFamily_2 : CANONICAL_EXCEL_HEADERS.borrowerFamily;
+        if (n.includes('משפחה') && n.includes('לווה')) {
+            return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerFirstName_2 : CANONICAL_EXCEL_HEADERS.borrowerName;
+        }
         if ((n.includes('תעודת') || n.includes('ת.ז') || n.includes('זהות')) && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerIdNumber_2 : CANONICAL_EXCEL_HEADERS.borrowerIdNumber;
         if (n.includes('כתובת') && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerAddress_2 : CANONICAL_EXCEL_HEADERS.borrowerAddress;
-        if ((n.includes('סוג זיהוי') || n.includes('סוג לווה')) && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerIdType_2 : CANONICAL_EXCEL_HEADERS.borrowerIdType;
         if (n.includes('עורך דין') || n.includes('עורך הדין')) {
             if (n.includes('רישיון') || n.includes('רישום')) return CANONICAL_EXCEL_HEADERS.lawyerRegistrationNumber;
             if (n.includes('תעודת') || n.includes('זהות')) return CANONICAL_EXCEL_HEADERS.lawyerIdNumber;
@@ -537,14 +527,13 @@ const useImport = () => {
                 const borrowerFullName = (r, i) => {
                     if (i === 1) {
                         const one = str(r.borrowerName);
-                        const fam = str(r.borrowerFamily);
-                        if (one || fam) return [one, fam].filter(Boolean).join(' ').trim();
-                        return [str(r.borrowerFirstName_2), str(r.borrowerFamily_2)].filter(Boolean).join(' ').trim() || '';
+                        if (one) return one;
+                        return str(r.borrowerFirstName_2) || '';
                     }
                     if (i === 2) {
                         const n2 = str(r.borrowerName_2);
                         if (n2) return n2;
-                        return [str(r.borrowerFirstName_2), str(r.borrowerFamily_2)].filter(Boolean).join(' ').trim() || '';
+                        return str(r.borrowerFirstName_2) || '';
                     }
                     return str(r[`borrowerName_${i}`]) || '';
                 };
@@ -560,20 +549,16 @@ const useImport = () => {
                     let r = mapProductColumnNames(row);
 
                     // קובץ עם לווה אחד בלבד (רק עמודות בלי "1"): מעבירים _2 ל־_1
-                    const hasFirstBorrowerColumns = str(r.borrowerName) || str(r.borrowerFamily) || r.borrowerIdNumber != null;
-                    if (!hasFirstBorrowerColumns && (str(r.borrowerFirstName_2) || str(r.borrowerFamily_2) || r.borrowerIdNumber_2 != null)) {
+                    const hasFirstBorrowerColumns = str(r.borrowerName) || r.borrowerIdNumber != null;
+                    if (!hasFirstBorrowerColumns && (str(r.borrowerFirstName_2) || r.borrowerIdNumber_2 != null)) {
                         r = {
                             ...r,
                             borrowerName: r.borrowerFirstName_2,
-                            borrowerFamily: r.borrowerFamily_2,
                             borrowerIdNumber: r.borrowerIdNumber_2,
                             borrowerAddress: r.borrowerAddress_2,
-                            borrowerIdType: r.borrowerIdType_2,
                             borrowerFirstName_2: undefined,
-                            borrowerFamily_2: undefined,
                             borrowerIdNumber_2: undefined,
                             borrowerAddress_2: undefined,
-                            borrowerIdType_2: undefined,
                         };
                     }
 

@@ -57,7 +57,7 @@ const ConsultantForm = () => {
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
-      borrowers: [{ borrowerName: "", borrowerFamily: "", borrowerIdType: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "" }],
+      borrowers: [{ borrowerName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "" }],
       registrationDetails: {},
       sellers: [],
       loans: [],
@@ -153,7 +153,7 @@ const ConsultantForm = () => {
                 type="button"
                 onClick={() => {
                   const cur = watch("borrowers") || [];
-                  setValue("borrowers", [...cur, { borrowerName: "", borrowerFamily: "", borrowerIdType: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "" }]);
+                  setValue("borrowers", [...cur, { borrowerName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "" }]);
                 }}
                 className="text-sm text-[#a57d45] hover:underline"
               >
@@ -163,8 +163,6 @@ const ConsultantForm = () => {
             {(watch("borrowers") || []).map((_, i) => (
               <div key={i} className="col-span-12 border rounded-xl p-4 bg-gray-50 grid grid-cols-12 gap-4">
                 <Field label="שם פרטי" col={3}><Input register={register} name={`borrowers[${i}].borrowerName`} placeholder="שם פרטי" /></Field>
-                <Field label="שם משפחה" col={3}><Input register={register} name={`borrowers[${i}].borrowerFamily`} placeholder="שם משפחה" /></Field>
-                <Field label="סוג מזהה" col={3}><Input register={register} name={`borrowers[${i}].borrowerIdType`} placeholder="ת.ז / דרכון" /></Field>
                 <Field label="מספר ת.ז" col={3}><Input register={register} name={`borrowers[${i}].borrowerIdNumber`} type="text" placeholder="מספר ת.ז" registerOptions={{ validate: idValidate }} /></Field>
                 {errors?.borrowers?.[i]?.borrowerIdNumber && <div className="col-span-12 text-red-600 text-sm">{errors.borrowers[i].borrowerIdNumber.message}</div>}
                 <Field label="כתובת" col={6}><Input register={register} name={`borrowers[${i}].borrowerAddress`} placeholder="כתובת מגורים" /></Field>

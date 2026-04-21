@@ -712,8 +712,6 @@
   "SelectAllOrdersInFilter": "בחירת כל ההזמנות בסינון ({{count}} הזמנות)",
   "DateRange": "טווח תאריכים",
   "BorrowerName": "שם הלווה",
-  "BorrowerFamily": "שם משפחה של הלווה",
-  "BorrowerIdType": "סוג תעודת זהות",
   "BorrowerIdNumber": "מספר תעודת זהות",
   "BorrowerAddress": "כתובת הלווה",
   "BorrowerDateOfBirth": "תאריך לידה",

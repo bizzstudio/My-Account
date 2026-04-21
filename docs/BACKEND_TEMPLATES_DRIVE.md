@@ -19,3 +19,18 @@
 ---
 
 **מודל Template נוכחי:** `name`, `driveFileId`, timestamps. יש להוסיף שדה אופציונלי `webViewLink`.
+
+---
+
+## ייצוא Word (מילוי תבנית) — מה נדרש בבקאנד
+
+המיזוג ל־DOCX רץ בפרונט (`ExportWord` + `buildWordTemplateData`). השרת **לא** ממלא תגים; הוא רק מחזיר את קובץ התבנית ומקבל את ה־DOCX אחרי מילוי.
+
+כדי שהמסמך יכיל נתונים:
+
+1. **GET /products/:id** (ורשימת מוצרים אם משם מייצאים) חייב להחזיר את כל האובייקטים השמורים:  
+   `registrationDetails`, `signingDetails`, `projectDetails`, `borrowerBankAccount`, `seniorCreditor`,  
+   `borrowers` (מערך מלא), `financingCompanies`, `sellers`, `loans`, `authorizedPerson`, `mortgagors`.  
+   אם השרת מחזיר רק חלק מהשדות או מערך `borrowers` עם איבר אחד בלבד למרות שיש כמה — חלק מהתגים במקרא יישארו `-` או לא מדויקים.
+2. **POST/PUT מוצר** — לוודא שהסכימה ב-Mongo (או ORM) כוללת את כל השדות הנ"ל ושאין `select`/`lean` שמסננים nested objects לפני השמירה או לפני הקריאה.
+3. **תאימות שמות שדות** — חברות מימון במוצר: `financingCompanies[].name` ו־`financingCompanies[].idNumber` (לא חייבים להיות זהים לשמות במקרא Word; הפרונט ממפה ל־`financingCompanyName` / `financingCompanyIdNumber`).
