@@ -57,7 +57,7 @@ const ConsultantForm = () => {
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
-      borrowers: [{ borrowerName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "" }],
+      borrowers: [{ borrowerName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "", borrowerIsMortgagor: false }],
       registrationDetails: {},
       sellers: [],
       loans: [],
@@ -153,9 +153,9 @@ const ConsultantForm = () => {
                 type="button"
                 onClick={() => {
                   const cur = watch("borrowers") || [];
-                  setValue("borrowers", [...cur, { borrowerName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "" }]);
+                  setValue("borrowers", [...cur, { borrowerName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "", borrowerIsMortgagor: false }]);
                 }}
-                className="text-sm text-[#a57d45] hover:underline"
+                className="text-base font-bold text-[#a57d45] hover:underline"
               >
                 + הוסף לווה
               </button>
@@ -174,6 +174,12 @@ const ConsultantForm = () => {
                   </div>
                 </Field>
                 <Field label="אימייל" col={6}><Input register={register} name={`borrowers[${i}].borrowerEmail`} type="email" placeholder="דוא״ל" /></Field>
+                <Field label={t("BorrowerIsMortgagor")} col={3}>
+                  <label className="flex items-center gap-2 text-sm mt-2 cursor-pointer">
+                    <input type="checkbox" className="rounded border-gray-300 text-[#a57d45] focus:ring-[#a57d45]" {...register(`borrowers[${i}].borrowerIsMortgagor`)} />
+                    <span>{t("Yes")}</span>
+                  </label>
+                </Field>
                 {(watch("borrowers") || []).length > 1 && (
                   <div className="col-span-12 flex justify-end">
                     <button type="button" onClick={() => setValue("borrowers", (watch("borrowers") || []).filter((_, j) => j !== i))} className="text-sm text-red-500 hover:underline">הסר לווה</button>

@@ -9,6 +9,7 @@ import ProductServices from "@/services/ProductServices";
 import UserServices from "@/services/UserServices";
 import notifyApiResponse from "@/utils/notifyApiResponse";
 import ExportWord from "@/components/product/ExportWord";
+import { isBorrowerMortgagorFlag } from "@/utils/buildWordTemplateData";
 
 const useProductSubmit = (id, onSuccess) => {
   const { isDrawerOpen, closeDrawer, setIsUpdate } =
@@ -27,6 +28,7 @@ const useProductSubmit = (id, onSuccess) => {
     borrowerDateOfBirth: "",
     borrowerGender: "",
     borrowerEmail: "",
+    borrowerIsMortgagor: false,
   };
 
   const defaultSeller = {
@@ -56,13 +58,6 @@ const useProductSubmit = (id, onSuccess) => {
     authorizedIdNumber: 0,
   };
 
-  const defaultMortgagor = {
-    mortgagorDetails: "",
-    mortgagorFamily: "",
-    mortgagorIdType: "",
-    mortgagorIdNumber: 0,
-  };
-
   const {
     register,
     handleSubmit,
@@ -83,9 +78,11 @@ const useProductSubmit = (id, onSuccess) => {
       financingCompanies: [],
       loans: [defaultLoan],
       authorizedPerson: [defaultAuthorized],
-      mortgagors: [defaultMortgagor],
+      mortgagors: [],
       transcriptText: "",
       facebookFeedData: "",
+      /** UI בלבד — בחירת עורך דין מהרשימה (אדמין); לא נשלח ל-API */
+      _selectedLawyerId: "",
     },
   });
 
@@ -120,20 +117,23 @@ const useProductSubmit = (id, onSuccess) => {
     try {
       setIsSubmitting(true);
 
-      // 🔹 Prepare product data
+      // 🔹 Prepare product data (שדות UI פנימיים לא נשלחים לשרת)
+      const { _selectedLawyerId: _uiLawyer, ...restData } = data;
       const productData = {
-        ...data,
+        ...restData,
+        mortgagors: [],
         signingDetails: {
-          ...data.signingDetails,
-          signingDate: convertDate(data.signingDetails?.signingDate),
+          ...restData.signingDetails,
+          signingDate: convertDate(restData.signingDetails?.signingDate),
         },
         projectDetails: {
-          ...data.projectDetails,
-          tamAgreementDate: convertDate(data.projectDetails?.tamAgreementDate),
+          ...restData.projectDetails,
+          tamAgreementDate: convertDate(restData.projectDetails?.tamAgreementDate),
         },
-        borrowers: data.borrowers?.map((b) => ({
+        borrowers: restData.borrowers?.map((b) => ({
           ...b,
           borrowerDateOfBirth: convertDate(b.borrowerDateOfBirth),
+          borrowerIsMortgagor: isBorrowerMortgagorFlag(b),
         })),
         loans: data.loans?.map((l) => ({
           ...l,
@@ -144,8 +144,8 @@ const useProductSubmit = (id, onSuccess) => {
       };
 
       // 🔹 Only super-admin can set owner
-      if (userInfo?.role === "super-admin" && data.owner) {
-        productData.owner = data.owner;
+      if (userInfo?.role === "super-admin" && restData.owner) {
+        productData.owner = restData.owner;
       }
 
       let res;
@@ -225,7 +225,7 @@ const useProductSubmit = (id, onSuccess) => {
         borrowers: borrowersMappedFinal,
         loans: loansMapped,
         authorizedPerson: res.authorizedPerson?.length ? res.authorizedPerson : [defaultAuthorized],
-        mortgagors: res.mortgagors?.length ? res.mortgagors : [defaultMortgagor],
+        mortgagors: [],
         sellers: res.sellers?.length ? res.sellers : [defaultSeller],
         financingCompanies: res.financingCompanies || [],
         transcriptText: res.transcriptText || "",

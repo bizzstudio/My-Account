@@ -317,11 +317,6 @@ import {
   { key: "authorizedPerson.authorizedName", label: getCanonicalHeader("authorizedPerson.authorizedName") || t("AuthorizedName") },
   { key: "authorizedPerson.authorizedIdNumber", label: getCanonicalHeader("authorizedPerson.authorizedIdNumber") || t("AuthorizedIdNumber") },
 
-  { key: "mortgagors.mortgagorDetails", label: getCanonicalHeader("mortgagors.mortgagorDetails") || t("MortgagorDetails") },
-  { key: "mortgagors.mortgagorFamily", label: getCanonicalHeader("mortgagors.mortgagorFamily") || t("MortgagorFamily") },
-  { key: "mortgagors.mortgagorIdType", label: getCanonicalHeader("mortgagors.mortgagorIdType") || t("MortgagorIdType") },
-  { key: "mortgagors.mortgagorIdNumber", label: getCanonicalHeader("mortgagors.mortgagorIdNumber") || t("MortgagorIdNumber") },
-
   // ===== פרטי פרויקט =====
   { key: "projectDetails.tamAgreementDate", label: getCanonicalHeader("projectDetails.tamAgreementDate") || t("TamAgreementDate") },
   { key: "projectDetails.appraiser", label: getCanonicalHeader("projectDetails.appraiser") || t("Appraiser") },

@@ -86,16 +86,33 @@ const ProductDrawer = ({ id, onSuccess }) => {
         }
     }, [id, rawPackages, setValue]);
 
-    // בעריכת תיק: סנכרון בחירת עורך דין לפי מספר רישום (מזהה ראשי)
+    // בעריכת תיק: סנכרון בחירת עורך דין מהרשימה (חובה לולידציה) — לפי מספר רישום ואם אין התאמה לפי שם
     const lawyerRegistrationNumber = watch("signingDetails.lawyerRegistrationNumber");
+    const lawyerNameSigned = watch("signingDetails.lawyerName");
     const selectedLawyerId = watch("_selectedLawyerId");
     useEffect(() => {
-        if (id && lawyers?.length > 0 && lawyerRegistrationNumber != null && lawyerRegistrationNumber !== "" && !selectedLawyerId) {
-            const regStr = String(lawyerRegistrationNumber).trim();
-            const found = lawyers.find((l) => l.registrationNumber != null && String(l.registrationNumber).trim() === regStr);
-            if (found) setValue("_selectedLawyerId", found._id);
+        if (!isAdmin || !id || !lawyers?.length || selectedLawyerId) return;
+        const regStr =
+            lawyerRegistrationNumber != null && String(lawyerRegistrationNumber).trim() !== ""
+                ? String(lawyerRegistrationNumber).trim()
+                : "";
+        const nameStr = lawyerNameSigned ? String(lawyerNameSigned).trim() : "";
+
+        let found = null;
+        if (regStr) {
+            found = lawyers.find((l) => {
+                if (l.registrationNumber == null || l.registrationNumber === "") return false;
+                const lr = String(l.registrationNumber).trim();
+                return lr === regStr || Number(lr) === Number(regStr);
+            });
         }
-    }, [id, lawyers, lawyerRegistrationNumber, selectedLawyerId, setValue]);
+        if (!found && nameStr) {
+            found = lawyers.find((l) => (l.name || "").trim() === nameStr);
+        }
+        if (found) {
+            setValue("_selectedLawyerId", found._id, { shouldValidate: true, shouldDirty: false });
+        }
+    }, [isAdmin, id, lawyers, lawyerRegistrationNumber, lawyerNameSigned, selectedLawyerId, setValue]);
 
     const packageCargoTypeOptions = PACKAGE_CARGO_TYPE_VALUES.map((value) => ({
         _id: value,
@@ -203,6 +220,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
       {isAdmin && (
         <div className="flex flex-col gap-1 md:col-span-5 col-span-12">
           <LabelArea label={t("SelectLawyer")} />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t("SelectLawyerHelp")}</p>
           <input
             type="hidden"
             {...register("_selectedLawyerId", {
@@ -288,10 +306,11 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 borrowerDateOfBirth: "",
                 borrowerGender: "",
                 borrowerEmail: "",
+                borrowerIsMortgagor: false,
               },
             ]);
           }}
-          className="text-sm text-mainColor hover:underline whitespace-nowrap"
+          className="text-base font-bold text-mainColor hover:underline whitespace-nowrap"
         >
           + {t("AddBorrower")}
         </button>
@@ -383,21 +402,31 @@ const ProductDrawer = ({ id, onSuccess }) => {
             </div>
           </div>
 
-          {/* Borrower Gender */}
-          <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+          {/* מין הלווה + ממשכן — באותה שורה */}
+          <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
             <LabelArea label={t("BorrowerGender")} />
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input type="radio" value="male"
-                  {...register(`borrowers[${index}].borrowerGender`)}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 justify-between sm:justify-start">
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2">
+                  <input type="radio" value="male"
+                    {...register(`borrowers[${index}].borrowerGender`)}
+                  />
+                  {t("Male")}
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="radio" value="female"
+                    {...register(`borrowers[${index}].borrowerGender`)}
+                  />
+                  {t("Female")}
+                </label>
+              </div>
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300 text-mainColor focus:ring-mainColor"
+                  {...register(`borrowers[${index}].borrowerIsMortgagor`)}
                 />
-                {t("Male")}
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="radio" value="female"
-                  {...register(`borrowers[${index}].borrowerGender`)}
-                />
-                {t("Female")}
+                {t("BorrowerIsMortgagor")}
               </label>
             </div>
             <Error errorName={errors?.borrowers?.[index]?.borrowerGender} />
@@ -473,7 +502,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
             const current = watch("financingCompanies") || [];
             setValue("financingCompanies", [...current, { name: "", idNumber: "" }]);
           }}
-          className="text-sm text-mainColor hover:underline whitespace-nowrap"
+          className="text-base font-bold text-mainColor hover:underline whitespace-nowrap"
         >
           + {t("AddFinancingCompany")}
         </button>
@@ -917,7 +946,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         const current = watch("sellers") || [];
                         setValue("sellers", [...current, { sellerName: "", sellerIdType: "", sellerIdNumber: "", sellerAddress: "" }]);
                     }}
-                    className="text-sm text-mainColor hover:underline whitespace-nowrap"
+                    className="text-base font-bold text-mainColor hover:underline whitespace-nowrap"
                 >
                     + {t("AddSeller")}
                 </button>
@@ -1044,7 +1073,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                             mortgageNumber: "" 
                         }]);
                     }}
-                    className="text-sm text-mainColor hover:underline whitespace-nowrap"
+                    className="text-base font-bold text-mainColor hover:underline whitespace-nowrap"
                 >
                     + {t("AddLoan")}
                 </button>
@@ -1395,10 +1424,10 @@ const ProductDrawer = ({ id, onSuccess }) => {
     </CollapsibleSection>
 </div>
 
-{/* סקשן: מורשים ומורשים מורשים (Authorized Person + Mortgagors) */}
+{/* סקשן: אנשים מורשים */}
 <div className="col-span-12">
     <CollapsibleSection
-        title={t("AuthorizedAndMortgagors")}
+        title={t("AuthorizedPersons")}
         icon={<MdEditNote size={24} className="mt-1" />}
         defaultfalse
     >
@@ -1417,7 +1446,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 { authorizedName: "", authorizedIdNumber: "" },
                             ]);
                         }}
-                        className="text-sm text-mainColor hover:underline whitespace-nowrap"
+                        className="text-base font-bold text-mainColor hover:underline whitespace-nowrap"
                     >
                         + {t("AddAuthorizedPerson")}
                     </button>
@@ -1475,120 +1504,6 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-sm"
                             >
                                 {t("RemoveAuthorizedPerson")}
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* מערך: Mortgagors */}
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                    <LabelArea label={t("Mortgagors")} />
-                    <button
-                        type="button"
-                        onClick={() => {
-                            const current = watch("mortgagors") || [];
-                            setValue("mortgagors", [
-                                ...current,
-                                {
-                                    mortgagorDetails: "",
-                                    mortgagorFamily: "",
-                                    mortgagorIdType: "",
-                                    mortgagorIdNumber: "",
-                                },
-                            ]);
-                        }}
-                        className="text-sm text-mainColor hover:underline whitespace-nowrap"
-                    >
-                        + {t("AddMortgagor")}
-                    </button>
-                </div>
-
-                {(watch("mortgagors") || []).map((mortgagor, index) => (
-                    <div
-                        key={index}
-                        className="grid grid-cols-12 gap-5 p-2 border rounded-md bg-gray-50 dark:bg-gray-800"
-                    >
-                        {/* Details */}
-                        <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                            <LabelArea label={t("MortgagorDetails")} />
-                            <InputArea
-                                register={register}
-                                label={t("MortgagorDetails")}
-                                name={`mortgagors[${index}].mortgagorDetails`}
-                                type="text"
-                                placeholder={t("MortgagorDetails")}
-                                isRequired={false}
-                            />
-                            <Error
-                                errorName={errors?.mortgagors?.[index]?.mortgagorDetails}
-                            />
-                        </div>
-
-                        {/* Family */}
-                        <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                            <LabelArea label={t("MortgagorFamily")} />
-                            <InputArea
-                                register={register}
-                                label={t("MortgagorFamily")}
-                                name={`mortgagors[${index}].mortgagorFamily`}
-                                type="text"
-                                placeholder={t("MortgagorFamily")}
-                                isRequired={false}
-                            />
-                            <Error
-                                errorName={errors?.mortgagors?.[index]?.mortgagorFamily}
-                            />
-                        </div>
-
-                        {/* ID Type */}
-                        <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                            <LabelArea label={t("MortgagorIdType")} />
-                            <InputArea
-                                register={register}
-                                label={t("MortgagorIdType")}
-                                name={`mortgagors[${index}].mortgagorIdType`}
-                                type="text"
-                                placeholder={t("MortgagorIdType")}
-                                isRequired={false}
-                            />
-                            <Error
-                                errorName={errors?.mortgagors?.[index]?.mortgagorIdType}
-                            />
-                        </div>
-
-                        {/* ID Number */}
-                        <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                            <LabelArea label={t("MortgagorIdNumber")} />
-                            <InputArea
-                                register={register}
-                                label={t("MortgagorIdNumber")}
-                                name={`mortgagors[${index}].mortgagorIdNumber`}
-                                type="text"
-                                placeholder={t("MortgagorIdNumber")}
-                                isRequired={false}
-                                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
-                            />
-                            <Error
-                                errorName={errors?.mortgagors?.[index]?.mortgagorIdNumber}
-                            />
-                        </div>
-
-                        {/* כפתור הסרה */}
-                        <div className="col-span-12 flex justify-end">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const current = watch("mortgagors") || [];
-                                    setValue(
-                                        "mortgagors",
-                                        current.filter((_, i) => i !== index)
-                                    );
-                                }}
-                                className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-sm"
-                            >
-                                {t("RemoveMortgagor")}
                             </button>
                         </div>
                     </div>

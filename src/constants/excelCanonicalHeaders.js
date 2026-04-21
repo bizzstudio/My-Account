@@ -1,7 +1,7 @@
 /**
  * כותרות אקסל אחידות — כותרת אחת לכל שדה.
  * משמש ייבוא (Excel/CSV) וייצוא (Excel) כדי שהקבצים יהיו תואמים.
- * עדכון: לשנות רק כאן; התיעוד ב-docs/רשימת-כותרות-אקסל-מדויקת.txt ו-CSV משקפים את הרשימה הזו.
+ * עדכון: לשנות רק כאן; קבצי docs לייבוא/אקסל עשויים לדרוש עדכון ידני בהתאמה.
  */
 
 export const CANONICAL_EXCEL_HEADERS = {
@@ -117,19 +117,6 @@ export const CANONICAL_EXCEL_HEADERS = {
   authorizedIdNumber_2: 'ת.ז. מורשה 2',
   authorizedName_3: 'שם מורשה 3',
   authorizedIdNumber_3: 'ת.ז. מורשה 3',
-  // משכנים 1–3
-  mortgagorDetails: 'פרטי ממשכן 1',
-  mortgagorFamily: 'משפחה ממשכן 1',
-  mortgagorIdType: 'זיהוי ממשכן 1',
-  mortgagorIdNumber: 'מ. זיהוי ממשכן 1',
-  mortgagorDetails_2: 'פרטי ממשכן 2',
-  mortgagorFamily_2: 'משפחה ממשכן 2',
-  mortgagorIdType_2: 'זיהוי ממשכן 2',
-  mortgagorIdNumber_2: 'מ. זיהוי ממשכן 2',
-  mortgagorDetails_3: 'פרטי ממשכן 3',
-  mortgagorFamily_3: 'משפחה ממשכן 3',
-  mortgagorIdType_3: 'זיהוי ממשכן 3',
-  mortgagorIdNumber_3: 'מ. זיהוי ממשכן 3',
   // פרטי פרויקט
   tamAgreementDate: 'ת. הסכם תמא',
   appraiser: 'שמאי',

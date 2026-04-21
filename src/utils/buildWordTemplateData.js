@@ -27,6 +27,103 @@ const genderHe = (g) => {
   return dash(g);
 };
 
+const yesNoHe = (v) =>
+  v === true || v === "true" || v === 1 || v === "1" ? "כן" : "לא";
+
+/** האם הלווה מסומן כממשכן (לסינון תגי mortgagorName1… ו־nonMortgagor…) */
+export function isBorrowerMortgagorFlag(b) {
+  const v = b?.borrowerIsMortgagor;
+  return v === true || v === "true" || v === 1 || v === "1";
+}
+
+/** מספר מקסימלי של לווים עם תגים ממוספרים ({borrowerName1}, {borrowerName2}, …) */
+export const MAX_INDEXED_BORROWERS = 5;
+
+/** שדות לווה לתת-מספר אחרי mortgagor / nonMortgagor (למשל mortgagorName1) */
+const ROLE_INDEXED_BORROWER_KEYS = [
+  ["borrowerName", "Name"],
+  ["borrowerIdNumber", "IdNumber"],
+  ["borrowerAddress", "Address"],
+  ["borrowerDateOfBirth", "DateOfBirth"],
+  ["borrowerGender", "Gender"],
+  ["borrowerEmail", "Email"],
+];
+
+const INDEXED_BORROWER_FIELD_KEYS = [
+  "borrowerName",
+  "borrowerIdNumber",
+  "borrowerAddress",
+  "borrowerDateOfBirth",
+  "borrowerGender",
+  "borrowerEmail",
+  "borrowerIsMortgagor",
+];
+
+export function formatBorrowerPlaceholderValue(key, borrower) {
+  const b = borrower || {};
+  switch (key) {
+    case "borrowerName":
+      return dash(b.borrowerName);
+    case "borrowerIdNumber":
+      return dash(b.borrowerIdNumber);
+    case "borrowerAddress":
+      return dash(b.borrowerAddress);
+    case "borrowerDateOfBirth":
+      return formatDateHe(b.borrowerDateOfBirth);
+    case "borrowerGender":
+      return genderHe(b.borrowerGender);
+    case "borrowerEmail":
+      return dash(b.borrowerEmail);
+    case "borrowerIsMortgagor":
+      return yesNoHe(b.borrowerIsMortgagor);
+    default:
+      return "-";
+  }
+}
+
+/** תגים ממוספרים: {borrowerName1}, {borrowerName2}, … לפי סדר הלווים בתיק (עד MAX_INDEXED_BORROWERS) */
+export function buildBorrowerIndexedPlaceholders(borrowers) {
+  const brs = Array.isArray(borrowers) && borrowers.length ? borrowers : [{}];
+  const out = {};
+  for (let i = 0; i < MAX_INDEXED_BORROWERS; i++) {
+    const b = brs[i] || {};
+    const n = i + 1;
+    for (const key of INDEXED_BORROWER_FIELD_KEYS) {
+      out[`${key}${n}`] = formatBorrowerPlaceholderValue(key, b);
+    }
+  }
+  return out;
+}
+
+/**
+ * תגים לפי סדר ממשכנים (לווים עם צ'קבוקס ממשכן): {mortgagorName1}, {mortgagorHas1}, …
+ * ולפי סדר לווים שאינם ממשכנים: {nonMortgagorName1}, {nonMortgagorHas1}, …
+ * + borrowerIsMortgagorBool1… — בוליאני לתנאי docxtemplater לפי מספר לווה בתיק (לא לפי סינון ממשכן).
+ */
+export function buildMortgagorRolePlaceholders(borrowers) {
+  const brs = Array.isArray(borrowers) && borrowers.length ? borrowers : [];
+  const mort = brs.filter(isBorrowerMortgagorFlag);
+  const non = brs.filter((b) => !isBorrowerMortgagorFlag(b));
+  const out = {};
+  for (let i = 0; i < MAX_INDEXED_BORROWERS; i++) {
+    const n = i + 1;
+    const bm = mort[i] || {};
+    const bn = non[i] || {};
+    out[`mortgagorHas${n}`] = !!mort[i];
+    out[`nonMortgagorHas${n}`] = !!non[i];
+    for (const [borrowKey, suffix] of ROLE_INDEXED_BORROWER_KEYS) {
+      out[`mortgagor${suffix}${n}`] = formatBorrowerPlaceholderValue(borrowKey, bm);
+      out[`nonMortgagor${suffix}${n}`] = formatBorrowerPlaceholderValue(borrowKey, bn);
+    }
+  }
+  for (let i = 0; i < MAX_INDEXED_BORROWERS; i++) {
+    const n = i + 1;
+    const b = brs[i];
+    out[`borrowerIsMortgagorBool${n}`] = isBorrowerMortgagorFlag(b);
+  }
+  return out;
+}
+
 /**
  * @param {object} product — מסמך מוצר מלא
  * @param {object} borrower — איבר מ- product.borrowers לעמוד הנוכחי בייצוא
@@ -44,15 +141,23 @@ export function buildWordTemplateData(product, borrower) {
   const auth = Array.isArray(product?.authorizedPerson) && product.authorizedPerson.length
     ? product.authorizedPerson[0]
     : {};
-  const mort = Array.isArray(product?.mortgagors) && product.mortgagors.length ? product.mortgagors[0] : {};
   const sc = product?.seniorCreditor || {};
   const bba = product?.borrowerBankAccount || {};
+
+  const allBorrowersList =
+    Array.isArray(product?.borrowers) && product.borrowers.length ? product.borrowers : [b];
+  const allBorrowerNames =
+    allBorrowersList.map((x) => (x.borrowerName || "").trim()).filter(Boolean).join(" ו ") || "-";
+
+  const indexedBorrowers = buildBorrowerIndexedPlaceholders(allBorrowersList);
+  const mortgagorRolePlaceholders = buildMortgagorRolePlaceholders(allBorrowersList);
 
   return {
     lawyerName: dash(sd.lawyerName),
     lawyerRegistrationNumber: dash(sd.lawyerRegistrationNumber),
     lawyerIdNumber: dash(sd.lawyerIdNumber),
     lawyerEmail: dash(sd.lawyerEmail),
+    signingDate: formatDateHe(sd.signingDate),
 
     consultant: dash(sd.consultant),
     consultantEmail: dash(sd.consultantEmail),
@@ -60,12 +165,16 @@ export function buildWordTemplateData(product, borrower) {
     financingCompanyName: dash(fc.name),
     financingCompanyIdNumber: dash(fc.idNumber),
 
-    borrowerName: dash(b.borrowerName),
-    borrowerIdNumber: dash(b.borrowerIdNumber),
-    borrowerAddress: dash(b.borrowerAddress),
-    borrowerDateOfBirth: formatDateHe(b.borrowerDateOfBirth),
-    borrowerGender: genderHe(b.borrowerGender),
-    borrowerEmail: dash(b.borrowerEmail),
+    borrowerName: formatBorrowerPlaceholderValue("borrowerName", b),
+    borrowerIdNumber: formatBorrowerPlaceholderValue("borrowerIdNumber", b),
+    borrowerAddress: formatBorrowerPlaceholderValue("borrowerAddress", b),
+    borrowerDateOfBirth: formatBorrowerPlaceholderValue("borrowerDateOfBirth", b),
+    borrowerGender: formatBorrowerPlaceholderValue("borrowerGender", b),
+    borrowerEmail: formatBorrowerPlaceholderValue("borrowerEmail", b),
+    borrowerIsMortgagor: formatBorrowerPlaceholderValue("borrowerIsMortgagor", b),
+    allBorrowerNames,
+    ...indexedBorrowers,
+    ...mortgagorRolePlaceholders,
 
     block: dash(rd.block),
     plot: dash(rd.plot),
@@ -117,11 +226,6 @@ export function buildWordTemplateData(product, borrower) {
 
     authorizedName: dash(auth.authorizedName),
     authorizedIdNumber: dashOptionalZero(auth.authorizedIdNumber),
-
-    mortgagorDetails: dash(mort.mortgagorDetails),
-    mortgagorFamily: dash(mort.mortgagorFamily),
-    mortgagorIdType: dash(mort.mortgagorIdType),
-    mortgagorIdNumber: dashOptionalZero(mort.mortgagorIdNumber),
 
     tamAgreementDate: formatDateHe(pd.tamAgreementDate),
     appraiser: dash(pd.appraiser),

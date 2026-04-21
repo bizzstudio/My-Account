@@ -9,6 +9,7 @@ const DEFAULT_TEMPLATE = { _id: "default", name: t("DefaultTemplate") };
 const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
   const [templates, setTemplates] = useState([]);
   const [selected, setSelected] = useState({ default: true });
+  const [singleDocByTemplateId, setSingleDocByTemplateId] = useState({});
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(null);
@@ -43,24 +44,36 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
       const allFiles = [];
 
       if (selected["default"]) {
-        const { driveLinks, uploadedFiles } = await ExportWord(products, isCheck, null);
+        const { driveLinks, uploadedFiles } = await ExportWord(products, isCheck, null, {
+          singleDocumentPerProduct: !!singleDocByTemplateId["default"],
+        });
         Object.assign(allLinks, driveLinks);
         allFiles.push(...uploadedFiles);
       }
 
       for (const tpl of templates) {
         if (selected[tpl._id]) {
-          const { driveLinks, uploadedFiles } = await ExportWord(products, isCheck, tpl);
+          const { driveLinks, uploadedFiles } = await ExportWord(products, isCheck, tpl, {
+            singleDocumentPerProduct: !!singleDocByTemplateId[tpl._id],
+          });
           Object.assign(allLinks, driveLinks);
           allFiles.push(...uploadedFiles);
         }
       }
 
       if (allFiles.length === 1) {
-        const { borrower, template: tplName } = allFiles[0];
-        alert(`✅ המסמך הועלה בהצלחה!\n\nלקוח: ${borrower}\nמסמך: ${tplName}`);
+        const { borrower, template: tplName, singleDocument } = allFiles[0];
+        if (singleDocument) {
+          alert(`✅ מסמך אחד לכל התיק הועלה בהצלחה!\n\nשמות בתיק: ${borrower}\nמסמך: ${tplName}`);
+        } else {
+          alert(`✅ המסמך הועלה בהצלחה!\n\nלקוח: ${borrower}\nמסמך: ${tplName}`);
+        }
       } else if (allFiles.length > 1) {
-        const lines = allFiles.map(({ borrower, template: tplName }) => `• ${borrower} — ${tplName}`).join("\n");
+        const lines = allFiles
+          .map(({ borrower, template: tplName, singleDocument }) =>
+            singleDocument ? `• ${tplName} (מסמך אחד לתיק: ${borrower})` : `• ${borrower} — ${tplName}`
+          )
+          .join("\n");
         alert(`✅ ${allFiles.length} מסמכים הועלו בהצלחה:\n\n${lines}`);
       } else {
         setExportError("לא הועלו מסמכים. בדוק את חיבור ה-Drive בהגדרות (הגדרות → ניתוב ל-Drive).");
@@ -111,23 +124,41 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
               </button>
             </div>
 
-            <div className="flex flex-col gap-2 max-h-64 overflow-y-auto mb-5">
+            <div className="flex flex-col gap-2 max-h-72 overflow-y-auto mb-5">
               {allTemplates.map((tpl) => (
-                <label
+                <div
                   key={tpl._id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/40 cursor-pointer transition"
+                  className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition"
                 >
-                  <input
-                    type="checkbox"
-                    checked={!!selected[tpl._id]}
-                    onChange={() => toggleSelect(tpl._id)}
-                    className="w-4 h-4 accent-[#a57d45]"
-                  />
-                  <FiFileText size={16} className="text-[#a57d45] shrink-0" />
-                  <span className="text-sm text-gray-800 dark:text-gray-100">
-                    {tpl.name}
-                  </span>
-                </label>
+                  <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!selected[tpl._id]}
+                      onChange={() => toggleSelect(tpl._id)}
+                      className="w-4 h-4 accent-[#a57d45] shrink-0"
+                    />
+                    <FiFileText size={16} className="text-[#a57d45] shrink-0" />
+                    <span className="text-sm text-gray-800 dark:text-gray-100 truncate">
+                      {tpl.name}
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 shrink-0 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!singleDocByTemplateId[tpl._id]}
+                      onChange={() =>
+                        setSingleDocByTemplateId((prev) => ({
+                          ...prev,
+                          [tpl._id]: !prev[tpl._id],
+                        }))
+                      }
+                      className="w-4 h-4 accent-[#a57d45] shrink-0"
+                    />
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                      {t("SingleDocumentShort")}
+                    </span>
+                  </label>
+                </div>
               ))}
             </div>
 

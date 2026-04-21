@@ -21,6 +21,7 @@ const LEGEND_SECTIONS = [
       { key: "{lawyerRegistrationNumber}", label: "מספר רישום עורך דין" },
       { key: "{lawyerIdNumber}", label: "תעודת זהות עורך דין" },
       { key: "{lawyerEmail}", label: "אימייל עורך דין" },
+      { key: "{signingDate}", label: "תאריך חתימה" },
     ],
   },
   {
@@ -40,14 +41,10 @@ const LEGEND_SECTIONS = [
   {
     title: "לווים",
     items: [
-      { key: "{borrowerName}", label: "שם הלווה" },
-      { key: "{borrowerFamily}", label: "שם משפחת לווה" },
-      { key: "{borrowerIdType}", label: "סוג מזהה לווה" },
-      { key: "{borrowerIdNumber}", label: "מספר תעודת זהות לווה" },
-      { key: "{borrowerAddress}", label: "כתובת לווה" },
-      { key: "{borrowerDateOfBirth}", label: "תאריך לידה" },
-      { key: "{borrowerGender}", label: "מין" },
-      { key: "{borrowerEmail}", label: "אימייל לווה" },
+      { key: "{borrowerName1} … {borrowerName5}", label: "כל הלווים — שם לפי סדר ברשימת הלווים בתיק" },
+      { key: "{mortgagorName1} … {mortgagorName5}", label: "רק ממשכנים — שם לפי סדר (מסומנים «ממשכן» בלבד)" },
+      { key: "{nonMortgagorName1} … {nonMortgagorName5}", label: "רק לא ממשכנים — שם לפי סדר" },
+      { key: "{allBorrowerNames}", label: "טקסט מאוחד של כולם (שמות מחוברים ב־ו)" },
     ],
   },
   {
@@ -123,15 +120,6 @@ const LEGEND_SECTIONS = [
     items: [
       { key: "{authorizedName}", label: "שם מורשה" },
       { key: "{authorizedIdNumber}", label: "מספר תעודת זהות מורשה" },
-    ],
-  },
-  {
-    title: "ממשכנים",
-    items: [
-      { key: "{mortgagorDetails}", label: "פרטי ממשכן" },
-      { key: "{mortgagorFamily}", label: "שם משפחה ממשכן" },
-      { key: "{mortgagorIdType}", label: "סוג מזהה ממשכן" },
-      { key: "{mortgagorIdNumber}", label: "מספר מזהה ממשכן" },
     ],
   },
   {

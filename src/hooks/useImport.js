@@ -193,11 +193,6 @@ const useImport = () => {
             // מורשים
             [t('AuthorizedName')]: 'authorizedName',
             [t('AuthorizedIdNumber')]: 'authorizedIdNumber',
-            // משכנים
-            [t('MortgagorDetails')]: 'mortgagorDetails',
-            [t('MortgagorFamily')]: 'mortgagorFamily',
-            [t('MortgagorIdType')]: 'mortgagorIdType',
-            [t('MortgagorIdNumber')]: 'mortgagorIdNumber',
             // פרטי פרויקט
             [t('TamAgreementDate')]: 'tamAgreementDate',
             [t('Appraiser')]: 'appraiser',
@@ -344,10 +339,6 @@ const useImport = () => {
         [t('SellerAddress')]: 'sellerAddress',
         [t('AuthorizedName')]: 'authorizedName',
         [t('AuthorizedIdNumber')]: 'authorizedIdNumber',
-        [t('MortgagorDetails')]: 'mortgagorDetails',
-        [t('MortgagorFamily')]: 'mortgagorFamily',
-        [t('MortgagorIdType')]: 'mortgagorIdType',
-        [t('MortgagorIdNumber')]: 'mortgagorIdNumber',
         [t('TamAgreementDate')]: 'tamAgreementDate',
         [t('Appraiser')]: 'appraiser',
         [t('Supervisor')]: 'supervisor',
@@ -417,7 +408,6 @@ const useImport = () => {
         if (n.includes('בנק') && n.includes('לווה')) return CANONICAL_EXCEL_HEADERS.borrowerBankName;
         if (n.includes('מוכר')) return /2|שני/.test(n) ? (n.includes('כתובת') ? CANONICAL_EXCEL_HEADERS.sellerAddress_2 : n.includes('מס זיהוי') ? CANONICAL_EXCEL_HEADERS.sellerIdNumber_2 : n.includes('סוג') ? CANONICAL_EXCEL_HEADERS.sellerIdType_2 : CANONICAL_EXCEL_HEADERS.sellerName_2) : /3|שלישי/.test(n) ? (n.includes('כתובת') ? CANONICAL_EXCEL_HEADERS.sellerAddress_3 : n.includes('מס זיהוי') ? CANONICAL_EXCEL_HEADERS.sellerIdNumber_3 : n.includes('סוג') ? CANONICAL_EXCEL_HEADERS.sellerIdType_3 : CANONICAL_EXCEL_HEADERS.sellerName_3) : (n.includes('כתובת') ? CANONICAL_EXCEL_HEADERS.sellerAddress : n.includes('מס זיהוי') ? CANONICAL_EXCEL_HEADERS.sellerIdNumber : n.includes('סוג') ? CANONICAL_EXCEL_HEADERS.sellerIdType : CANONICAL_EXCEL_HEADERS.sellerName);
         if (n.includes('מורשה')) return /2|שני/.test(n) ? (n.includes('ת.ז') ? CANONICAL_EXCEL_HEADERS.authorizedIdNumber_2 : CANONICAL_EXCEL_HEADERS.authorizedName_2) : /3|שלישי/.test(n) ? (n.includes('ת.ז') ? CANONICAL_EXCEL_HEADERS.authorizedIdNumber_3 : CANONICAL_EXCEL_HEADERS.authorizedName_3) : (n.includes('ת.ז') ? CANONICAL_EXCEL_HEADERS.authorizedIdNumber : CANONICAL_EXCEL_HEADERS.authorizedName);
-        if (n.includes('ממשכן')) return /2|שני/.test(n) ? (n.includes('משפחה') ? CANONICAL_EXCEL_HEADERS.mortgagorFamily_2 : n.includes('זיהוי') && !n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdType_2 : n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdNumber_2 : CANONICAL_EXCEL_HEADERS.mortgagorDetails_2) : /3|שלישי/.test(n) ? (n.includes('משפחה') ? CANONICAL_EXCEL_HEADERS.mortgagorFamily_3 : n.includes('זיהוי') && !n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdType_3 : n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdNumber_3 : CANONICAL_EXCEL_HEADERS.mortgagorDetails_3) : (n.includes('משפחה') ? CANONICAL_EXCEL_HEADERS.mortgagorFamily : n.includes('זיהוי') && !n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdType : n.includes('מ.') ? CANONICAL_EXCEL_HEADERS.mortgagorIdNumber : CANONICAL_EXCEL_HEADERS.mortgagorDetails);
         if (n.includes('סעיף')) return CANONICAL_EXCEL_HEADERS.clause;
         return null;
     };
@@ -464,7 +454,6 @@ const useImport = () => {
             product.seniorCreditor?.seniorCreditorIdNumber != null && check(product.seniorCreditor.seniorCreditorIdNumber, 'SeniorCreditorIdNumber');
             product.sellers?.forEach((s, i) => s.sellerIdNumber != null && check(s.sellerIdNumber, `SellerIdNumber (${i + 1})`));
             product.authorizedPerson?.forEach((a, i) => a.authorizedIdNumber != null && check(a.authorizedIdNumber, `AuthorizedIdNumber (${i + 1})`));
-            product.mortgagors?.forEach((m, i) => m.mortgagorIdNumber != null && check(m.mortgagorIdNumber, `MortgagorIdNumber (${i + 1})`));
             product.financingCompanies?.forEach((f, i) => f.idNumber != null && check(f.idNumber, `FinancingCompanyId (${i + 1})`));
         });
         return { invalidRows };
@@ -586,10 +575,11 @@ const useImport = () => {
                                 borrowerDateOfBirth: dob ? new Date(dob) : undefined,
                                 borrowerGender: gender,
                                 borrowerEmail: email,
+                                borrowerIsMortgagor: false,
                             });
                         }
                     }
-                    if (borrowers.length === 0) borrowers.push({ borrowerName: '', borrowerIdNumber: undefined, borrowerAddress: undefined, borrowerDateOfBirth: undefined, borrowerGender: undefined, borrowerEmail: undefined });
+                    if (borrowers.length === 0) borrowers.push({ borrowerName: '', borrowerIdNumber: undefined, borrowerAddress: undefined, borrowerDateOfBirth: undefined, borrowerGender: undefined, borrowerEmail: undefined, borrowerIsMortgagor: false });
 
                     // הלוואות — 1–3
                     const loans = [];
@@ -642,22 +632,6 @@ const useImport = () => {
                         const aName = i === 1 ? str(r.authorizedName) : str(r[`authorizedName_${i}`]);
                         const aId = i === 1 ? num(r.authorizedIdNumber) : num(r[`authorizedIdNumber_${i}`]);
                         if (aName != null || aId != null) authorizedPerson.push({ authorizedName: aName, authorizedIdNumber: aId });
-                    }
-
-                    // משכנים — 1–3
-                    const mortgagors = [];
-                    for (let i = 1; i <= 3; i++) {
-                        const mDet = i === 1 ? str(r.mortgagorDetails) : str(r[`mortgagorDetails_${i}`]);
-                        const mFam = i === 1 ? str(r.mortgagorFamily) : str(r[`mortgagorFamily_${i}`]);
-                        const mId = i === 1 ? num(r.mortgagorIdNumber) : num(r[`mortgagorIdNumber_${i}`]);
-                        if (mDet != null || mFam != null || mId != null) {
-                            mortgagors.push({
-                                mortgagorDetails: mDet,
-                                mortgagorFamily: mFam,
-                                mortgagorIdType: i === 1 ? str(r.mortgagorIdType) : str(r[`mortgagorIdType_${i}`]),
-                                mortgagorIdNumber: mId,
-                            });
-                        }
                     }
 
                     const product = {
@@ -725,7 +699,7 @@ const useImport = () => {
 
                         sellers,
                         authorizedPerson,
-                        mortgagors,
+                        mortgagors: [],
 
                         projectDetails: {
                             tamAgreementDate: r.tamAgreementDate ? new Date(r.tamAgreementDate) : undefined,

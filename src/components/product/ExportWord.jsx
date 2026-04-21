@@ -11,7 +11,10 @@ const safeAuthHeader = (token) => {
 };
 
 // מחזיר מפה של { productId: driveFolderLink } לשימוש בשליחת מייל
-const ExportWord = async (products, isCheck = [], template = null) => {
+// options.singleDocumentPerProduct — true: קובץ Word אחד לכל תיק (לתבנית זו); false: קובץ נפרד לכל לווה.
+// תגים ממוספרים {borrowerName1}, {borrowerName2}, … מתמלאים תמיד לפי סדר הלווים בתיק; {borrowerName} = הלווה «של הקובץ» (במצב קובץ אחד — הלווה הראשון).
+const ExportWord = async (products, isCheck = [], template = null, options = {}) => {
+  const { singleDocumentPerProduct = false } = options;
   const uploadedFiles = [];
   const driveLinks = {}; // productId → folder webViewLink
 
@@ -75,40 +78,30 @@ const ExportWord = async (products, isCheck = [], template = null) => {
 
     for (let product of dataToExport) {
       const borrowers = product.borrowers?.length ? product.borrowers : [{}];
+      const driveFolderName =
+        borrowers
+          .map((br) => (br.borrowerName && String(br.borrowerName).trim()) || "")
+          .filter(Boolean)
+          .join(" ו ") || "Unknown";
 
-      for (let borrower of borrowers) {
-        const safeData = buildWordTemplateData(product, borrower);
+      const templateFileName = template?.name || "תבנית ברירת מחדל";
+      const templateName = templateFileName;
 
-        // יצירת עותק חדש לכל איטרציה — מונע ניצול ה-buffer המקורי
-        const zip = new PizZip(new Uint8Array(content));
-        const doc = new Docxtemplater(zip, {
-          paragraphLoop: true,
-          linebreaks: true,
-          nullGetter: () => "-",
-        });
-        await doc.renderAsync(safeData);
-
-        const blob = doc.getZip().generate({ type: "blob" });
-
-        const templateFileName = template?.name || "תבנית ברירת מחדל";
+      const uploadOneDoc = async (blob, fileBaseName, uploadedBorrowerLabel) => {
         const formData = new FormData();
         formData.append("file", blob, "document.docx");
-        const uniqueFolderName = safeData.borrowerName || "Unknown";
-        formData.append("folderName", uniqueFolderName);
+        formData.append("folderName", driveFolderName);
         formData.append("productId", product._id || "");
 
-        // שם הקובץ עובר כ-query param מקודד כדי לתמוך בעברית בצורה אמינה
-        // שימוש ב-base של הבקאנד (כמו שאר הבקשות) — כך ב-Vercel הבקשה מגיעה ל-backend ולא לפרונט
         const apiBase = import.meta.env.VITE_APP_API_BASE_URL || "";
         const backendOrigin = apiBase.replace(/\/api\/?$/, "");
-        const encodedFileName = encodeURIComponent(`${templateFileName}.docx`);
+        const encodedFileName = encodeURIComponent(`${fileBaseName}.docx`);
         const res = await fetch(`${backendOrigin}/api/upload-to-drive?fileName=${encodedFileName}`, {
           method: "POST",
           body: formData,
         });
 
         if (!res.ok) {
-          // קריאה אחת בלבד ל-body — אחרת "body stream already read"
           const text = await res.text();
           let errMsg = `העלאה ל-Drive נכשלה (${res.status})`;
           try {
@@ -118,32 +111,66 @@ const ExportWord = async (products, isCheck = [], template = null) => {
             if (text) errMsg = text.slice(0, 200);
           }
           throw new Error(errMsg);
-        } else {
-          const templateName = template?.name || "תבנית ברירת מחדל";
-          uploadedFiles.push({ borrower: safeData.borrowerName, template: templateName });
-          const data = JSON.parse(await res.text());
-          if (data?.folder?.webViewLink) {
-            driveLinks[product._id] = data.folder.webViewLink;
-          }
-          // שמירת תבנית שיוצאה על המוצר לצורך עדכון אוטומטי בעתיד
-          if (product._id) {
-            const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
-            const authHeader = safeAuthHeader(tokenHolder?.token);
-            fetch(
-              `${import.meta.env.VITE_APP_API_BASE_URL}/products/${product._id}/exported-templates`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  ...(authHeader && { Authorization: authHeader }),
-                },
-                body: JSON.stringify({
-                  id: template?._id || "default",
-                  name: templateName,
-                }),
-              }
-            ).catch(() => {});
-          }
+        }
+
+        uploadedFiles.push({
+          borrower: uploadedBorrowerLabel,
+          folder: driveFolderName,
+          template: templateName,
+          singleDocument: singleDocumentPerProduct,
+        });
+        const data = JSON.parse(await res.text());
+        if (data?.folder?.webViewLink) {
+          driveLinks[product._id] = data.folder.webViewLink;
+        }
+        if (product._id) {
+          const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
+          const authHeader = safeAuthHeader(tokenHolder?.token);
+          fetch(
+            `${import.meta.env.VITE_APP_API_BASE_URL}/products/${product._id}/exported-templates`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(authHeader && { Authorization: authHeader }),
+              },
+              body: JSON.stringify({
+                id: template?._id || "default",
+                name: templateName,
+              }),
+            }
+          ).catch(() => {});
+        }
+      };
+
+      const renderZip = async (safeData) => {
+        const zip = new PizZip(new Uint8Array(content));
+        const doc = new Docxtemplater(zip, {
+          paragraphLoop: true,
+          linebreaks: true,
+          nullGetter: () => "-",
+        });
+        await doc.renderAsync(safeData);
+        return doc.getZip().generate({ type: "blob" });
+      };
+
+      if (singleDocumentPerProduct) {
+        const anchorBorrower = borrowers[0] || {};
+        const safeData = buildWordTemplateData(product, anchorBorrower);
+        const blob = await renderZip(safeData);
+        const label =
+          driveFolderName !== "Unknown" ? driveFolderName : anchorBorrower.borrowerName || "-";
+        await uploadOneDoc(blob, templateFileName, label);
+      } else {
+        for (let bi = 0; bi < borrowers.length; bi++) {
+          const borrower = borrowers[bi];
+          const safeData = buildWordTemplateData(product, borrower);
+          const blob = await renderZip(safeData);
+          const fileBaseName =
+            borrowers.length > 1 ? `${templateFileName} (${bi + 1})` : templateFileName;
+          const uploadedBorrowerLabel =
+            (borrower.borrowerName && String(borrower.borrowerName).trim()) || "-";
+          await uploadOneDoc(blob, fileBaseName, uploadedBorrowerLabel);
         }
       }
     }
