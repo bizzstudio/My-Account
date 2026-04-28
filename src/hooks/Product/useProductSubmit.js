@@ -11,6 +11,29 @@ import notifyApiResponse from "@/utils/notifyApiResponse";
 import ExportWord from "@/components/product/ExportWord";
 import { isBorrowerMortgagorFlag } from "@/utils/buildWordTemplateData";
 
+export const defaultLoan = {
+  loanPlan: "",
+  loanInterestRate: "",
+  adjustedInterestRate: "",
+  adjustedLoan: "",
+  realCreditCostRate: "",
+  realLoan: "",
+  primeMargin: "",
+  indexLinked: "",
+  establishmentFee: "",
+  borrowerReceivesAmount: "",
+  excessPaymentBeyondCredit: "",
+  totalPayableEndOfTerm: "",
+  loanPurpose: "",
+  loanAmount: "",
+  loanChange: "",
+  clause: "",
+  loanMonths: "",
+  loanCreation: "",
+  loanNumber: "",
+  mortgageNumber: "",
+};
+
 const useProductSubmit = (id, onSuccess) => {
   const { isDrawerOpen, closeDrawer, setIsUpdate } =
     useContext(SidebarContext);
@@ -23,6 +46,7 @@ const useProductSubmit = (id, onSuccess) => {
 
   const defaultBorrower = {
     borrowerName: "",
+    borrowerLastName: "",
     borrowerIdNumber: "",
     borrowerAddress: "",
     borrowerDateOfBirth: "",
@@ -36,21 +60,6 @@ const useProductSubmit = (id, onSuccess) => {
     sellerIdType: "",
     sellerIdNumber: "",
     sellerAddress: "",
-  };
-
-  const defaultLoan = {
-    loanAmount: 0,
-    loanChange: "",
-    clause: "",
-    loanPlan: "",
-    loanMonths: 0,
-    loanInterestRate: 0,
-    adjustedLoan: 0,
-    realLoan: 0,
-    primeMargin: 0,
-    loanCreation: "",
-    loanNumber: 0,
-    mortgageNumber: 0,
   };
 
   const defaultAuthorized = {

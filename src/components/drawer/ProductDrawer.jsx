@@ -16,7 +16,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import Error from "@/components/form/others/Error";
 import Title from "@/components/form/others/Title";
 import InputArea from "@/components/form/input/InputArea";
-import useProductSubmit from "@/hooks/Product/useProductSubmit";
+import useProductSubmit, { defaultLoan } from "@/hooks/Product/useProductSubmit";
 import DrawerButton from "@/components/form/button/DrawerButton";
 import LabelArea from "@/components/form/selectOption/LabelArea";
 import TextAreaCom from "@/components/form/input/TextAreaCom";
@@ -302,6 +302,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
               {
                 _clientKey: globalThis.crypto?.randomUUID?.() ?? `b-${Date.now()}-${Math.random()}`,
                 borrowerName: "",
+                borrowerLastName: "",
                 borrowerIdNumber: "",
                 borrowerAddress: "",
                 borrowerDateOfBirth: "",
@@ -323,19 +324,33 @@ const ProductDrawer = ({ id, onSuccess }) => {
           key={borrower._id || borrower._clientKey || `borrower-row-${index}`}
           className="grid grid-cols-12 gap-5 p-2 border rounded-md bg-gray-50 dark:bg-gray-800"
         >
-          {/* Borrower Name */}
-          <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-            <LabelArea label={t("BorrowerName")} />
+          {/* Borrower first + last name */}
+          <div className="flex flex-col gap-1 md:col-span-2 col-span-12">
+            <LabelArea label={t("BorrowerFirstName")} />
             <div className="col-span-6">
               <InputArea
                 register={register}
-                label={t("BorrowerName")}
+                label={t("BorrowerFirstName")}
                 name={`borrowers[${index}].borrowerName`}
                 type="text"
-                placeholder={t("BorrowerName")}
+                placeholder={t("BorrowerFirstName")}
                 isRequired={false}
               />
               <Error errorName={errors?.borrowers?.[index]?.borrowerName} />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2 col-span-12">
+            <LabelArea label={t("BorrowerLastName")} />
+            <div className="col-span-6">
+              <InputArea
+                register={register}
+                label={t("BorrowerLastName")}
+                name={`borrowers[${index}].borrowerLastName`}
+                type="text"
+                placeholder={t("BorrowerLastName")}
+                isRequired={false}
+              />
+              <Error errorName={errors?.borrowers?.[index]?.borrowerLastName} />
             </div>
           </div>
 
@@ -357,7 +372,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
           </div>
 
           {/* Borrower Address */}
-          <div className="flex flex-col gap-1 md:col-span-4 col-span-12">
+          <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
             <LabelArea label={t("BorrowerAddress")} />
             <div className="col-span-6">
               <InputArea
@@ -576,6 +591,52 @@ const ProductDrawer = ({ id, onSuccess }) => {
         defaultOpen={false}
     >
         <div className="grid grid-cols-12 gap-5 mt-2">
+
+            {/* דרגת שעבוד */}
+            <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                <LabelArea label={t("LienRank")} />
+                <div className="col-span-6">
+                    <select
+                        {...register("registrationDetails.lienRank")}
+                        className="border h-12 text-sm focus:outline-none block w-full bg-gray-100 dark:bg-gray-700 border-transparent focus:bg-white rounded-lg px-3 dark:focus:border-gray-600 dark:text-gray-300"
+                    >
+                        <option value="">{t("SelectOptionPlaceholder")}</option>
+                        <option value="first">{t("LienRankFirst")}</option>
+                        <option value="second">{t("LienRankSecond")}</option>
+                    </select>
+                    <Error errorName={errors?.registrationDetails?.lienRank} />
+                </div>
+            </div>
+
+            {/* סכום שעבוד דרגות */}
+            <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                <LabelArea label={t("FirstLienAmount")} />
+                <div className="col-span-6">
+                    <InputArea
+                        register={register}
+                        label={t("FirstLienAmount")}
+                        name="registrationDetails.firstLienAmount"
+                        type="text"
+                        placeholder={t("FirstLienAmount")}
+                        isRequired={false}
+                    />
+                    <Error errorName={errors?.registrationDetails?.firstLienAmount} />
+                </div>
+            </div>
+            <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                <LabelArea label={t("SecondLienAmount")} />
+                <div className="col-span-6">
+                    <InputArea
+                        register={register}
+                        label={t("SecondLienAmount")}
+                        name="registrationDetails.secondLienAmount"
+                        type="text"
+                        placeholder={t("SecondLienAmount")}
+                        isRequired={false}
+                    />
+                    <Error errorName={errors?.registrationDetails?.secondLienAmount} />
+                </div>
+            </div>
             
             {/* Block — מסד */}
             <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
@@ -738,7 +799,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 </div>
             </div>
 
-            {/* PlotArea */}
+            {/* PlotArea — שטח במ"ר */}
             <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
                 <LabelArea label={t("PlotArea")} />
                 <div className="col-span-6">
@@ -751,6 +812,50 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         isRequired={false}
                     />
                     <Error errorName={errors?.registrationDetails?.plotArea} />
+                </div>
+            </div>
+
+            {/* מספר חוזה רמ"י, מס׳ מגרש, מספר בקשה */}
+            <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                <LabelArea label={t("RamiContractNumber")} />
+                <div className="col-span-6">
+                    <InputArea
+                        register={register}
+                        label={t("RamiContractNumber")}
+                        name="registrationDetails.ramiContractNumber"
+                        type="text"
+                        placeholder={t("RamiContractNumber")}
+                        isRequired={false}
+                    />
+                    <Error errorName={errors?.registrationDetails?.ramiContractNumber} />
+                </div>
+            </div>
+            <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                <LabelArea label={t("LotNumberShort")} />
+                <div className="col-span-6">
+                    <InputArea
+                        register={register}
+                        label={t("LotNumberShort")}
+                        name="registrationDetails.lotNumber"
+                        type="text"
+                        placeholder={t("LotNumberShort")}
+                        isRequired={false}
+                    />
+                    <Error errorName={errors?.registrationDetails?.lotNumber} />
+                </div>
+            </div>
+            <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                <LabelArea label={t("RequestNumber")} />
+                <div className="col-span-6">
+                    <InputArea
+                        register={register}
+                        label={t("RequestNumber")}
+                        name="registrationDetails.applicationNumber"
+                        type="text"
+                        placeholder={t("RequestNumber")}
+                        isRequired={false}
+                    />
+                    <Error errorName={errors?.registrationDetails?.applicationNumber} />
                 </div>
             </div>
 
@@ -939,7 +1044,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
     <CollapsibleSection
         title={t("Sellers")}
         icon={<MdEditNote size={24} className="mt-1" />}
-        defaultfalse
+        defaultOpen={false}
     >
         <div className="flex flex-col gap-2 mt-2">
             {/* כפתור להוספה */}
@@ -1062,20 +1167,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                     type="button"
                     onClick={() => {
                         const current = watch("loans") || [];
-                        setValue("loans", [...current, { 
-                            loanAmount: "", 
-                            loanChange: "", 
-                            clause: "", 
-                            loanPlan: "", 
-                            loanMonths: "", 
-                            loanInterestRate: "", 
-                            adjustedLoan: "", 
-                            realLoan: "", 
-                            primeMargin: "", 
-                            loanCreation: "", 
-                            loanNumber: "", 
-                            mortgageNumber: "" 
-                        }]);
+                        setValue("loans", [...current, { ...defaultLoan }]);
                     }}
                     className="text-base font-bold text-mainColor hover:underline whitespace-nowrap"
                 >
@@ -1084,8 +1176,184 @@ const ProductDrawer = ({ id, onSuccess }) => {
             </div>
 
             {/* מערך של הלוואות */}
-            {(watch("loans") || []).map((loan, index) => (
+            {(watch("loans") || []).map((_, index) => (
                 <div key={index} className="grid grid-cols-12 gap-5 p-2 border rounded-md bg-gray-50 dark:bg-gray-800">
+
+                    {/* שם מסלול הריבית */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("LoanPlan")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("LoanPlan")}
+                                name={`loans[${index}].loanPlan`}
+                                type="text"
+                                placeholder={t("LoanPlan")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.loanPlan} />
+                        </div>
+                    </div>
+
+                    {/* שיעור הריבית הנומינלית — טקסט חופשי */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("LoanInterestRate")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("LoanInterestRate")}
+                                name={`loans[${index}].loanInterestRate`}
+                                type="text"
+                                placeholder={t("LoanInterestRate")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.loanInterestRate} />
+                        </div>
+                    </div>
+
+                    {/* הריבית המתואמת */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("AdjustedInterestRate")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("AdjustedInterestRate")}
+                                name={`loans[${index}].adjustedInterestRate`}
+                                type="text"
+                                placeholder={t("AdjustedInterestRate")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.adjustedInterestRate} />
+                        </div>
+                    </div>
+
+                    {/* שיעור עלות ממשית של האשראי */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("RealCreditCostRate")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("RealCreditCostRate")}
+                                name={`loans[${index}].realCreditCostRate`}
+                                type="text"
+                                placeholder={t("RealCreditCostRate")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.realCreditCostRate} />
+                        </div>
+                    </div>
+
+                    {/* מרכיב הריבית המשתנה במסלול פריים */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("PrimeMargin")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("PrimeMargin")}
+                                name={`loans[${index}].primeMargin`}
+                                type="text"
+                                placeholder={t("PrimeMargin")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.primeMargin} />
+                        </div>
+                    </div>
+
+                    {/* הצמדה למדד */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("IndexLinkage")} />
+                        <div className="col-span-6">
+                            <select
+                                {...register(`loans[${index}].indexLinked`)}
+                                className="border h-12 text-sm focus:outline-none block w-full bg-gray-100 dark:bg-gray-700 border-transparent focus:bg-white rounded-lg px-3 dark:focus:border-gray-600 dark:text-gray-300"
+                            >
+                                <option value="">{t("SelectOptionPlaceholder")}</option>
+                                <option value="yes">{t("Yes")}</option>
+                                <option value="no">{t("No")}</option>
+                            </select>
+                            <Error errorName={errors?.loans?.[index]?.indexLinked} />
+                        </div>
+                    </div>
+
+                    {/* עמלת הקמה */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("EstablishmentFee")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("EstablishmentFee")}
+                                name={`loans[${index}].establishmentFee`}
+                                type="text"
+                                placeholder={t("EstablishmentFee")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.establishmentFee} />
+                        </div>
+                    </div>
+
+                    {/* הסכום שיקבל הלווה בפועל */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("BorrowerReceivesAmount")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("BorrowerReceivesAmount")}
+                                name={`loans[${index}].borrowerReceivesAmount`}
+                                type="text"
+                                placeholder={t("BorrowerReceivesAmount")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.borrowerReceivesAmount} />
+                        </div>
+                    </div>
+
+                    {/* סכום מעבר לאשראי */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("ExcessPaymentBeyondCredit")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("ExcessPaymentBeyondCredit")}
+                                name={`loans[${index}].excessPaymentBeyondCredit`}
+                                type="text"
+                                placeholder={t("ExcessPaymentBeyondCredit")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.excessPaymentBeyondCredit} />
+                        </div>
+                    </div>
+
+                    {/* סה״כ ישולם עד סוף התקופה */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("TotalPayableEndOfTerm")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("TotalPayableEndOfTerm")}
+                                name={`loans[${index}].totalPayableEndOfTerm`}
+                                type="text"
+                                placeholder={t("TotalPayableEndOfTerm")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.totalPayableEndOfTerm} />
+                        </div>
+                    </div>
+
+                    {/* מטרת ההלוואה */}
+                    <div className="flex flex-col gap-1 md:col-span-6 col-span-12">
+                        <LabelArea label={t("LoanPurpose")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("LoanPurpose")}
+                                name={`loans[${index}].loanPurpose`}
+                                type="text"
+                                placeholder={t("LoanPurpose")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.loanPurpose} />
+                        </div>
+                    </div>
 
                     {/* Loan Amount */}
                     <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
@@ -1136,22 +1404,6 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* Loan Plan */}
-                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                        <LabelArea label={t("LoanPlan")} />
-                        <div className="col-span-6">
-                            <InputArea
-                                register={register}
-                                label={t("LoanPlan")}
-                                name={`loans[${index}].loanPlan`}
-                                type="text"
-                                placeholder={t("LoanPlan")}
-                                isRequired={false}
-                            />
-                            <Error errorName={errors?.loans?.[index]?.loanPlan} />
-                        </div>
-                    </div>
-
                     {/* Loan Months */}
                     <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
                         <LabelArea label={t("LoanMonths")} />
@@ -1168,24 +1420,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* Loan Interest Rate */}
-                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                        <LabelArea label={t("LoanInterestRate")} />
-                        <div className="col-span-6">
-                            <InputArea
-                                register={register}
-                                label={t("LoanInterestRate")}
-                                name={`loans[${index}].loanInterestRate`}
-                                type="number"
-                                placeholder={t("LoanInterestRate")}
-                                step={0.01}
-                                isRequired={false}
-                            />
-                            <Error errorName={errors?.loans?.[index]?.loanInterestRate} />
-                        </div>
-                    </div>
-
-                    {/* Adjusted Loan — מתואמת/פיגורים */}
+                    {/* Adjusted Loan — legacy */}
                     <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
                         <LabelArea label={EXCEL_LABEL.adjustedLoan} />
                         <div className="col-span-6">
@@ -1193,9 +1428,8 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 register={register}
                                 label={t("AdjustedLoan")}
                                 name={`loans[${index}].adjustedLoan`}
-                                type="number"
+                                type="text"
                                 placeholder={t("AdjustedLoan")}
-                                step={0.01}
                                 isRequired={false}
                             />
                             <Error errorName={errors?.loans?.[index]?.adjustedLoan} />
@@ -1210,33 +1444,15 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 register={register}
                                 label={t("RealLoan")}
                                 name={`loans[${index}].realLoan`}
-                                type="number"
+                                type="text"
                                 placeholder={t("RealLoan")}
-                                step={0.01}
                                 isRequired={false}
                             />
                             <Error errorName={errors?.loans?.[index]?.realLoan} />
                         </div>
                     </div>
 
-                    {/* Prime Margin — פריים */}
-                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
-                        <LabelArea label={EXCEL_LABEL.primeMargin} />
-                        <div className="col-span-6">
-                            <InputArea
-                                register={register}
-                                label={t("PrimeMargin")}
-                                name={`loans[${index}].primeMargin`}
-                                type="number"
-                                placeholder={t("PrimeMargin")}
-                                step={0.01}
-                                isRequired={false}
-                            />
-                            <Error errorName={errors?.loans?.[index]?.primeMargin} />
-                        </div>
-                    </div>
-
-                    {/* Loan Creation */}
+                    {/* Loan Creation — תאריך */}
                     <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
                         <LabelArea label={t("LoanCreation")} />
                         <div className="col-span-6">
@@ -1310,7 +1526,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
     <CollapsibleSection
         title={t("SeniorCreditor")}
         icon={<MdEditNote size={24} className="mt-1" />}
-        defaultfalse
+        defaultOpen={false}
     >
         <div className="grid grid-cols-12 gap-5 mt-2">
 
@@ -1372,7 +1588,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
     <CollapsibleSection
         title={t("BorrowerBankAccount")}
         icon={<MdEditNote size={24} className="mt-1" />}
-        defaultfalse
+        defaultOpen={false}
     >
         <div className="grid grid-cols-12 gap-5 mt-2">
 
@@ -1433,7 +1649,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
     <CollapsibleSection
         title={t("AuthorizedPersons")}
         icon={<MdEditNote size={24} className="mt-1" />}
-        defaultfalse
+        defaultOpen={false}
     >
         <div className="flex flex-col gap-6 mt-2">
 

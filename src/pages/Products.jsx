@@ -18,6 +18,7 @@ import {
   import ExportWord from "@/components/product/ExportWord";
   import TemplateSelectModal from "@/components/settings/TemplateSelectModal";
   import requests from "@/services/httpService";
+  import { formatBorrowerDisplayName } from "@/utils/buildWordTemplateData";
 
 
   import ProductFilters from "@/components/product/ProductFilters";
@@ -254,6 +255,7 @@ import {
 
   // ===== לווים =====
   { key: "borrowers.borrowerName", label: getCanonicalHeader("borrowers.borrowerName") || t("BorrowerName") },
+  { key: "borrowers.borrowerLastName", label: getCanonicalHeader("borrowers.borrowerLastName") || t("BorrowerLastName") },
   { key: "borrowers.borrowerIdNumber", label: getCanonicalHeader("borrowers.borrowerIdNumber") || t("BorrowerIdNumber") },
   { key: "borrowers.borrowerAddress", label: getCanonicalHeader("borrowers.borrowerAddress") || t("BorrowerAddress") },
   { key: "borrowers.borrowerDateOfBirth", label: getCanonicalHeader("borrowers.borrowerDateOfBirth") || t("BorrowerDateOfBirth") },
@@ -412,8 +414,14 @@ import {
     useEffect(() => {
       if (!products.length) return;
       const items = products
-        .filter((p) => p.borrowers?.[0]?.borrowerName)
-        .map((p) => ({ productId: p._id, borrowerName: p.borrowers[0].borrowerName }));
+        .filter((p) => {
+          const b = p.borrowers?.[0];
+          return b && (String(b.borrowerName || "").trim() || String(b.borrowerLastName || "").trim());
+        })
+        .map((p) => ({
+          productId: p._id,
+          borrowerName: formatBorrowerDisplayName(p.borrowers[0]),
+        }));
       if (!items.length) return;
       requests.post("/products/drive-folders-batch", { items })
         .then((data) => setDriveLinks(data))

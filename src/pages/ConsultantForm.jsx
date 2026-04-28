@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import logo from "@/assets/img/logo.jpeg";
 import { isValidIsraeliID } from "@/utils/israeliId";
+import { defaultLoan } from "@/hooks/Product/useProductSubmit";
 
 // VITE_APP_API_BASE_URL = "http://localhost:3031/api" — מסירים את /api בסוף
 const API_BASE = import.meta.env.VITE_APP_API_BASE_URL || "http://localhost:3031/api";
@@ -36,13 +37,16 @@ const Field = ({ label, children, col = 6 }) => (
   </div>
 );
 
+const inputClass =
+  "border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a57d45] w-full";
+
 const Input = ({ register, name, type = "text", placeholder, step, registerOptions }) => (
   <input
     {...register(name, registerOptions)}
     type={type}
     placeholder={placeholder}
     step={step}
-    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a57d45] w-full"
+    className={inputClass}
   />
 );
 
@@ -57,7 +61,7 @@ const ConsultantForm = () => {
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
-      borrowers: [{ borrowerName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "", borrowerIsMortgagor: false }],
+      borrowers: [{ borrowerName: "", borrowerLastName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "", borrowerIsMortgagor: false }],
       registrationDetails: {},
       sellers: [],
       loans: [],
@@ -153,7 +157,7 @@ const ConsultantForm = () => {
                 type="button"
                 onClick={() => {
                   const cur = watch("borrowers") || [];
-                  setValue("borrowers", [...cur, { borrowerName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "", borrowerIsMortgagor: false }]);
+                  setValue("borrowers", [...cur, { borrowerName: "", borrowerLastName: "", borrowerIdNumber: "", borrowerAddress: "", borrowerDateOfBirth: "", borrowerGender: "", borrowerEmail: "", borrowerIsMortgagor: false }]);
                 }}
                 className="text-base font-bold text-[#a57d45] hover:underline"
               >
@@ -163,6 +167,7 @@ const ConsultantForm = () => {
             {(watch("borrowers") || []).map((_, i) => (
               <div key={i} className="col-span-12 border rounded-xl p-4 bg-gray-50 grid grid-cols-12 gap-4">
                 <Field label="שם פרטי" col={3}><Input register={register} name={`borrowers[${i}].borrowerName`} placeholder="שם פרטי" /></Field>
+                <Field label="שם משפחה" col={3}><Input register={register} name={`borrowers[${i}].borrowerLastName`} placeholder="שם משפחה" /></Field>
                 <Field label="מספר ת.ז" col={3}><Input register={register} name={`borrowers[${i}].borrowerIdNumber`} type="text" placeholder="מספר ת.ז" registerOptions={{ validate: idValidate }} /></Field>
                 {errors?.borrowers?.[i]?.borrowerIdNumber && <div className="col-span-12 text-red-600 text-sm">{errors.borrowers[i].borrowerIdNumber.message}</div>}
                 <Field label="כתובת" col={6}><Input register={register} name={`borrowers[${i}].borrowerAddress`} placeholder="כתובת מגורים" /></Field>
@@ -191,6 +196,19 @@ const ConsultantForm = () => {
 
           {/* ══ פרטי רישום ══ */}
           <Section title="פרטי רישום הנכס">
+            <Field label="דרגת שעבוד" col={6}>
+              <select {...register("registrationDetails.lienRank")} className={inputClass}>
+                <option value="">בחר...</option>
+                <option value="first">דרגה ראשונה</option>
+                <option value="second">דרגה שניה</option>
+              </select>
+            </Field>
+            <Field label="סכום שעבוד בדרגה ראשונה" col={6}>
+              <Input register={register} name="registrationDetails.firstLienAmount" placeholder="סכום" />
+            </Field>
+            <Field label="סכום שעבוד בדרגה שניה" col={6}>
+              <Input register={register} name="registrationDetails.secondLienAmount" placeholder="סכום" />
+            </Field>
             <Field label="גוש"><Input register={register} name="registrationDetails.block" placeholder="גוש" /></Field>
             <Field label="חלקה"><Input register={register} name="registrationDetails.plot" placeholder="חלקה" /></Field>
             <Field label="תת חלקה"><Input register={register} name="registrationDetails.subPlot" placeholder="תת חלקה" /></Field>
@@ -200,7 +218,15 @@ const ConsultantForm = () => {
             <Field label="שם משכנתא"><Input register={register} name="registrationDetails.mortgageName" placeholder="שם משכנתא" /></Field>
             <Field label="ח.פ חברת משכנתא"><Input register={register} name="registrationDetails.mortgageCompanyId" placeholder="ח.פ" /></Field>
             <Field label="לשכה"><Input register={register} name="registrationDetails.office" placeholder="לשכה" /></Field>
-            <Field label="שטח מגרש"><Input register={register} name="registrationDetails.plotArea" placeholder="שטח" /></Field>
+            <Field label="מרשם"><Input register={register} name="registrationDetails.registry" placeholder="מרשם" /></Field>
+            <Field label='שטח במ"ר'>
+              <Input register={register} name="registrationDetails.plotArea" placeholder='שטח במ"ר' />
+            </Field>
+            <Field label='מספר חוזה רמ"י'>
+              <Input register={register} name="registrationDetails.ramiContractNumber" placeholder='חוזה רמ"י' />
+            </Field>
+            <Field label="מס׳ מגרש"><Input register={register} name="registrationDetails.lotNumber" placeholder="מס׳ מגרש" /></Field>
+            <Field label="מספר בקשה"><Input register={register} name="registrationDetails.applicationNumber" placeholder="מספר בקשה" /></Field>
             <Field label="זכות"><Input register={register} name="registrationDetails.right" placeholder="זכות" /></Field>
             <Field label="חלקים"><Input register={register} name="registrationDetails.parts" placeholder="חלקים" /></Field>
             <Field label="סוג נכס"><Input register={register} name="registrationDetails.propertyType" placeholder="סוג נכס" /></Field>
@@ -253,19 +279,43 @@ const ConsultantForm = () => {
           {/* ══ הלוואות ══ */}
           <Section title="פרטי הלוואות">
             <div className="col-span-12 flex justify-end mb-2">
-              <button type="button" onClick={() => setValue("loans", [...(watch("loans") || []), { loanAmount: "", loanChange: "", clause: "", loanPlan: "", loanMonths: "", loanInterestRate: "", adjustedLoan: "", realLoan: "", primeMargin: "", loanCreation: "", loanNumber: "", mortgageNumber: "" }])} className="text-sm text-[#a57d45] hover:underline">+ הוסף הלוואה</button>
+              <button
+                type="button"
+                onClick={() => setValue("loans", [...(watch("loans") || []), { ...defaultLoan }])}
+                className="text-sm text-[#a57d45] hover:underline"
+              >
+                + הוסף הלוואה
+              </button>
             </div>
             {(watch("loans") || []).map((_, i) => (
               <div key={i} className="col-span-12 border rounded-xl p-4 bg-gray-50 grid grid-cols-12 gap-4">
-                <Field label="סכום הלוואה" col={3}><Input register={register} name={`loans[${i}].loanAmount`} type="number" step={0.01} placeholder="סכום" /></Field>
+                <Field label="שם מסלול הריבית" col={3}><Input register={register} name={`loans[${i}].loanPlan`} placeholder="מסלול" /></Field>
+                <Field label="שיעור הריבית הנומינלית" col={3}><Input register={register} name={`loans[${i}].loanInterestRate`} placeholder="למשל 3.5%" /></Field>
+                <Field label="הריבית המתואמת" col={3}><Input register={register} name={`loans[${i}].adjustedInterestRate`} placeholder="למשל 4%" /></Field>
+                <Field label="שיעור עלות ממשית של האשראי" col={3}><Input register={register} name={`loans[${i}].realCreditCostRate`} placeholder="%" /></Field>
+                <Field label="מרכיב הריבית במסלול פריים" col={3}><Input register={register} name={`loans[${i}].primeMargin`} placeholder="מרווח" /></Field>
+                <Field label="הצמדה למדד" col={3}>
+                  <select {...register(`loans[${i}].indexLinked`)} className={inputClass}>
+                    <option value="">בחר...</option>
+                    <option value="yes">כן</option>
+                    <option value="no">לא</option>
+                  </select>
+                </Field>
+                <Field label="עמלת הקמה" col={3}><Input register={register} name={`loans[${i}].establishmentFee`} placeholder="סכום" /></Field>
+                <Field label="הסכום שיקבל הלווה בפועל" col={3}><Input register={register} name={`loans[${i}].borrowerReceivesAmount`} placeholder="סכום" /></Field>
+                <Field label="תשלום מעבר לאשראי עד סוף התקופה" col={3}>
+                  <Input register={register} name={`loans[${i}].excessPaymentBeyondCredit`} placeholder="סכום" />
+                </Field>
+                <Field label='סה״כ ישולם עד סוף התקופה' col={3}>
+                  <Input register={register} name={`loans[${i}].totalPayableEndOfTerm`} placeholder="סכום" />
+                </Field>
+                <Field label="מטרת ההלוואה" col={6}><Input register={register} name={`loans[${i}].loanPurpose`} placeholder="מטרה" /></Field>
+                <Field label="סכום הלוואה" col={3}><Input register={register} name={`loans[${i}].loanAmount`} placeholder="סכום" /></Field>
                 <Field label="שינוי הלוואה" col={3}><Input register={register} name={`loans[${i}].loanChange`} placeholder="שינוי" /></Field>
                 <Field label="סעיף" col={3}><Input register={register} name={`loans[${i}].clause`} placeholder="סעיף" /></Field>
-                <Field label="מסלול" col={3}><Input register={register} name={`loans[${i}].loanPlan`} placeholder="מסלול" /></Field>
-                <Field label="מספר חודשים" col={3}><Input register={register} name={`loans[${i}].loanMonths`} type="number" placeholder="חודשים" /></Field>
-                <Field label="ריבית %" col={3}><Input register={register} name={`loans[${i}].loanInterestRate`} type="number" step={0.01} placeholder="%" /></Field>
-                <Field label="הלוואה מתואמת" col={3}><Input register={register} name={`loans[${i}].adjustedLoan`} type="number" step={0.01} placeholder="מתואמת" /></Field>
-                <Field label="הלוואה ריאלית" col={3}><Input register={register} name={`loans[${i}].realLoan`} type="number" step={0.01} placeholder="ריאלית" /></Field>
-                <Field label="מרווח פריים" col={3}><Input register={register} name={`loans[${i}].primeMargin`} type="number" step={0.01} placeholder="מרווח" /></Field>
+                <Field label="מספר חודשים" col={3}><Input register={register} name={`loans[${i}].loanMonths`} placeholder="חודשים" /></Field>
+                <Field label="הלוואה מתואמת (סכום)" col={3}><Input register={register} name={`loans[${i}].adjustedLoan`} placeholder="מתואמת" /></Field>
+                <Field label="הלוואה ריאלית" col={3}><Input register={register} name={`loans[${i}].realLoan`} placeholder="ריאלית" /></Field>
                 <Field label="תאריך יצירה" col={3}><Input register={register} name={`loans[${i}].loanCreation`} type="date" /></Field>
                 <Field label="מספר הלוואה" col={3}><Input register={register} name={`loans[${i}].loanNumber`} placeholder="מספר הלוואה" /></Field>
                 <Field label="מספר משכנתא" col={3}><Input register={register} name={`loans[${i}].mortgageNumber`} placeholder="מספר משכנתא" /></Field>

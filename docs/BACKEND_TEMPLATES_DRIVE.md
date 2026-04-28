@@ -31,6 +31,7 @@
 1. **GET /products/:id** (ורשימת מוצרים אם משם מייצאים) חייב להחזיר את כל האובייקטים השמורים:  
    `registrationDetails`, `signingDetails`, `projectDetails`, `borrowerBankAccount`, `seniorCreditor`,  
    `borrowers` (מערך מלא), `financingCompanies`, `sellers`, `loans`, `authorizedPerson`, `mortgagors`.  
-   אם השרת מחזיר רק חלק מהשדות או מערך `borrowers` עם איבר אחד בלבד למרות שיש כמה — חלק מהתגים במקרא יישארו `-` או לא מדויקים.
-2. **POST/PUT מוצר** — לוודא שהסכימה ב-Mongo (או ORM) כוללת את כל השדות הנ"ל ושאין `select`/`lean` שמסננים nested objects לפני השמירה או לפני הקריאה.
+   אם השרת מחזיר רק חלק מהשדות או מערך `borrowers` עם איבר אחד בלבד למרות שיש כמה — חלק מהתגים במקרא יישארו `-` או לא מדויקים.  
+   בכל איבר ב־`borrowers`: לשמור ולהחזיר גם **`borrowerLastName`** (שם משפחה, מחרוזת אופציונלית) לצד **`borrowerName`** (שם פרטי). בלי השדה ב-DB, ייצוא Word יציג `-` ב־`{borrowerLastName}` / `{mortgagorLastName1}` וכו'.
+2. **POST/PUT מוצר** — לוודא שהסכימה ב-Mongo (או ORM) כוללת את כל השדות הנ"ל (כולל `borrowers[].borrowerLastName`) ושאין `select`/`lean` שמסננים nested objects לפני השמירה או לפני הקריאה.
 3. **תאימות שמות שדות** — חברות מימון במוצר: `financingCompanies[].name` ו־`financingCompanies[].idNumber` (לא חייבים להיות זהים לשמות במקרא Word; הפרונט ממפה ל־`financingCompanyName` / `financingCompanyIdNumber`).

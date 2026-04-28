@@ -13,6 +13,7 @@ import ProductCard from "./ProductCard";
 import CheckBox from "@/components/form/others/CheckBox";
 import { UserContext } from "@/context/UserContext";
 import SendEmailModal from "./SendEmailModal";
+import { formatBorrowerDisplayName } from "@/utils/buildWordTemplateData";
 
 const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false, driveLinks = {} }) => {
   const { state: userState } = useContext(UserContext);
@@ -110,7 +111,7 @@ const ProductsTable = ({ products, isCheck, setIsCheck, isMobile = false, driveL
 
               {/* 3️⃣ Borrower הראשון בלבד (בטוח גם אם אין Borrowers) */}
               <TableCell className="text-center">
-                {product.borrowers?.[0]?.borrowerName || "-"}
+                {formatBorrowerDisplayName(product.borrowers?.[0] || {})}
               </TableCell>
               <TableCell className="text-center">
                 {product.borrowers?.[0]?.borrowerIdNumber || "-"}

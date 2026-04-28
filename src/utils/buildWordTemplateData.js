@@ -1,6 +1,8 @@
 /**
  * מפתחות שטוחים ל-docxtemplater — תואמים למקרא בהגדרות (Settings → LEGEND_SECTIONS).
  * מקור הנתונים: אובייקט מוצר כפי שחוזר מה-API / נשמר בטופס (ProductDrawer, ConsultantForm).
+ * שמות לווה: `borrowerName` = שם פרטי (תאימות לאחור); `borrowerFirstName` = אותו ערך לתבניות;
+ * `borrowerLastName` = שם משפחה. רובריקות ממשכן/לא-ממשכן: mortgagorFirstName1, mortgagorLastName1, …
  */
 
 const dash = (v) => {
@@ -20,6 +22,18 @@ const formatDateHe = (v) => {
   return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString("he-IL");
 };
 
+/** מפצל תאריך לרכיבים נפרדים (יום / חודש / שנה) כמחרוזות */
+const splitDate = (v) => {
+  if (!v) return { day: "-", month: "-", year: "-" };
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return { day: "-", month: "-", year: "-" };
+  return {
+    day: String(d.getDate()).padStart(2, "0"),
+    month: String(d.getMonth() + 1).padStart(2, "0"),
+    year: String(d.getFullYear()),
+  };
+};
+
 const genderHe = (g) => {
   if (g == null || g === "") return "-";
   if (g === "male") return "זכר";
@@ -29,6 +43,15 @@ const genderHe = (g) => {
 
 const yesNoHe = (v) =>
   v === true || v === "true" || v === 1 || v === "1" ? "כן" : "לא";
+
+/** שם לתצוגה (תיקיית Drive, טקסט מאוחד) — שם פרטי + שם משפחה כששניהם קיימים */
+export function formatBorrowerDisplayName(borrower) {
+  const parts = [borrower?.borrowerName, borrower?.borrowerLastName]
+    .map((x) => (x != null && String(x).trim() !== "" ? String(x).trim() : ""))
+    .filter(Boolean);
+  if (!parts.length) return "-";
+  return parts.join(" ");
+}
 
 /** האם הלווה מסומן כממשכן (לסינון תגי mortgagorName1… ו־nonMortgagor…) */
 export function isBorrowerMortgagorFlag(b) {
@@ -42,6 +65,8 @@ export const MAX_INDEXED_BORROWERS = 5;
 /** שדות לווה לתת-מספר אחרי mortgagor / nonMortgagor (למשל mortgagorName1) */
 const ROLE_INDEXED_BORROWER_KEYS = [
   ["borrowerName", "Name"],
+  ["borrowerFirstName", "FirstName"],
+  ["borrowerLastName", "LastName"],
   ["borrowerIdNumber", "IdNumber"],
   ["borrowerAddress", "Address"],
   ["borrowerDateOfBirth", "DateOfBirth"],
@@ -51,6 +76,8 @@ const ROLE_INDEXED_BORROWER_KEYS = [
 
 const INDEXED_BORROWER_FIELD_KEYS = [
   "borrowerName",
+  "borrowerFirstName",
+  "borrowerLastName",
   "borrowerIdNumber",
   "borrowerAddress",
   "borrowerDateOfBirth",
@@ -64,12 +91,22 @@ export function formatBorrowerPlaceholderValue(key, borrower) {
   switch (key) {
     case "borrowerName":
       return dash(b.borrowerName);
+    case "borrowerFirstName":
+      return dash(b.borrowerName);
+    case "borrowerLastName":
+      return dash(b.borrowerLastName);
     case "borrowerIdNumber":
       return dash(b.borrowerIdNumber);
     case "borrowerAddress":
       return dash(b.borrowerAddress);
     case "borrowerDateOfBirth":
       return formatDateHe(b.borrowerDateOfBirth);
+    case "borrowerDateOfBirthDay":
+      return splitDate(b.borrowerDateOfBirth).day;
+    case "borrowerDateOfBirthMonth":
+      return splitDate(b.borrowerDateOfBirth).month;
+    case "borrowerDateOfBirthYear":
+      return splitDate(b.borrowerDateOfBirth).year;
     case "borrowerGender":
       return genderHe(b.borrowerGender);
     case "borrowerEmail":
@@ -91,6 +128,11 @@ export function buildBorrowerIndexedPlaceholders(borrowers) {
     for (const key of INDEXED_BORROWER_FIELD_KEYS) {
       out[`${key}${n}`] = formatBorrowerPlaceholderValue(key, b);
     }
+    // תאריך לידה מפוצל לכל לווה ממוספר
+    const dob = splitDate(b.borrowerDateOfBirth);
+    out[`borrowerDateOfBirthDay${n}`] = dob.day;
+    out[`borrowerDateOfBirthMonth${n}`] = dob.month;
+    out[`borrowerDateOfBirthYear${n}`] = dob.year;
   }
   return out;
 }
@@ -115,6 +157,15 @@ export function buildMortgagorRolePlaceholders(borrowers) {
       out[`mortgagor${suffix}${n}`] = formatBorrowerPlaceholderValue(borrowKey, bm);
       out[`nonMortgagor${suffix}${n}`] = formatBorrowerPlaceholderValue(borrowKey, bn);
     }
+    // תאריך לידה מפוצל לממשכנים / לא-ממשכנים
+    const dobM = splitDate(bm.borrowerDateOfBirth);
+    out[`mortgagorDateOfBirthDay${n}`] = dobM.day;
+    out[`mortgagorDateOfBirthMonth${n}`] = dobM.month;
+    out[`mortgagorDateOfBirthYear${n}`] = dobM.year;
+    const dobN = splitDate(bn.borrowerDateOfBirth);
+    out[`nonMortgagorDateOfBirthDay${n}`] = dobN.day;
+    out[`nonMortgagorDateOfBirthMonth${n}`] = dobN.month;
+    out[`nonMortgagorDateOfBirthYear${n}`] = dobN.year;
   }
   for (let i = 0; i < MAX_INDEXED_BORROWERS; i++) {
     const n = i + 1;
@@ -147,7 +198,10 @@ export function buildWordTemplateData(product, borrower) {
   const allBorrowersList =
     Array.isArray(product?.borrowers) && product.borrowers.length ? product.borrowers : [b];
   const allBorrowerNames =
-    allBorrowersList.map((x) => (x.borrowerName || "").trim()).filter(Boolean).join(" ו ") || "-";
+    allBorrowersList
+      .map((x) => formatBorrowerDisplayName(x))
+      .filter((s) => s && s !== "-")
+      .join(" ו ") || "-";
 
   const indexedBorrowers = buildBorrowerIndexedPlaceholders(allBorrowersList);
   const mortgagorRolePlaceholders = buildMortgagorRolePlaceholders(allBorrowersList);
@@ -158,6 +212,9 @@ export function buildWordTemplateData(product, borrower) {
     lawyerIdNumber: dash(sd.lawyerIdNumber),
     lawyerEmail: dash(sd.lawyerEmail),
     signingDate: formatDateHe(sd.signingDate),
+    signingDateDay: splitDate(sd.signingDate).day,
+    signingDateMonth: splitDate(sd.signingDate).month,
+    signingDateYear: splitDate(sd.signingDate).year,
 
     consultant: dash(sd.consultant),
     consultantEmail: dash(sd.consultantEmail),
@@ -166,9 +223,14 @@ export function buildWordTemplateData(product, borrower) {
     financingCompanyIdNumber: dash(fc.idNumber),
 
     borrowerName: formatBorrowerPlaceholderValue("borrowerName", b),
+    borrowerFirstName: formatBorrowerPlaceholderValue("borrowerFirstName", b),
+    borrowerLastName: formatBorrowerPlaceholderValue("borrowerLastName", b),
     borrowerIdNumber: formatBorrowerPlaceholderValue("borrowerIdNumber", b),
     borrowerAddress: formatBorrowerPlaceholderValue("borrowerAddress", b),
     borrowerDateOfBirth: formatBorrowerPlaceholderValue("borrowerDateOfBirth", b),
+    borrowerDateOfBirthDay: splitDate(b.borrowerDateOfBirth).day,
+    borrowerDateOfBirthMonth: splitDate(b.borrowerDateOfBirth).month,
+    borrowerDateOfBirthYear: splitDate(b.borrowerDateOfBirth).year,
     borrowerGender: formatBorrowerPlaceholderValue("borrowerGender", b),
     borrowerEmail: formatBorrowerPlaceholderValue("borrowerEmail", b),
     borrowerIsMortgagor: formatBorrowerPlaceholderValue("borrowerIsMortgagor", b),
@@ -185,6 +247,19 @@ export function buildWordTemplateData(product, borrower) {
     mortgageName: dash(rd.mortgageName),
     mortgageCompanyId: dash(rd.mortgageCompanyId),
     office: dash(rd.office),
+    registry: dash(rd.registry),
+    lienRank: dash(rd.lienRank),
+    lienRankHe:
+      rd.lienRank === "first"
+        ? "דרגה ראשונה"
+        : rd.lienRank === "second"
+          ? "דרגה שניה"
+          : dash(rd.lienRank),
+    firstLienAmount: dash(rd.firstLienAmount),
+    secondLienAmount: dash(rd.secondLienAmount),
+    ramiContractNumber: dash(rd.ramiContractNumber),
+    lotNumber: dash(rd.lotNumber),
+    applicationNumber: dash(rd.applicationNumber),
     plotArea: dash(rd.plotArea),
     right: dash(rd.right),
     parts: dash(rd.parts),
@@ -209,10 +284,23 @@ export function buildWordTemplateData(product, borrower) {
     loanPlan: dash(loan.loanPlan),
     loanMonths: dash(loan.loanMonths),
     loanInterestRate: dash(loan.loanInterestRate),
+    adjustedInterestRate: dash(loan.adjustedInterestRate),
     adjustedLoan: dash(loan.adjustedLoan),
     realLoan: dash(loan.realLoan),
+    realCreditCostRate: dash(loan.realCreditCostRate),
     primeMargin: dash(loan.primeMargin),
+    indexLinked: dash(loan.indexLinked),
+    indexLinkedHe:
+      loan.indexLinked === "yes" ? "כן" : loan.indexLinked === "no" ? "לא" : dash(loan.indexLinked),
+    establishmentFee: dash(loan.establishmentFee),
+    borrowerReceivesAmount: dash(loan.borrowerReceivesAmount),
+    excessPaymentBeyondCredit: dash(loan.excessPaymentBeyondCredit),
+    totalPayableEndOfTerm: dash(loan.totalPayableEndOfTerm),
+    loanPurpose: dash(loan.loanPurpose),
     loanCreation: formatDateHe(loan.loanCreation),
+    loanCreationDay: splitDate(loan.loanCreation).day,
+    loanCreationMonth: splitDate(loan.loanCreation).month,
+    loanCreationYear: splitDate(loan.loanCreation).year,
     loanNumber: dashOptionalZero(loan.loanNumber),
     mortgageNumber: dashOptionalZero(loan.mortgageNumber),
 
@@ -228,6 +316,9 @@ export function buildWordTemplateData(product, borrower) {
     authorizedIdNumber: dashOptionalZero(auth.authorizedIdNumber),
 
     tamAgreementDate: formatDateHe(pd.tamAgreementDate),
+    tamAgreementDateDay: splitDate(pd.tamAgreementDate).day,
+    tamAgreementDateMonth: splitDate(pd.tamAgreementDate).month,
+    tamAgreementDateYear: splitDate(pd.tamAgreementDate).year,
     appraiser: dash(pd.appraiser),
     supervisor: dash(pd.supervisor),
     additionalFloors: dash(pd.additionalFloors),

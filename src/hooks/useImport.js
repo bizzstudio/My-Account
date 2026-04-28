@@ -121,6 +121,8 @@ const useImport = () => {
         const columnMap = {
             // לווה
             [t('BorrowerName')]: 'borrowerName',
+            [t('BorrowerFirstName')]: 'borrowerName',
+            [t('BorrowerLastName')]: 'borrowerLastName',
             [t('BorrowerIdNumber')]: 'borrowerIdNumber',
             [t('BorrowerAddress')]: 'borrowerAddress',
             [t('BorrowerDateOfBirth')]: 'borrowerDateOfBirth',
@@ -170,9 +172,17 @@ const useImport = () => {
             [t('LoanPlan')]: 'loanPlan',
             [t('LoanMonths')]: 'loanMonths',
             [t('LoanInterestRate')]: 'loanInterestRate',
+            [t('AdjustedInterestRate')]: 'adjustedInterestRate',
+            [t('RealCreditCostRate')]: 'realCreditCostRate',
+            [t('PrimeMargin')]: 'primeMargin',
+            [t('IndexLinkage')]: 'indexLinked',
+            [t('EstablishmentFee')]: 'establishmentFee',
+            [t('BorrowerReceivesAmount')]: 'borrowerReceivesAmount',
+            [t('ExcessPaymentBeyondCredit')]: 'excessPaymentBeyondCredit',
+            [t('TotalPayableEndOfTerm')]: 'totalPayableEndOfTerm',
+            [t('LoanPurpose')]: 'loanPurpose',
             [t('AdjustedLoan')]: 'adjustedLoan',
             [t('RealLoan')]: 'realLoan',
-            [t('PrimeMargin')]: 'primeMargin',
             [t('LoanNumber')]: 'loanNumber',
             [t('MortgageNumber')]: 'mortgageNumber',
             // נושה בכיר
@@ -362,8 +372,8 @@ const useImport = () => {
         'פריים': CANONICAL_EXCEL_HEADERS.primeMargin,
         'פיגורים': CANONICAL_EXCEL_HEADERS.adjustedLoan,
         'פיגורים מתואמת': CANONICAL_EXCEL_HEADERS.adjustedLoan,
-        'שם משפחה לווה1': CANONICAL_EXCEL_HEADERS.borrowerName,
-        'שם משפחה לווה 1': CANONICAL_EXCEL_HEADERS.borrowerName,
+        'שם משפחה לווה1': CANONICAL_EXCEL_HEADERS.borrowerLastName,
+        'שם משפחה לווה 1': CANONICAL_EXCEL_HEADERS.borrowerLastName,
     };
 
     // מציע כותרת תקנית לכותרת לא מוכרת (לפי מילות מפתח) — כדי להציג ללקוח "השם צריך להיות X"
@@ -382,7 +392,7 @@ const useImport = () => {
         }
         if ((n.includes('שם') && n.includes('לווה')) || n.includes('שם הלווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerFirstName_2 : CANONICAL_EXCEL_HEADERS.borrowerName;
         if (n.includes('משפחה') && n.includes('לווה')) {
-            return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerFirstName_2 : CANONICAL_EXCEL_HEADERS.borrowerName;
+            return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerLastName_2 : CANONICAL_EXCEL_HEADERS.borrowerLastName;
         }
         if ((n.includes('תעודת') || n.includes('ת.ז') || n.includes('זהות')) && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerIdNumber_2 : CANONICAL_EXCEL_HEADERS.borrowerIdNumber;
         if (n.includes('כתובת') && n.includes('לווה')) return n.includes('2') ? CANONICAL_EXCEL_HEADERS.borrowerAddress_2 : CANONICAL_EXCEL_HEADERS.borrowerAddress;
@@ -543,9 +553,11 @@ const useImport = () => {
                         r = {
                             ...r,
                             borrowerName: r.borrowerFirstName_2,
+                            borrowerLastName: r.borrowerLastName_2,
                             borrowerIdNumber: r.borrowerIdNumber_2,
                             borrowerAddress: r.borrowerAddress_2,
                             borrowerFirstName_2: undefined,
+                            borrowerLastName_2: undefined,
                             borrowerIdNumber_2: undefined,
                             borrowerAddress_2: undefined,
                         };
@@ -554,22 +566,42 @@ const useImport = () => {
                     // לווים — עד 5. לווה 1 ו־2: תמיכה בשם פרטי+משפחה (עם או בלי סיומת 1)
                     const borrowers = [];
                     for (let i = 1; i <= 5; i++) {
-                        let name = i <= 2 ? borrowerFullName(r, i) : str(r[`borrowerName_${i}`]);
+                        let first =
+                            i === 1
+                                ? str(r.borrowerName)
+                                : i === 2
+                                  ? str(r.borrowerName_2) || str(r.borrowerFirstName_2)
+                                  : str(r[`borrowerName_${i}`]);
+                        let lastName =
+                            i === 1 ? str(r.borrowerLastName) : str(r[`borrowerLastName_${i}`]);
+                        if (!first && !lastName && i <= 2) {
+                            const legacy = borrowerFullName(r, i);
+                            if (legacy) first = legacy;
+                        }
                         let idNum = i === 1 ? num(r.borrowerIdNumber) : num(r[`borrowerIdNumber_${i}`]);
                         let address = i === 1 ? str(r.borrowerAddress) : str(r[`borrowerAddress_${i}`]);
                         let dob = i === 1 ? r.borrowerDateOfBirth : r[`borrowerDateOfBirth_${i}`];
                         let gender = i === 1 ? str(r.borrowerGender) : str(r[`borrowerGender_${i}`]);
                         let email = i === 1 ? str(r.borrowerEmail) : str(r[`borrowerEmail_${i}`]);
                         if (i >= 2) {
-                            if (name === undefined) name = str(getFromRow(row, BORROWER_ALT_HEADERS(i).name));
+                            if (first === undefined) first = str(getFromRow(row, BORROWER_ALT_HEADERS(i).name));
                             if (idNum == null) idNum = num(getFromRow(row, BORROWER_ALT_HEADERS(i).idNumber));
                             if (address === undefined) address = str(getFromRow(row, BORROWER_ALT_HEADERS(i).address));
                         }
-                        const hasAnyValue = !!(name || idNum != null || address || (dob != null && dob !== '') || gender || email);
-                        const shouldAdd = i === 1 ? (name || idNum != null) : hasAnyValue;
+                        const hasAnyValue = !!(
+                            first ||
+                            lastName ||
+                            idNum != null ||
+                            address ||
+                            (dob != null && dob !== '') ||
+                            gender ||
+                            email
+                        );
+                        const shouldAdd = i === 1 ? (first || lastName || idNum != null) : hasAnyValue;
                         if (shouldAdd) {
                             borrowers.push({
-                                borrowerName: name || '',
+                                borrowerName: first || '',
+                                borrowerLastName: lastName || '',
                                 borrowerIdNumber: idNum,
                                 borrowerAddress: address,
                                 borrowerDateOfBirth: dob ? new Date(dob) : undefined,
@@ -579,7 +611,17 @@ const useImport = () => {
                             });
                         }
                     }
-                    if (borrowers.length === 0) borrowers.push({ borrowerName: '', borrowerIdNumber: undefined, borrowerAddress: undefined, borrowerDateOfBirth: undefined, borrowerGender: undefined, borrowerEmail: undefined, borrowerIsMortgagor: false });
+                    if (borrowers.length === 0)
+                        borrowers.push({
+                            borrowerName: '',
+                            borrowerLastName: '',
+                            borrowerIdNumber: undefined,
+                            borrowerAddress: undefined,
+                            borrowerDateOfBirth: undefined,
+                            borrowerGender: undefined,
+                            borrowerEmail: undefined,
+                            borrowerIsMortgagor: false,
+                        });
 
                     // הלוואות — 1–3
                     const loans = [];
@@ -593,10 +635,18 @@ const useImport = () => {
                                 clause: str(r.clause),
                                 loanPlan: i === 1 ? str(r.loanPlan) : str(r[`loanPlan_${i}`]),
                                 loanMonths: i === 1 ? num(r.loanMonths) : num(r[`loanMonths_${i}`]),
-                                loanInterestRate: i === 1 ? num(r.loanInterestRate) : num(r[`loanInterestRate_${i}`]),
-                                adjustedLoan: i === 1 ? num(r.adjustedLoan) : num(r[`adjustedLoan_${i}`]),
-                                realLoan: i === 1 ? num(r.realLoan) : num(r[`realLoan_${i}`]),
-                                primeMargin: i === 1 ? num(r.primeMargin) : num(r[`primeMargin_${i}`]),
+                                loanInterestRate: i === 1 ? str(r.loanInterestRate) : str(r[`loanInterestRate_${i}`]),
+                                adjustedInterestRate: i === 1 ? str(r.adjustedInterestRate) : str(r[`adjustedInterestRate_${i}`]),
+                                adjustedLoan: i === 1 ? str(r.adjustedLoan) : str(r[`adjustedLoan_${i}`]),
+                                realLoan: i === 1 ? str(r.realLoan) : str(r[`realLoan_${i}`]),
+                                realCreditCostRate: i === 1 ? str(r.realCreditCostRate) : str(r[`realCreditCostRate_${i}`]),
+                                primeMargin: i === 1 ? str(r.primeMargin) : str(r[`primeMargin_${i}`]),
+                                indexLinked: i === 1 ? str(r.indexLinked) : str(r[`indexLinked_${i}`]),
+                                establishmentFee: i === 1 ? str(r.establishmentFee) : str(r[`establishmentFee_${i}`]),
+                                borrowerReceivesAmount: i === 1 ? str(r.borrowerReceivesAmount) : str(r[`borrowerReceivesAmount_${i}`]),
+                                excessPaymentBeyondCredit: i === 1 ? str(r.excessPaymentBeyondCredit) : str(r[`excessPaymentBeyondCredit_${i}`]),
+                                totalPayableEndOfTerm: i === 1 ? str(r.totalPayableEndOfTerm) : str(r[`totalPayableEndOfTerm_${i}`]),
+                                loanPurpose: i === 1 ? str(r.loanPurpose) : str(r[`loanPurpose_${i}`]),
                                 loanCreation: (i === 1 ? r.loanCreation : r[`loanCreation_${i}`]) ? new Date(i === 1 ? r.loanCreation : r[`loanCreation_${i}`]) : undefined,
                                 loanNumber: loanNum,
                                 mortgageNumber: i === 1 ? num(r.mortgageNumber) : num(r[`mortgageNumber_${i}`]),
@@ -659,6 +709,9 @@ const useImport = () => {
                         financingCompanies,
 
                         registrationDetails: {
+                            lienRank: str(r.lienRank),
+                            firstLienAmount: str(r.firstLienAmount),
+                            secondLienAmount: str(r.secondLienAmount),
                             block: str(r.block),
                             plot: str(r.plot),
                             subPlot: str(r.subPlot),
@@ -670,6 +723,9 @@ const useImport = () => {
                             office: str(r.office),
                             registry: str(r.registry),
                             plotArea: str(r.plotArea),
+                            ramiContractNumber: str(r.ramiContractNumber),
+                            lotNumber: str(r.lotNumber),
+                            applicationNumber: str(r.applicationNumber),
                             right: str(r.right),
                             parts: str(r.parts),
                             propertyType: str(r.propertyType),

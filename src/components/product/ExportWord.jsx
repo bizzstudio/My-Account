@@ -1,7 +1,68 @@
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import Cookies from "js-cookie";
-import { buildWordTemplateData } from "@/utils/buildWordTemplateData";
+import { buildWordTemplateData, formatBorrowerDisplayName } from "@/utils/buildWordTemplateData";
+
+/**
+ * מחיל גופן David 12pt על כל ה-runs במסמך DOCX (PizZip לאחר מילוי docxtemplater).
+ * מתקן גם את docDefaults ב-styles.xml וגם כל <w:rPr> ב-document.xml.
+ */
+function applyDocumentFont(zip, fontName = "David", sizePt = 12) {
+  const halfPt = String(sizePt * 2);
+  const fontTag = `<w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:eastAsia="${fontName}"/>`;
+  const sizeTag = `<w:sz w:val="${halfPt}"/><w:szCs w:val="${halfPt}"/>`;
+  const injection = fontTag + sizeTag;
+
+  const patchRpr = (xml) =>
+    xml.replace(
+      /(<w:rPr(?:\s[^>]*)?>)([\s\S]*?)(<\/w:rPr>)/g,
+      (_, open, inner, close) => {
+        const cleaned = inner
+          .replace(/<w:rFonts\b[^/]*\/>/g, "")
+          .replace(/<w:sz\b[^/]*\/>/g, "")
+          .replace(/<w:szCs\b[^/]*\/>/g, "");
+        return `${open}${injection}${cleaned}${close}`;
+      }
+    );
+
+  // styles.xml — docDefaults
+  try {
+    const stylesFile = zip.file("word/styles.xml");
+    if (stylesFile) {
+      let xml = stylesFile.asText();
+      if (/<w:rPrDefault/.test(xml)) {
+        xml = patchRpr(xml);
+      } else if (/<w:docDefaults/.test(xml)) {
+        xml = xml.replace(
+          /(<w:docDefaults[^>]*>)/,
+          `$1<w:rPrDefault><w:rPr>${injection}</w:rPr></w:rPrDefault>`
+        );
+      } else {
+        xml = xml.replace(
+          /(<w:style\b)/,
+          `<w:docDefaults><w:rPrDefault><w:rPr>${injection}</w:rPr></w:rPrDefault></w:docDefaults>$1`
+        );
+      }
+      zip.file("word/styles.xml", xml);
+    }
+  } catch (_) {}
+
+  // document.xml — כל <w:rPr> קיים
+  try {
+    const docFile = zip.file("word/document.xml");
+    if (docFile) {
+      let xml = docFile.asText();
+      // פטח rPr קיימים
+      xml = patchRpr(xml);
+      // הוסף rPr ל-run שאין לו (<w:r> ו-<w:r ...> ואחריו <w:t ולא <w:rPr>)
+      xml = xml.replace(
+        /(<w:r(?:\s[^>]*)?>)(?![\s\S]*?<w:rPr)(<w:t\b)/g,
+        `$1<w:rPr>${injection}</w:rPr>$2`
+      );
+      zip.file("word/document.xml", xml);
+    }
+  } catch (_) {}
+}
 
 // מנקה token מתווים לא חוקיים ב-header (שורה חדשה, רווח מיותר) — מונע "Invalid character in header content [Authorization]"
 const safeAuthHeader = (token) => {
@@ -13,6 +74,7 @@ const safeAuthHeader = (token) => {
 // מחזיר מפה של { productId: driveFolderLink } לשימוש בשליחת מייל
 // options.singleDocumentPerProduct — true: קובץ Word אחד לכל תיק (לתבנית זו); false: קובץ נפרד לכל לווה.
 // תגים ממוספרים {borrowerName1}, {borrowerName2}, … מתמלאים תמיד לפי סדר הלווים בתיק; {borrowerName} = הלווה «של הקובץ» (במצב קובץ אחד — הלווה הראשון).
+// {borrowerFirstName} / {borrowerLastName} (ומקבילי mortgagor*/nonMortgagor*) — שם פרטי ושם משפחה בנפרד; {borrowerName} נשאר כפי שנשמר בשדה (תאימות לאחור).
 const ExportWord = async (products, isCheck = [], template = null, options = {}) => {
   const { singleDocumentPerProduct = false } = options;
   const uploadedFiles = [];
@@ -80,7 +142,10 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
       const borrowers = product.borrowers?.length ? product.borrowers : [{}];
       const driveFolderName =
         borrowers
-          .map((br) => (br.borrowerName && String(br.borrowerName).trim()) || "")
+          .map((br) => {
+            const d = formatBorrowerDisplayName(br);
+            return d !== "-" ? d : "";
+          })
           .filter(Boolean)
           .join(" ו ") || "Unknown";
 
@@ -152,6 +217,7 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
           nullGetter: () => "-",
         });
         await doc.renderAsync(safeData);
+        applyDocumentFont(zip);
         return doc.getZip().generate({ type: "blob" });
       };
 
@@ -160,7 +226,9 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
         const safeData = buildWordTemplateData(product, anchorBorrower);
         const blob = await renderZip(safeData);
         const label =
-          driveFolderName !== "Unknown" ? driveFolderName : anchorBorrower.borrowerName || "-";
+          driveFolderName !== "Unknown"
+            ? driveFolderName
+            : formatBorrowerDisplayName(anchorBorrower);
         await uploadOneDoc(blob, templateFileName, label);
       } else {
         for (let bi = 0; bi < borrowers.length; bi++) {
@@ -169,8 +237,7 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
           const blob = await renderZip(safeData);
           const fileBaseName =
             borrowers.length > 1 ? `${templateFileName} (${bi + 1})` : templateFileName;
-          const uploadedBorrowerLabel =
-            (borrower.borrowerName && String(borrower.borrowerName).trim()) || "-";
+          const uploadedBorrowerLabel = formatBorrowerDisplayName(borrower);
           await uploadOneDoc(blob, fileBaseName, uploadedBorrowerLabel);
         }
       }

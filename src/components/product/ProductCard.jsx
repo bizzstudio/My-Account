@@ -8,6 +8,7 @@ import EditDeleteButton from "../table/EditDeleteButton";
 import ActiveInActiveButton from "../table/ActiveInActiveButton";
 import CheckBox from "../form/others/CheckBox";
 import { UserContext } from "@/context/UserContext";
+import { formatBorrowerDisplayName } from "@/utils/buildWordTemplateData";
 
 const ProductCard = ({ product, isCheck, setIsCheck, handleClick, toggleDrawerData }) => {
   const { state: userState } = useContext(UserContext);
@@ -56,8 +57,8 @@ const ProductCard = ({ product, isCheck, setIsCheck, handleClick, toggleDrawerDa
       {/* Borrower details */}
       <div className="flex flex-col divide-y divide-דgray-200 dark:divide-gray-700">
         <div className="flex justify-between items-center gap-2 py-1">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("borrowerName")}:</span>
-          <span className="text-sm text-gray-900 dark:text-gray-100">{borrower.borrowerName || "-"}</span>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("BorrowerName")}:</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{formatBorrowerDisplayName(borrower)}</span>
         </div>
 
         <div className="flex justify-between items-center gap-2 py-1">

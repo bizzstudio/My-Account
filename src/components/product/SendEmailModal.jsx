@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { FiX, FiMail, FiAlertCircle } from "react-icons/fi";
 import { t } from "i18next";
 import requests from "@/services/httpService";
+import { formatBorrowerDisplayName } from "@/utils/buildWordTemplateData";
 
 const SendEmailModal = ({ product, onClose }) => {
-  const borrowerName = product?.borrowers?.[0]?.borrowerName || "-";
+  const borrowerName = formatBorrowerDisplayName(product?.borrowers?.[0] || {});
   const borrowerEmail = product?.borrowers?.[0]?.borrowerEmail || null;
   const lawyerEmail = product?.signingDetails?.lawyerEmail || null;
   const consultantEmail = product?.signingDetails?.consultantEmail || null;
