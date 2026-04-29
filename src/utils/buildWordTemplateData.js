@@ -1,8 +1,8 @@
 /**
  * מפתחות שטוחים ל-docxtemplater — תואמים למקרא בהגדרות (Settings → LEGEND_SECTIONS).
  * מקור הנתונים: אובייקט מוצר כפי שחוזר מה-API / נשמר בטופס (ProductDrawer, ConsultantForm).
- * שמות לווה: `borrowerName` = שם פרטי (תאימות לאחור); `borrowerFirstName` = אותו ערך לתבניות;
- * `borrowerLastName` = שם משפחה. רובריקות ממשכן/לא-ממשכן: mortgagorFirstName1, mortgagorLastName1, …
+ * שמות לווה: `borrowerName` = שם פרטי + שם משפחה יחד; `borrowerFirstName` = שם פרטי בלבד;
+ * `borrowerLastName` = שם משפחה בלבד. רובריקות ממשכן/לא-ממשכן: mortgagorFirstName1, mortgagorLastName1, …
  */
 
 const dash = (v) => {
@@ -90,7 +90,7 @@ export function formatBorrowerPlaceholderValue(key, borrower) {
   const b = borrower || {};
   switch (key) {
     case "borrowerName":
-      return dash(b.borrowerName);
+      return formatBorrowerDisplayName(b);
     case "borrowerFirstName":
       return dash(b.borrowerName);
     case "borrowerLastName":
