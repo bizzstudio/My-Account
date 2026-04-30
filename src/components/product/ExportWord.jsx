@@ -74,6 +74,7 @@ const safeAuthHeader = (token) => {
 // מחזיר מפה של { productId: driveFolderLink } לשימוש בשליחת מייל
 // options.singleDocumentPerProduct — true: קובץ Word אחד לכל תיק (לתבנית זו); false: קובץ נפרד לכל לווה.
 // תגים ממוספרים {borrowerName1}, {borrowerName2}, … מתמלאים תמיד לפי סדר הלווים בתיק; {borrowerName} = שם מלא של הלווה «של הקובץ» (במצב קובץ אחד — הלווה הראשון).
+// {mortgagorIdNumber} / {nonMortgagorIdNumber} — ת.ז. של ממשכן ראשון / לא-ממשכן ראשון; {mortgagorIdNumber1}… — לפי סדר נפרד בתוך כל קבוצה (דורש צ׳קבוקס «ממשכן» בפרטי הלווה).
 // {borrowerFirstName} / {borrowerLastName} — שם פרטי ושם משפחה בנפרד; {borrowerName} — פרטי + משפחה יחד (כמו mortgagorName*/nonMortgagorName* לפי המפתח Name).
 const ExportWord = async (products, isCheck = [], template = null, options = {}) => {
   const { singleDocumentPerProduct = false } = options;

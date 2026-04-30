@@ -144,8 +144,14 @@ const useProductSubmit = (id, onSuccess) => {
         borrowers: restData.borrowers?.map((b) => {
           const { _clientKey: _ck, ...rest } = b;
           const normalized = coerceBorrowerFields(rest);
+          const idRaw = normalized.borrowerIdNumber;
+          const borrowerIdNumber =
+            idRaw === undefined || idRaw === null || String(idRaw).trim() === ""
+              ? ""
+              : String(idRaw).trim();
           return {
             ...normalized,
+            borrowerIdNumber,
             borrowerDateOfBirth: convertDate(b.borrowerDateOfBirth),
             borrowerIsMortgagor: isBorrowerMortgagorFlag(b),
           };

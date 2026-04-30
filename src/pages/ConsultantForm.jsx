@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import logo from "@/assets/img/logo.jpeg";
 import { isValidIsraeliID } from "@/utils/israeliId";
 import { defaultLoan } from "@/hooks/Product/useProductSubmit";
-
 // VITE_APP_API_BASE_URL = "http://localhost:3031/api" — מסירים את /api בסוף
 const API_BASE = import.meta.env.VITE_APP_API_BASE_URL || "http://localhost:3031/api";
 const BACKEND_URL = API_BASE.replace(/\/api$/, "");
@@ -181,7 +180,14 @@ const ConsultantForm = () => {
                 <Field label="אימייל" col={6}><Input register={register} name={`borrowers[${i}].borrowerEmail`} type="email" placeholder="דוא״ל" /></Field>
                 <Field label={t("BorrowerIsMortgagor")} col={3}>
                   <label className="flex items-center gap-2 text-sm mt-2 cursor-pointer">
-                    <input type="checkbox" className="rounded border-gray-300 text-[#a57d45] focus:ring-[#a57d45]" {...register(`borrowers[${i}].borrowerIsMortgagor`)} />
+                    <input
+                      type="checkbox"
+                      value="true"
+                      className="rounded border-gray-300 text-[#a57d45] focus:ring-[#a57d45]"
+                      {...register(`borrowers[${i}].borrowerIsMortgagor`, {
+                        setValueAs: (v) => v === true || v === "true" || v === "on",
+                      })}
+                    />
                     <span>{t("Yes")}</span>
                   </label>
                 </Field>

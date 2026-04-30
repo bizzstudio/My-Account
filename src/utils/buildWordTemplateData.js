@@ -1,3 +1,5 @@
+import { normalizeIsraeliID } from "@/utils/israeliId";
+
 /**
  * מפתחות שטוחים ל-docxtemplater — תואמים למקרא בהגדרות (Settings → LEGEND_SECTIONS).
  * מקור הנתונים: אובייקט מוצר כפי שחוזר מה-API / נשמר בטופס (ProductDrawer, ConsultantForm).
@@ -41,8 +43,17 @@ const genderHe = (g) => {
   return dash(g);
 };
 
-const yesNoHe = (v) =>
-  v === true || v === "true" || v === 1 || v === "1" ? "כן" : "לא";
+/** ערכי אמת נפוצים מצ'קבוקס / JSON / מסד (כולל "on" מטפסי HTML ) */
+function truthyBorrowerIsMortgagor(v) {
+  if (v === true || v === 1) return true;
+  if (typeof v === "string") {
+    const s = v.trim().toLowerCase();
+    return s === "true" || s === "1" || s === "on" || s === "yes";
+  }
+  return false;
+}
+
+const yesNoHeMortgagor = (v) => (truthyBorrowerIsMortgagor(v) ? "כן" : "לא");
 
 /**
  * איחוד מפתחות נפוצים מהבקאנד/מיגרציה — כדי ש־{mortgagorName1}, {borrowerName} וכו'
@@ -84,8 +95,7 @@ export function formatBorrowerDisplayName(borrower) {
 
 /** האם הלווה מסומן כממשכן (לסינון תגי mortgagorName1… ו־nonMortgagor…) */
 export function isBorrowerMortgagorFlag(b) {
-  const v = b?.borrowerIsMortgagor;
-  return v === true || v === "true" || v === 1 || v === "1";
+  return truthyBorrowerIsMortgagor(b?.borrowerIsMortgagor);
 }
 
 /** מספר מקסימלי של לווים עם תגים ממוספרים ({borrowerName1}, {borrowerName2}, …) */
@@ -124,8 +134,14 @@ export function formatBorrowerPlaceholderValue(key, borrower) {
       return dash(b.borrowerName);
     case "borrowerLastName":
       return dash(b.borrowerLastName);
-    case "borrowerIdNumber":
-      return dash(b.borrowerIdNumber);
+    case "borrowerIdNumber": {
+      const v = b.borrowerIdNumber;
+      if (v === undefined || v === null || v === "") return "-";
+      if (typeof v === "number" && Number.isFinite(v))
+        return normalizeIsraeliID(v) || "-";
+      const s = String(v).trim();
+      return s || "-";
+    }
     case "borrowerAddress":
       return dash(b.borrowerAddress);
     case "borrowerDateOfBirth":
@@ -141,7 +157,7 @@ export function formatBorrowerPlaceholderValue(key, borrower) {
     case "borrowerEmail":
       return dash(b.borrowerEmail);
     case "borrowerIsMortgagor":
-      return yesNoHe(b.borrowerIsMortgagor);
+      return yesNoHeMortgagor(b.borrowerIsMortgagor);
     default:
       return "-";
   }
@@ -176,6 +192,9 @@ export function buildMortgagorRolePlaceholders(borrowers) {
   const mort = brs.filter(isBorrowerMortgagorFlag);
   const non = brs.filter((b) => !isBorrowerMortgagorFlag(b));
   const out = {};
+  // תגים בלי מספר — שווים לממשכן/לא-ממשכן הראשון (נוחות במקרא ובתבניות ישנות)
+  out.mortgagorIdNumber = formatBorrowerPlaceholderValue("borrowerIdNumber", mort[0] || {});
+  out.nonMortgagorIdNumber = formatBorrowerPlaceholderValue("borrowerIdNumber", non[0] || {});
   for (let i = 0; i < MAX_INDEXED_BORROWERS; i++) {
     const n = i + 1;
     const bm = mort[i] || {};
