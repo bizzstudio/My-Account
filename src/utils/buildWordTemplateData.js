@@ -44,14 +44,43 @@ const genderHe = (g) => {
 const yesNoHe = (v) =>
   v === true || v === "true" || v === 1 || v === "1" ? "כן" : "לא";
 
+/**
+ * איחוד מפתחות נפוצים מהבקאנד/מיגרציה — כדי ש־{mortgagorName1}, {borrowerName} וכו'
+ * יקבלו שם מלא גם כש־שם המשפחה נשמר תחת lastName / familyName / borrowerFamily (שדה ישן בבקאנד) במקום borrowerLastName.
+ */
+export function coerceBorrowerFields(borrower) {
+  if (!borrower || typeof borrower !== "object") return {};
+  let borrowerName =
+    borrower.borrowerName ??
+    borrower.firstName ??
+    borrower.givenName ??
+    "";
+  borrowerName =
+    borrowerName != null && String(borrowerName).trim() !== ""
+      ? String(borrowerName).trim()
+      : "";
+  let borrowerLastName =
+    borrower.borrowerLastName ??
+    borrower.borrowerFamily ??
+    borrower.lastName ??
+    borrower.familyName ??
+    borrower.surname ??
+    "";
+  borrowerLastName =
+    borrowerLastName != null && String(borrowerLastName).trim() !== ""
+      ? String(borrowerLastName).trim()
+      : "";
+  return { ...borrower, borrowerName, borrowerLastName };
+}
+
 /** שם לתצוגה (תיקיית Drive, טקסט מאוחד) — שם פרטי + שם משפחה כששניהם קיימים */
 export function formatBorrowerDisplayName(borrower) {
-  const parts = [borrower?.borrowerName, borrower?.borrowerLastName]
-    .map((x) => (x != null && String(x).trim() !== "" ? String(x).trim() : ""))
-    .filter(Boolean);
+  const b = coerceBorrowerFields(borrower);
+  const parts = [b.borrowerName, b.borrowerLastName].filter(Boolean);
   if (!parts.length) return "-";
   return parts.join(" ");
 }
+
 
 /** האם הלווה מסומן כממשכן (לסינון תגי mortgagorName1… ו־nonMortgagor…) */
 export function isBorrowerMortgagorFlag(b) {
@@ -87,7 +116,7 @@ const INDEXED_BORROWER_FIELD_KEYS = [
 ];
 
 export function formatBorrowerPlaceholderValue(key, borrower) {
-  const b = borrower || {};
+  const b = coerceBorrowerFields(borrower || {});
   switch (key) {
     case "borrowerName":
       return formatBorrowerDisplayName(b);

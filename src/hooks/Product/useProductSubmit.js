@@ -9,7 +9,7 @@ import ProductServices from "@/services/ProductServices";
 import UserServices from "@/services/UserServices";
 import notifyApiResponse from "@/utils/notifyApiResponse";
 import ExportWord from "@/components/product/ExportWord";
-import { isBorrowerMortgagorFlag } from "@/utils/buildWordTemplateData";
+import { coerceBorrowerFields, isBorrowerMortgagorFlag } from "@/utils/buildWordTemplateData";
 
 export const defaultLoan = {
   loanPlan: "",
@@ -143,8 +143,9 @@ const useProductSubmit = (id, onSuccess) => {
         },
         borrowers: restData.borrowers?.map((b) => {
           const { _clientKey: _ck, ...rest } = b;
+          const normalized = coerceBorrowerFields(rest);
           return {
-            ...rest,
+            ...normalized,
             borrowerDateOfBirth: convertDate(b.borrowerDateOfBirth),
             borrowerIsMortgagor: isBorrowerMortgagorFlag(b),
           };
@@ -221,15 +222,18 @@ const useProductSubmit = (id, onSuccess) => {
 
       const borrowersMappedFinal =
         borrowersRaw.length > 0
-          ? borrowersRaw.map((b) => ({
-              ...defaultBorrower,
-              ...b,
-              borrowerDateOfBirth: b.borrowerDateOfBirth
-                ? new Date(b.borrowerDateOfBirth).toISOString().split("T")[0]
-                : "",
-              /** בוליאני אחיד — מונע צ'קבוקס ממשכן שקופץ בגלל מחרוזת מהשרת */
-              borrowerIsMortgagor: isBorrowerMortgagorFlag(b),
-            }))
+          ? borrowersRaw.map((b) => {
+              /** מיזוג עם default ואז coerce — מונע borrowerLastName:null שדורס ברירת מחדל,
+               * ומאחד מפתחות חלופיים מהבקאנד (lastName וכו') לשדות הטופס */
+              const merged = coerceBorrowerFields({ ...defaultBorrower, ...b });
+              return {
+                ...merged,
+                borrowerDateOfBirth: merged.borrowerDateOfBirth
+                  ? new Date(merged.borrowerDateOfBirth).toISOString().split("T")[0]
+                  : "",
+                borrowerIsMortgagor: isBorrowerMortgagorFlag(b),
+              };
+            })
           : [defaultBorrower];
 
       const formData = {

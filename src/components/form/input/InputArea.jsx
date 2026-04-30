@@ -1,6 +1,5 @@
 // form/input/InputArea.jsx
 import React, { useContext, useEffect } from "react";
-import Cookies from "js-cookie";
 import { Input, Label } from "@windmill/react-ui";
 import { useTranslation } from "react-i18next";
 import { SidebarContext } from "@/context/SidebarContext";
@@ -28,6 +27,14 @@ const InputArea = ({
   const { t } = useTranslation();
   const { lang } = useContext(SidebarContext);
   const currentLang = lang === 'he' ? 'rtl' : 'ltr';
+
+  const fieldRegister = register(name, {
+    required: isRequired ? `${t(label)} ${t("isRequired")}!` : false,
+    valueAsNumber: type === "number",
+    min: min !== undefined ? { value: min, message: t("minValue", { min }) } : undefined,
+    max: max !== undefined ? { value: max, message: t("maxValue", { max }) } : undefined,
+    ...(validate && { validate }),
+  });
 
   useEffect(() => {
     const input = document.getElementById(name);
@@ -57,24 +64,17 @@ const InputArea = ({
           {...props}
           id={name}
           dir={currentLang}
-          {...register(name, {
-            required: isRequired ? `${t(label)} ${t("isRequired")}!` : false,
-            valueAsNumber: type === "number",
-            min: min !== undefined ? { value: min, message: t("minValue", { min }) } : undefined,
-            max: max !== undefined ? { value: max, message: t("maxValue", { max }) } : undefined,
-            ...(validate && { validate }),
-          })}
+          {...fieldRegister}
           type={type}
           step={type === "number" ? 'any' : undefined}
           inputMode={type === "number" ? "decimal" : undefined} // ✅ מקלדת מספרית בסמארטפונים
           pattern={type === 'tel' ? '[0-9]*' : undefined} // אפשור של מספרים בלבד
-          name={name}
           defaultValue={defaultValue}
           placeholder={placeholder}
           autoComplete={autocomplete}
           onChange={(e) => {
             const value = type === "number" ? parseFloat(e.target.value) : e.target.value;
-            
+
             // בדיקת מינימום ומקסימום עבור שדות מספר
             if (type === "number" && !isNaN(value)) {
               if (min !== undefined && value < min) {
@@ -84,8 +84,8 @@ const InputArea = ({
                 notifyError(t("maxValue", { max }));
               }
             }
-            
-            register(name).onChange(e);
+
+            fieldRegister.onChange(e);
             onChange(e);
           }}
           className={
