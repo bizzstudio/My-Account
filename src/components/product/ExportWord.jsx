@@ -87,56 +87,47 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
       : products;
 
   try {
-    let content;
+    if (!template?._id) {
+      throw new Error("יש לבחור תבנית שהועלתה למערכת (אין תבנית ברירת מחדל).");
+    }
 
-    if (template) {
-      // תבנית שהועלתה על ידי האדמין — מורידים מהדרייב דרך הבקאנד
-      const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
-      const authHeader = safeAuthHeader(tokenHolder?.token);
-      const response = await fetch(
-        `${import.meta.env.VITE_APP_API_BASE_URL}/templates/${template._id}/file`,
-        {
-          headers: {
-            ...(authHeader && { Authorization: authHeader }),
-            "Cache-Control": "no-cache",
-          },
+    // תבנית מהשרת — קובץ מהדרייב דרך הבקאנד
+    const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
+    const authHeader = safeAuthHeader(tokenHolder?.token);
+    const response = await fetch(
+      `${import.meta.env.VITE_APP_API_BASE_URL}/templates/${template._id}/file`,
+      {
+        headers: {
+          ...(authHeader && { Authorization: authHeader }),
+          "Cache-Control": "no-cache",
+        },
+      }
+    );
+    if (!response.ok) {
+      let message = `שגיאה בהורדת התבנית (${response.status})`;
+      try {
+        const body = await response.json();
+        if (body?.message) message = body.message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+    const buffer = await response.arrayBuffer();
+    const content = new Uint8Array(buffer);
+    const isZip = content.length >= 2 && content[0] === 0x50 && content[1] === 0x4b;
+    const ct = response.headers.get("content-type") || "";
+    const tooSmall = content.length < 1000;
+    if (!isZip || ct.includes("application/json") || tooSmall) {
+      let msg = "לא התקבל קובץ תבנית תקין מהשרת. ייתכן שאין הרשאה לשימוש בתבנית זו.";
+      try {
+        const text = new TextDecoder().decode(content);
+        if (text.trim().startsWith("{")) {
+          const j = JSON.parse(text);
+          if (j?.message) msg = j.message;
+        } else if (tooSmall && text.length > 0) {
+          msg = "השרת החזיר תגובה קצרה במקום קובץ התבנית. ייתכן שנדרשת הרשאת אדמין.";
         }
-      );
-      if (!response.ok) {
-        let message = `שגיאה בהורדת התבנית (${response.status})`;
-        try {
-          const body = await response.json();
-          if (body?.message) message = body.message;
-        } catch (_) {}
-        throw new Error(message);
-      }
-      const buffer = await response.arrayBuffer();
-      content = new Uint8Array(buffer);
-      // וידוא שהתגובה היא קובץ docx (ZIP: מתחיל ב-PK) ולא JSON/הודעת שגיאה
-      const isZip = content.length >= 2 && content[0] === 0x50 && content[1] === 0x4b;
-      const ct = response.headers.get("content-type") || "";
-      const tooSmall = content.length < 1000; // קובץ docx מינימלי גדול בהרבה
-      if (!isZip || ct.includes("application/json") || tooSmall) {
-        let msg = "לא התקבל קובץ תבנית תקין מהשרת. ייתכן שאין הרשאה לשימוש בתבנית זו.";
-        try {
-          const text = new TextDecoder().decode(content);
-          if (text.trim().startsWith("{")) {
-            const j = JSON.parse(text);
-            if (j?.message) msg = j.message;
-          } else if (tooSmall && text.length > 0) {
-            msg = "השרת החזיר תגובה קצרה במקום קובץ התבנית. ייתכן שנדרשת הרשאת אדמין.";
-          }
-        } catch (_) {}
-        throw new Error(msg);
-      }
-    } else {
-      // תבנית ברירת מחדל — מהתיקייה הציבורית
-      const response = await fetch(`/template.docx?${Date.now()}`, {
-        cache: "no-cache",
-      });
-      if (!response.ok)
-        throw new Error(`Template not found. Status: ${response.status}`);
-      content = new Uint8Array(await response.arrayBuffer());
+      } catch (_) {}
+      throw new Error(msg);
     }
 
     for (let product of dataToExport) {
@@ -150,7 +141,7 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
           .filter(Boolean)
           .join(" ו ") || "Unknown";
 
-      const templateFileName = template?.name || "תבנית ברירת מחדל";
+      const templateFileName = template.name || "תבנית";
       const templateName = templateFileName;
 
       const uploadOneDoc = async (blob, fileBaseName, uploadedBorrowerLabel) => {
@@ -201,7 +192,7 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
                 ...(authHeader && { Authorization: authHeader }),
               },
               body: JSON.stringify({
-                id: template?._id || "default",
+                id: template._id,
                 name: templateName,
                 singleDocument: singleDocumentPerProduct,
               }),

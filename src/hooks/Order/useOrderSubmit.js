@@ -6,6 +6,7 @@ import { t } from "i18next";
 import { UserContext } from "@/context/UserContext";
 import UserServices from "@/services/UserServices";
 import { nanoid } from "@reduxjs/toolkit";
+import { parseInputNumber } from "@/utils/numberUtils";
 
 
 const useOrderSubmit = (id, onSuccess) => {
@@ -136,9 +137,9 @@ const useOrderSubmit = (id, onSuccess) => {
     if (idx !== -1) {
       // מוצר קיים — נעדכן את הכמות ונחשב מחדש את ה-totalPrice
       const item = { ...currentCart[idx] }; // clone item
-      const prevQty = Number(item.quantity || 0);
-      const unitPrice = Number(item.price || 0);
-      const discount = Number(item.discountPrice || 0);
+      const prevQty = parseInputNumber(item.quantity);
+      const unitPrice = parseInputNumber(item.price);
+      const discount = parseInputNumber(item.discountPrice);
 
       item.quantity = prevQty + 1;
       // חישוב בטוח של המחיר הכולל
@@ -174,9 +175,9 @@ const useOrderSubmit = (id, onSuccess) => {
       const updated = { ...item, [field]: value };
 
       if (["quantity", "price", "discountPrice"].includes(field)) {
-        const qty = Number(updated.quantity) || 1;
-        const price = Number(updated.price) || 0;
-        const discount = Number(updated.discountPrice) || 0;
+        const qty = parseInputNumber(updated.quantity) || 1;
+        const price = parseInputNumber(updated.price);
+        const discount = parseInputNumber(updated.discountPrice);
         updated.totalPrice = Math.max(qty * (price - discount), 0);
       }
 
@@ -297,10 +298,10 @@ const useOrderSubmit = (id, onSuccess) => {
           description: item.description,
           image: item.image,
           sku: item.sku,
-          quantity: item.quantity,
-          price: item.price,
-          discountPrice: item.discountPrice,
-          totalPrice: item.totalPrice,
+          quantity: parseInputNumber(item.quantity) || 1,
+          price: parseInputNumber(item.price),
+          discountPrice: parseInputNumber(item.discountPrice),
+          totalPrice: parseInputNumber(item.totalPrice),
           productId: item.productId,
         })),
 

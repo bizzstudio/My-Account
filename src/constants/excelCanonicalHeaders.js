@@ -10,11 +10,17 @@ export const CANONICAL_EXCEL_HEADERS = {
   borrowerLastName: 'שם משפחה לווה 1',
   borrowerIdNumber: 'מספר תעודת זהות לווה 1',
   borrowerAddress: 'כתובת לווה 1',
+  borrowerIsMortgagor: 'ממשכן לווה 1',
   // לווים 2
   borrowerFirstName_2: 'שם פרטי לווה 2',
   borrowerLastName_2: 'שם משפחה לווה 2',
   borrowerIdNumber_2: 'מספר תעודת זהות לווה 2',
   borrowerAddress_2: 'כתובת לווה 2',
+  borrowerIsMortgagor_2: 'ממשכן לווה 2',
+  // לווים 3–5 (תגיות ממשכן לתבניות mortgagorIdNumber*)
+  borrowerIsMortgagor_3: 'ממשכן לווה 3',
+  borrowerIsMortgagor_4: 'ממשכן לווה 4',
+  borrowerIsMortgagor_5: 'ממשכן לווה 5',
   // חתימה, עורך דין, יועץ, חברת מימון
   signingDate: 'תאריך חתימה',
   lawyerName: 'שם עורך הדין',
@@ -156,6 +162,7 @@ export function getCanonicalHeader(fieldKey) {
 
 /** כותרות חלופיות מהאקסל של המשתמש — מוכרות כתקניות, לא מוצגות כ"לא תקינות" */
 const ALTERNATIVE_EXCEL_HEADERS = {
+  ממשכן: 'borrowerIsMortgagor',
   'שטח חלקה': 'plotArea',
   'מסד': 'block',
   'שם משפחה לווה1': 'borrowerLastName',

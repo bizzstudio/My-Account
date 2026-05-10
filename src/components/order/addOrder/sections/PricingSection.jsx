@@ -4,11 +4,9 @@ import { t } from "i18next";
 import LabelArea from "@/components/form/selectOption/LabelArea";
 import Error from "@/components/form/others/Error";
 import InputArea from "@/components/form/input/InputArea";
+import { formatPrice as _formatPrice } from "@/utils/numberUtils";
 
-const formatPrice = (value) => {
-  const n = Number(value);
-  return Number.isFinite(n) ? `₪${n.toFixed(2)}` : "–";
-};
+const formatPrice = (value) => `₪${_formatPrice(value)}`;
 
 const PricingSection = ({ id, watch, register, errors }) => {
   const isEditMode = Boolean(id);

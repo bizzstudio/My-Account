@@ -4,6 +4,7 @@ import { t } from "i18next";
 import { FiTrash2 } from "react-icons/fi";
 import StandardTable from "@/components/table/StandardTable";
 import StandardTableHeader from "@/components/table/StandardTableHeader";
+import { formatPrice } from "@/utils/numberUtils";
 
 const CartTable = ({ cart, updateCartItem, removeCartItem, readOnly = false }) => {
   if (!cart || cart.length === 0) return null;
@@ -54,12 +55,11 @@ const CartTable = ({ cart, updateCartItem, removeCartItem, readOnly = false }) =
 
               <TableCell className="text-center">
                 {readOnly ? (
-                  <span className="text-sm">₪{Number(item.price).toFixed(2)}</span>
+                  <span className="text-sm">₪{formatPrice(item.price)}</span>
                 ) : (
                   <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={item.price}
                     onChange={(e) =>
                       updateCartItem(item.cartItemId, "price", e.target.value)
@@ -71,12 +71,11 @@ const CartTable = ({ cart, updateCartItem, removeCartItem, readOnly = false }) =
 
               <TableCell className="text-center">
                 {readOnly ? (
-                  <span className="text-sm">₪{Number(item.discountPrice ?? 0).toFixed(2)}</span>
+                  <span className="text-sm">₪{formatPrice(item.discountPrice ?? 0)}</span>
                 ) : (
                   <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={item.discountPrice}
                     onChange={(e) =>
                       updateCartItem(item.cartItemId, "discountPrice", e.target.value)
@@ -87,7 +86,7 @@ const CartTable = ({ cart, updateCartItem, removeCartItem, readOnly = false }) =
               </TableCell>
 
               <TableCell className="text-center">
-                <span className="text-sm">₪{item.totalPrice.toFixed(2)}</span>
+                <span className="text-sm">₪{formatPrice(item.totalPrice)}</span>
               </TableCell>
 
               {!readOnly && (

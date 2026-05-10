@@ -4,6 +4,7 @@ import { FiSearch, FiPlus } from "react-icons/fi";
 import { t } from "i18next";
 
 import useProductsForOrder from "@/hooks/Order/useProductsForOrder";
+import { formatPrice } from "@/utils/numberUtils";
 
 const ProductPicker = ({ onSelectProduct }) => {
   const {
@@ -99,7 +100,7 @@ const ProductPicker = ({ onSelectProduct }) => {
 
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-900 dark:text-white">
-                ₪{product.price?.toFixed(2) || "0.00"}
+                ₪{formatPrice(product.price ?? 0)}
               </span>
               <FiPlus className="text-gray-600 dark:text-gray-300" />
             </div>

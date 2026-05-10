@@ -18,7 +18,7 @@ import {
   import ExportWord from "@/components/product/ExportWord";
   import TemplateSelectModal from "@/components/settings/TemplateSelectModal";
   import requests from "@/services/httpService";
-  import { formatBorrowerDisplayName } from "@/utils/buildWordTemplateData";
+  import { formatDriveFolderNameFromBorrowers } from "@/utils/buildWordTemplateData";
 
 
   import ProductFilters from "@/components/product/ProductFilters";
@@ -410,21 +410,18 @@ import {
     const totalResults = productsData?.totalDoc || 0;
     const products = rawProducts;
 
-    // טעינת קישורי דרייב לכל המוצרים בדף הנוכחי
+    // טעינת קישורי דרייב — שם התיקייה כמו בייצוא Word (כל הלווים ב־« ו »); מיזוג עם קישורים מייצוא כדי שלא יימחקו אחרי רענון
     useEffect(() => {
       if (!products.length) return;
       const items = products
-        .filter((p) => {
-          const b = p.borrowers?.[0];
-          return b && (String(b.borrowerName || "").trim() || String(b.borrowerLastName || "").trim());
-        })
         .map((p) => ({
           productId: p._id,
-          borrowerName: formatBorrowerDisplayName(p.borrowers[0]),
-        }));
+          borrowerName: formatDriveFolderNameFromBorrowers(p.borrowers),
+        }))
+        .filter((it) => it.borrowerName);
       if (!items.length) return;
       requests.post("/products/drive-folders-batch", { items })
-        .then((data) => setDriveLinks(data))
+        .then((data) => setDriveLinks((prev) => ({ ...prev, ...(data || {}) })))
         .catch(() => {});
     }, [productsData]);
   

@@ -48,7 +48,8 @@ function truthyBorrowerIsMortgagor(v) {
   if (v === true || v === 1) return true;
   if (typeof v === "string") {
     const s = v.trim().toLowerCase();
-    return s === "true" || s === "1" || s === "on" || s === "yes";
+    const t = v.trim();
+    return s === "true" || s === "1" || s === "on" || s === "yes" || t === "כן";
   }
   return false;
 }
@@ -70,17 +71,37 @@ export function coerceBorrowerFields(borrower) {
     borrowerName != null && String(borrowerName).trim() !== ""
       ? String(borrowerName).trim()
       : "";
-  let borrowerLastName =
+
+  const explicitLast =
     borrower.borrowerLastName ??
-    borrower.borrowerFamily ??
     borrower.lastName ??
     borrower.familyName ??
-    borrower.surname ??
-    "";
-  borrowerLastName =
-    borrowerLastName != null && String(borrowerLastName).trim() !== ""
-      ? String(borrowerLastName).trim()
+    borrower.surname;
+
+  let borrowerLastName =
+    explicitLast != null && String(explicitLast).trim() !== ""
+      ? String(explicitLast).trim()
       : "";
+
+  const famRaw = borrower.borrowerFamily;
+  const fam =
+    famRaw != null && String(famRaw).trim() !== "" ? String(famRaw).trim() : "";
+
+  /**
+   * מיגרציה משדות ישנים (פרטי ממשכן / borrowerFamily): לפעמים נשמר שם פרטי בטעות כטוקן אחרון של משפחה דו־מילית
+   * (למשל borrowerName = "גד", borrowerFamily = "בן גד" במקום פרטי "בן" ומשפחה "גד").
+   */
+  if (!borrowerLastName && fam) {
+    const famParts = fam.split(/\s+/).filter(Boolean);
+    if (famParts.length >= 2 && borrowerName && borrowerName === famParts[famParts.length - 1]) {
+      const givenFromFam = famParts.slice(0, -1).join(" ");
+      borrowerName = givenFromFam || borrowerName;
+      borrowerLastName = famParts[famParts.length - 1];
+    } else {
+      borrowerLastName = fam;
+    }
+  }
+
   return { ...borrower, borrowerName, borrowerLastName };
 }
 
@@ -90,6 +111,19 @@ export function formatBorrowerDisplayName(borrower) {
   const parts = [b.borrowerName, b.borrowerLastName].filter(Boolean);
   if (!parts.length) return "-";
   return parts.join(" ");
+}
+
+/** שם תיקיית Drive כמו ב־ExportWord — כל הלווים עם שם מלא, מחוברים ב־« ו » */
+export function formatDriveFolderNameFromBorrowers(borrowers) {
+  const brs = Array.isArray(borrowers) && borrowers.length ? borrowers : [];
+  const joined = brs
+    .map((br) => {
+      const d = formatBorrowerDisplayName(br);
+      return d !== "-" ? d : "";
+    })
+    .filter(Boolean)
+    .join(" ו ");
+  return joined || "";
 }
 
 
@@ -330,6 +364,9 @@ export function buildWordTemplateData(product, borrower) {
     loanChange: dash(loan.loanChange),
     clause: dash(loan.clause),
     loanPlan: dash(loan.loanPlan),
+    interestLockDate: formatDateHe(loan.interestLockDate),
+    primeRate: dash(loan.primeRate),
+    repaymentTrackName: dash(loan.repaymentTrackName),
     loanMonths: dash(loan.loanMonths),
     loanInterestRate: dash(loan.loanInterestRate),
     adjustedInterestRate: dash(loan.adjustedInterestRate),
@@ -337,7 +374,8 @@ export function buildWordTemplateData(product, borrower) {
     realLoan: dash(loan.realLoan),
     realCreditCostRate: dash(loan.realCreditCostRate),
     primeMargin: dash(loan.primeMargin),
-    indexLinked: dash(loan.indexLinked),
+    indexLinked:
+      loan.indexLinked === "yes" ? "כן" : loan.indexLinked === "no" ? "לא" : dash(loan.indexLinked),
     indexLinkedHe:
       loan.indexLinked === "yes" ? "כן" : loan.indexLinked === "no" ? "לא" : dash(loan.indexLinked),
     establishmentFee: dash(loan.establishmentFee),

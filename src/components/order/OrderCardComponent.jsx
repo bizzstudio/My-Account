@@ -3,6 +3,7 @@ import { Avatar } from "@windmill/react-ui";
 import React, { useContext } from "react";
 import { t } from "i18next";
 import dayjs from "dayjs";
+import { formatPrice } from "@/utils/numberUtils";
 
 import EditDeleteButton from "@/components/table/EditDeleteButton";
 import CheckBox from "@/components/form/others/CheckBox";
@@ -69,7 +70,7 @@ const OrderCard = ({ order, isCheck, setIsCheck, handleClick, toggleDrawerData }
 
         <div className="flex justify-between items-center gap-2 py-1">
           <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t("Total")}:</span>
-          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">₪{order?.price?.finalPrice?.toFixed ? order.price.finalPrice.toFixed(2) : (order?.price?.finalPrice || "-")}</span>
+          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">₪{order?.price?.finalPrice != null ? formatPrice(order.price.finalPrice) : "-"}</span>
         </div>
 
         <div className="flex justify-between items-center gap-2 py-1">

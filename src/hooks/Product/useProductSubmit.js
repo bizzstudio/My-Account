@@ -104,20 +104,41 @@ const useProductSubmit = (id, onSuccess) => {
   const reExportToDrive = async (productId, productData) => {
     try {
       const tokenHolder = Cookies.get("userInfo") ? JSON.parse(Cookies.get("userInfo")) : null;
+      const authHeader = tokenHolder ? `Bearer ${tokenHolder.token}` : "";
       const res = await fetch(
         `${import.meta.env.VITE_APP_API_BASE_URL}/products/${productId}/exported-templates`,
-        { headers: { Authorization: tokenHolder ? `Bearer ${tokenHolder.token}` : "" } }
+        { headers: { Authorization: authHeader } }
       );
       if (!res.ok) return;
       const { exportedTemplates } = await res.json();
       if (!exportedTemplates || exportedTemplates.length === 0) return;
 
       const fullProduct = { ...productData, _id: productId };
+      const isMongoObjectId = (id) =>
+        typeof id === "string" && /^[a-fA-F0-9]{24}$/.test(id);
+
       for (const tpl of exportedTemplates) {
-        const templateArg = tpl.id === "default" ? null : { _id: tpl.id, name: tpl.name };
-        ExportWord([fullProduct], [], templateArg, {
-          singleDocumentPerProduct: Boolean(tpl.singleDocument),
-        }).catch(console.error);
+        const tid = tpl?.id != null ? String(tpl.id) : "";
+        if (!tid || tid === "default" || !isMongoObjectId(tid)) continue;
+        const templateArg = { _id: tid, name: tpl.name };
+        try {
+          await ExportWord([fullProduct], [], templateArg, {
+            singleDocumentPerProduct: Boolean(tpl.singleDocument),
+          });
+        } catch (exportErr) {
+          const msg = String(exportErr?.message || "");
+          const isNotFound =
+            msg.includes("404") ||
+            msg.toLowerCase().includes("not found") ||
+            msg.toLowerCase().includes("תבנית");
+          if (isNotFound) {
+            // תבנית נמחקה — מסירים מרשימת ה־exportedTemplates של התיק
+            fetch(
+              `${import.meta.env.VITE_APP_API_BASE_URL}/products/${productId}/exported-templates/${tid}`,
+              { method: "DELETE", headers: { Authorization: authHeader } }
+            ).catch(() => {});
+          }
+        }
       }
     } catch (err) {
       console.error("re-export failed:", err);

@@ -4,11 +4,9 @@ import { t } from "i18next";
 import TemplateServices from "@/services/TemplateServices";
 import ExportWord from "@/components/product/ExportWord";
 
-const DEFAULT_TEMPLATE = { _id: "default", name: t("DefaultTemplate") };
-
 const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
   const [templates, setTemplates] = useState([]);
-  const [selected, setSelected] = useState({ default: true });
+  const [selected, setSelected] = useState({});
   const [singleDocByTemplateId, setSingleDocByTemplateId] = useState({});
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -21,12 +19,21 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (loading || templates.length === 0) return;
+    setSelected((prev) => {
+      if (Object.values(prev).some(Boolean)) return prev;
+      return { [templates[0]._id]: true };
+    });
+  }, [loading, templates]);
+
   const toggleSelect = (id) => {
     setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const handleSelectAll = () => {
-    const allKeys = ["default", ...templates.map((t) => t._id)];
+    const allKeys = templates.map((t) => t._id);
+    if (allKeys.length === 0) return;
     const allSelected = allKeys.every((k) => selected[k]);
     const next = {};
     allKeys.forEach((k) => (next[k] = !allSelected));
@@ -42,14 +49,6 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
 
       const allLinks = {};
       const allFiles = [];
-
-      if (selected["default"]) {
-        const { driveLinks, uploadedFiles } = await ExportWord(products, isCheck, null, {
-          singleDocumentPerProduct: !!singleDocByTemplateId["default"],
-        });
-        Object.assign(allLinks, driveLinks);
-        allFiles.push(...uploadedFiles);
-      }
 
       for (const tpl of templates) {
         if (selected[tpl._id]) {
@@ -90,8 +89,7 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
     }
   };
 
-  const allTemplates = [DEFAULT_TEMPLATE, ...templates];
-  const allSelected = allTemplates.every((tpl) => selected[tpl._id]);
+  const allSelected = templates.length > 0 && templates.every((tpl) => selected[tpl._id]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -117,15 +115,22 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
                 {t("ChooseOneOrMore")}
               </span>
               <button
+                type="button"
                 onClick={handleSelectAll}
-                className="text-sm text-[#a57d45] hover:underline"
+                disabled={templates.length === 0}
+                className="text-sm text-[#a57d45] hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
               >
                 {allSelected ? t("DeselectAll") : t("SelectAll")}
               </button>
             </div>
 
             <div className="flex flex-col gap-2 max-h-72 overflow-y-auto mb-5">
-              {allTemplates.map((tpl) => (
+              {templates.length === 0 ? (
+                <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
+                  אין תבניות מועלות. העלי תבנית Word בהגדרות לפני ייצוא.
+                </div>
+              ) : null}
+              {templates.map((tpl) => (
                 <div
                   key={tpl._id}
                   className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition"

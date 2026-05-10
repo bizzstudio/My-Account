@@ -296,6 +296,9 @@ const ConsultantForm = () => {
             {(watch("loans") || []).map((_, i) => (
               <div key={i} className="col-span-12 border rounded-xl p-4 bg-gray-50 grid grid-cols-12 gap-4">
                 <Field label="שם מסלול הריבית" col={3}><Input register={register} name={`loans[${i}].loanPlan`} placeholder="מסלול" /></Field>
+                <Field label="מועד שמירת הריבית" col={3}><Input register={register} name={`loans[${i}].interestLockDate`} type="date" /></Field>
+                <Field label="שיעור הפריים" col={3}><Input register={register} name={`loans[${i}].primeRate`} placeholder="%" /></Field>
+                <Field label="שם מסלול הפירעון" col={3}><Input register={register} name={`loans[${i}].repaymentTrackName`} placeholder="מסלול פירעון" /></Field>
                 <Field label="שיעור הריבית הנומינלית" col={3}><Input register={register} name={`loans[${i}].loanInterestRate`} placeholder="למשל 3.5%" /></Field>
                 <Field label="הריבית המתואמת" col={3}><Input register={register} name={`loans[${i}].adjustedInterestRate`} placeholder="למשל 4%" /></Field>
                 <Field label="שיעור עלות ממשית של האשראי" col={3}><Input register={register} name={`loans[${i}].realCreditCostRate`} placeholder="%" /></Field>

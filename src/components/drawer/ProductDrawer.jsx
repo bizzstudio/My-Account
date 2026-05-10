@@ -1195,6 +1195,54 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         </div>
                     </div>
 
+                    {/* מועד שמירת הריבית */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("InterestLockDate")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("InterestLockDate")}
+                                name={`loans[${index}].interestLockDate`}
+                                type="date"
+                                placeholder=""
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.interestLockDate} />
+                        </div>
+                    </div>
+
+                    {/* שיעור הפריים */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("PrimeRate")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("PrimeRate")}
+                                name={`loans[${index}].primeRate`}
+                                type="text"
+                                placeholder={t("PrimeRate")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.primeRate} />
+                        </div>
+                    </div>
+
+                    {/* שם מסלול הפירעון */}
+                    <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
+                        <LabelArea label={t("RepaymentTrackName")} />
+                        <div className="col-span-6">
+                            <InputArea
+                                register={register}
+                                label={t("RepaymentTrackName")}
+                                name={`loans[${index}].repaymentTrackName`}
+                                type="text"
+                                placeholder={t("RepaymentTrackName")}
+                                isRequired={false}
+                            />
+                            <Error errorName={errors?.loans?.[index]?.repaymentTrackName} />
+                        </div>
+                    </div>
+
                     {/* שיעור הריבית הנומינלית — טקסט חופשי */}
                     <div className="flex flex-col gap-1 md:col-span-3 col-span-12">
                         <LabelArea label={t("LoanInterestRate")} />

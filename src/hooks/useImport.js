@@ -12,6 +12,7 @@ import { notifyError, notifySuccess } from "@/utils/toast";
 import { useTranslation } from "react-i18next";
 import { isValidIsraeliIdOrPassport } from "@/utils/israeliId";
 import { getHeaderToFieldMap, CANONICAL_EXCEL_HEADERS } from "@/constants/excelCanonicalHeaders";
+import { isBorrowerMortgagorFlag } from "@/utils/buildWordTemplateData";
 
 const useImport = () => {
     const { t } = useTranslation();
@@ -542,6 +543,7 @@ const useImport = () => {
                     name: [`שם לווה ${i}`, `שם לווה${i}`, `שם הלווה ${i}`, `שם הלווה${i}`],
                     idNumber: [`תעודת זהות לווה ${i}`, `תעודת זהות לווה${i}`, `מספר תעודת זהות לווה ${i}`, `מספר תעודת זהות לווה${i}`, `ת.ז. לווה ${i}`, `ת.ז. לווה${i}`],
                     address: [`כתובת לווה ${i}`, `כתובת לווה${i}`],
+                    mortgagor: [`ממשכן לווה ${i}`, `ממשכן לווה${i}`, `ממשכן ${i}`, `ממשכן${i}`],
                 });
 
                 processedData = data.map((row) => {
@@ -588,6 +590,15 @@ const useImport = () => {
                             if (idNum == null) idNum = num(getFromRow(row, BORROWER_ALT_HEADERS(i).idNumber));
                             if (address === undefined) address = str(getFromRow(row, BORROWER_ALT_HEADERS(i).address));
                         }
+                        let mortRaw =
+                            i === 1 ? r.borrowerIsMortgagor : r[`borrowerIsMortgagor_${i}`];
+                        if (mortRaw === undefined || mortRaw === null || String(mortRaw).trim() === "") {
+                            mortRaw =
+                                i === 1
+                                    ? getFromRow(row, ["ממשכן", "ממשכן לווה 1", "ממשכן לווה"])
+                                    : getFromRow(row, BORROWER_ALT_HEADERS(i).mortgagor);
+                        }
+
                         const hasAnyValue = !!(
                             first ||
                             lastName ||
@@ -607,7 +618,7 @@ const useImport = () => {
                                 borrowerDateOfBirth: dob ? new Date(dob) : undefined,
                                 borrowerGender: gender,
                                 borrowerEmail: email,
-                                borrowerIsMortgagor: false,
+                                borrowerIsMortgagor: isBorrowerMortgagorFlag({ borrowerIsMortgagor: mortRaw }),
                             });
                         }
                     }
@@ -620,7 +631,9 @@ const useImport = () => {
                             borrowerDateOfBirth: undefined,
                             borrowerGender: undefined,
                             borrowerEmail: undefined,
-                            borrowerIsMortgagor: false,
+                            borrowerIsMortgagor: isBorrowerMortgagorFlag({
+                                borrowerIsMortgagor: getFromRow(row, ["ממשכן", "ממשכן לווה 1"]),
+                            }),
                         });
 
                     // הלוואות — 1–3

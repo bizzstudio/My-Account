@@ -142,6 +142,9 @@ const LEGEND_SECTIONS = [
     title: "הלוואות",
     items: [
       { key: "{loanPlan}", label: "שם מסלול הריבית (מלל חופשי)" },
+      { key: "{interestLockDate}", label: "מועד שמירת הריבית" },
+      { key: "{primeRate}", label: "שיעור הפריים" },
+      { key: "{repaymentTrackName}", label: "שם מסלול הפירעון" },
       { key: "{loanInterestRate}", label: "שיעור הריבית הנומינלית (מספרי / מלל חופשי)" },
       { key: "{adjustedInterestRate}", label: "הריבית המתואמת (מספרי / מלל חופשי)" },
       { key: "{realCreditCostRate}", label: "שיעור עלות ממשית של האשראי (מספרי / מלל חופשי)" },
