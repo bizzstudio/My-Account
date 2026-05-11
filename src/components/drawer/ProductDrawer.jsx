@@ -1411,9 +1411,8 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 register={register}
                                 label={t("LoanAmount")}
                                 name={`loans[${index}].loanAmount`}
-                                type="number"
+                                type="text"
                                 placeholder={t("LoanAmount")}
-                                step={0.01}
                                 isRequired={false}
                             />
                             <Error errorName={errors?.loans?.[index]?.loanAmount} />
