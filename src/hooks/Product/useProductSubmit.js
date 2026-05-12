@@ -177,10 +177,19 @@ const useProductSubmit = (id, onSuccess) => {
             borrowerIsMortgagor: isBorrowerMortgagorFlag(b),
           };
         }),
-        loans: data.loans?.map((l) => ({
-          ...l,
-          loanCreation: convertDate(l.loanCreation),
-        })),
+        loans: data.loans?.map((l) => {
+          const parseNumeric = (val) => {
+            if (val === undefined || val === null || val === "") return undefined;
+            const n = Number(String(val).replace(/,/g, ""));
+            return isNaN(n) ? undefined : n;
+          };
+          return {
+            ...l,
+            loanAmount: parseNumeric(l.loanAmount),
+            loanMonths: parseNumeric(l.loanMonths),
+            loanCreation: convertDate(l.loanCreation),
+          };
+        }),
         transcriptText: data.transcriptText || "",
         facebookFeedData: data.facebookFeedData || "",
       };
