@@ -237,10 +237,18 @@ const useProductSubmit = (id, onSuccess) => {
       }
 
       // 🔹 כל המערכים — שומרים את כל האיברים (לווים, הלוואות, מוכרים וכו')
+      const formatWithCommas = (val) => {
+        if (val == null || val === "") return "";
+        const n = Number(val);
+        return isNaN(n) ? String(val) : n.toLocaleString("en-US");
+      };
+
       const loansMapped = (res.loans && res.loans.length > 0)
         ? res.loans.map((l) => ({
             ...defaultLoan,
             ...l,
+            loanAmount: formatWithCommas(l.loanAmount),
+            loanMonths: formatWithCommas(l.loanMonths),
             loanCreation: l.loanCreation
               ? new Date(l.loanCreation).toISOString().split("T")[0]
               : "",

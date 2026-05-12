@@ -360,7 +360,7 @@ export function buildWordTemplateData(product, borrower) {
     sellerIdNumber: dash(seller.sellerIdNumber),
     sellerAddress: dash(seller.sellerAddress),
 
-    loanAmount: dash(loan.loanAmount),
+    loanAmount: loan.loanAmount != null && loan.loanAmount !== "" ? Number(loan.loanAmount).toLocaleString("en-US") : "-",
     loanChange: dash(loan.loanChange),
     clause: dash(loan.clause),
     loanPlan: dash(loan.loanPlan),
