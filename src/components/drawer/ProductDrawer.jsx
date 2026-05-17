@@ -1,5 +1,5 @@
 /// src/components/drawer/ProductDrawer.jsx
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Card, CardBody } from "@windmill/react-ui";
 import { useNavigate } from "react-router-dom";
 import { t } from "i18next";
@@ -7,6 +7,7 @@ import { RiAdminLine } from "react-icons/ri";
 import { BiSolidPackage, BiSolidDollarCircle } from "react-icons/bi";
 import { MdEditNote, MdInventory, MdLocalShipping } from "react-icons/md";
 import { FaTag } from "react-icons/fa";
+import { FiFileText } from "react-icons/fi";
 import ReactTagInput from "@pathofdev/react-tag-input";
 import ReactQuill from "react-quill-new";
 import 'react-quill-new/dist/quill.snow.css';
@@ -26,6 +27,7 @@ import SelectWithOptions from "@/components/form/selectOption/SelectWithOptions"
 import Uploader from "@/components/image-uploader/Uploader";
 import CollapsibleSection from "@/components/common/CollapsibleSection";
 import SwitchToggle from "@/components/form/switch/SwitchToggle";
+import TemplateSelectModal from "@/components/settings/TemplateSelectModal";
 import YouTubeVideoPreview from "@/components/product/YouTubeVideoPreview";
 import FormSubmitActions from "../form/FormSubmitActions";
 import { CARGO_TYPE_VALUES, PACKAGE_CARGO_TYPE_VALUES, DEFAULT_CARGO_TYPE } from "@/constants/cargoTypes";
@@ -51,6 +53,8 @@ const ProductDrawer = ({ id, onSuccess }) => {
         setValue,
         watch,
     } = useProductSubmit(id, onSuccess);
+
+    const [loanExportIndex, setLoanExportIndex] = useState(null);
 
     const isAdmin = userInfo?.role === "admin" || userInfo?.role === "super-admin";
     const isLawyer = userInfo?.role === "lawyer";
@@ -1547,8 +1551,40 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         </div>
                     </div>
 
+                    {/* שעבוד */}
+                    <div className="col-span-12 flex flex-wrap items-center gap-6 pt-2">
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-mainColor focus:ring-mainColor"
+                                {...register(`loans[${index}].lienFirst`, {
+                                    setValueAs: (v) => v === true || v === "true" || v === "on",
+                                })}
+                            />
+                            {t("LienRankFirst")}
+                        </label>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-mainColor focus:ring-mainColor"
+                                {...register(`loans[${index}].lienSecond`, {
+                                    setValueAs: (v) => v === true || v === "true" || v === "on",
+                                })}
+                            />
+                            {t("LienRankSecond")}
+                        </label>
+                    </div>
+
                     {/* כפתור הסרה */}
-                    <div className="col-span-12 flex justify-end">
+                    <div className="col-span-12 flex items-center justify-between">
+                        <button
+                            type="button"
+                            onClick={() => setLoanExportIndex(index)}
+                            className="flex items-center gap-2 px-3 py-2 text-mainColor hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded text-sm font-medium"
+                        >
+                            <FiFileText size={15} />
+                            {t("ExportToWord")}
+                        </button>
                         <button
                             type="button"
                             onClick={() => {
@@ -1992,6 +2028,24 @@ const ProductDrawer = ({ id, onSuccess }) => {
 
 </Card>
 </div>
+        {loanExportIndex !== null && (() => {
+            const formData = watch();
+            const specificLoan = (formData.loans || [])[loanExportIndex];
+            const loanLabel = specificLoan?.loanPlan
+                ? `- ${specificLoan.loanPlan}`
+                : `- הלוואה ${loanExportIndex + 1}`;
+            const loanProduct = specificLoan
+                ? { ...formData, _id: id, loans: [specificLoan] }
+                : { ...formData, _id: id };
+            return (
+                <TemplateSelectModal
+                    products={[loanProduct]}
+                    isCheck={[]}
+                    fileNameSuffix={loanLabel}
+                    onClose={() => setLoanExportIndex(null)}
+                />
+            );
+        })()}
         </>
     );
 };

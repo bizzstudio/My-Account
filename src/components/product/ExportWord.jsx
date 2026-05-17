@@ -77,7 +77,7 @@ const safeAuthHeader = (token) => {
 // {mortgagorIdNumber} / {nonMortgagorIdNumber} — ת.ז. של ממשכן ראשון / לא-ממשכן ראשון; {mortgagorIdNumber1}… — לפי סדר נפרד בתוך כל קבוצה (דורש צ׳קבוקס «ממשכן» בפרטי הלווה).
 // {borrowerFirstName} / {borrowerLastName} — שם פרטי ושם משפחה בנפרד; {borrowerName} — פרטי + משפחה יחד (כמו mortgagorName*/nonMortgagorName* לפי המפתח Name).
 const ExportWord = async (products, isCheck = [], template = null, options = {}) => {
-  const { singleDocumentPerProduct = false } = options;
+  const { singleDocumentPerProduct = false, fileNameSuffix = "" } = options;
   const uploadedFiles = [];
   const driveLinks = {}; // productId → folder webViewLink
 
@@ -141,7 +141,7 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
           .filter(Boolean)
           .join(" ו ") || "Unknown";
 
-      const templateFileName = template.name || "תבנית";
+      const templateFileName = (template.name || "תבנית") + (fileNameSuffix ? ` ${fileNameSuffix}` : "");
       const templateName = templateFileName;
 
       const uploadOneDoc = async (blob, fileBaseName, uploadedBorrowerLabel) => {

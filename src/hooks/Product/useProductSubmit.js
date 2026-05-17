@@ -32,6 +32,8 @@ export const defaultLoan = {
   loanCreation: "",
   loanNumber: "",
   mortgageNumber: "",
+  lienFirst: false,
+  lienSecond: false,
 };
 
 const useProductSubmit = (id, onSuccess) => {

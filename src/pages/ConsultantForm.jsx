@@ -328,6 +328,28 @@ const ConsultantForm = () => {
                 <Field label="תאריך יצירה" col={3}><Input register={register} name={`loans[${i}].loanCreation`} type="date" /></Field>
                 <Field label="מספר הלוואה" col={3}><Input register={register} name={`loans[${i}].loanNumber`} placeholder="מספר הלוואה" /></Field>
                 <Field label="מספר משכנתא" col={3}><Input register={register} name={`loans[${i}].mortgageNumber`} placeholder="מספר משכנתא" /></Field>
+                <div className="col-span-12 flex flex-wrap items-center gap-6 pt-1">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 text-[#a57d45] focus:ring-[#a57d45]"
+                      {...register(`loans[${i}].lienFirst`, {
+                        setValueAs: (v) => v === true || v === "true" || v === "on",
+                      })}
+                    />
+                    דרגה ראשונה
+                  </label>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 text-[#a57d45] focus:ring-[#a57d45]"
+                      {...register(`loans[${i}].lienSecond`, {
+                        setValueAs: (v) => v === true || v === "true" || v === "on",
+                      })}
+                    />
+                    דרגה שניה
+                  </label>
+                </div>
                 <div className="col-span-12 flex justify-end">
                   <button type="button" onClick={() => setValue("loans", (watch("loans") || []).filter((_, j) => j !== i))} className="text-sm text-red-500 hover:underline">הסר הלוואה</button>
                 </div>

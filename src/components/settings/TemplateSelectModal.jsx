@@ -4,10 +4,10 @@ import { t } from "i18next";
 import TemplateServices from "@/services/TemplateServices";
 import ExportWord from "@/components/product/ExportWord";
 
-const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
+const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone, fileNameSuffix = "" }) => {
   const [templates, setTemplates] = useState([]);
   const [selected, setSelected] = useState({});
-  const [singleDocByTemplateId, setSingleDocByTemplateId] = useState({});
+  const [perBorrowerById, setPerBorrowerById] = useState({});
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(null);
@@ -53,7 +53,8 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
       for (const tpl of templates) {
         if (selected[tpl._id]) {
           const { driveLinks, uploadedFiles } = await ExportWord(products, isCheck, tpl, {
-            singleDocumentPerProduct: !!singleDocByTemplateId[tpl._id],
+            singleDocumentPerProduct: !perBorrowerById[tpl._id],
+            fileNameSuffix,
           });
           Object.assign(allLinks, driveLinks);
           allFiles.push(...uploadedFiles);
@@ -150,9 +151,9 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
                   <label className="flex items-center gap-2 shrink-0 cursor-pointer select-none">
                     <input
                       type="checkbox"
-                      checked={!!singleDocByTemplateId[tpl._id]}
+                      checked={!!perBorrowerById[tpl._id]}
                       onChange={() =>
-                        setSingleDocByTemplateId((prev) => ({
+                        setPerBorrowerById((prev) => ({
                           ...prev,
                           [tpl._id]: !prev[tpl._id],
                         }))
@@ -160,7 +161,7 @@ const TemplateSelectModal = ({ products, isCheck, onClose, onExportDone }) => {
                       className="w-4 h-4 accent-[#a57d45] shrink-0"
                     />
                     <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                      {t("SingleDocumentShort")}
+                      {t("PerBorrowerShort")}
                     </span>
                   </label>
                 </div>
