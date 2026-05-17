@@ -31,7 +31,7 @@ import TemplateSelectModal from "@/components/settings/TemplateSelectModal";
 import YouTubeVideoPreview from "@/components/product/YouTubeVideoPreview";
 import FormSubmitActions from "../form/FormSubmitActions";
 import { CARGO_TYPE_VALUES, PACKAGE_CARGO_TYPE_VALUES, DEFAULT_CARGO_TYPE } from "@/constants/cargoTypes";
-import { isValidIsraeliID } from "@/utils/israeliId";
+import { isValidIsraeliIdOrPassport } from "@/utils/israeliId";
 
 /** שמות מהאקסל — מוצגים בעריכת מוצר (רק השם המקורי) */
 const EXCEL_LABEL = { block: "מסד", office: "לשכה", registry: "מרשם", contract: "ת.ח. הסכם מכר", transferFees: "תמורה", primeMargin: "פריים", adjustedLoan: "מתואמת/פיגורים" };
@@ -369,7 +369,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 type="text"
                 placeholder={t("BorrowerIdNumber")}
                 isRequired={false}
-                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
+                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliIdOrPassport(v) || t("InvalidIsraeliId")}
               />
               <Error errorName={errors?.borrowers?.[index]?.borrowerIdNumber} />
             </div>
@@ -560,7 +560,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                 type="text"
                 placeholder={t("FinancingCompanyId")}
                 isRequired={false}
-                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
+                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliIdOrPassport(v) || t("InvalidIsraeliId")}
               />
               <Error errorName={errors?.financingCompanies?.[index]?.idNumber} />
             </div>
@@ -1112,7 +1112,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 type="text"
                                 placeholder={t("SellerIdNumber")}
                                 isRequired={false}
-                                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
+                                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliIdOrPassport(v) || t("InvalidIsraeliId")}
                             />
                             <Error errorName={errors?.sellers?.[index]?.sellerIdNumber} />
                         </div>
@@ -1656,7 +1656,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                         type="text"
                         placeholder={t("SeniorCreditorIdNumber")}
                         isRequired={false}
-                        validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
+                        validate={(v) => !v || String(v).trim() === "" || isValidIsraeliIdOrPassport(v) || t("InvalidIsraeliId")}
                     />
                     <Error errorName={errors?.seniorCreditor?.seniorCreditorIdNumber} />
                 </div>
@@ -1786,7 +1786,7 @@ const ProductDrawer = ({ id, onSuccess }) => {
                                 type="text"
                                 placeholder={t("AuthorizedIdNumber")}
                                 isRequired={false}
-                                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
+                                validate={(v) => !v || String(v).trim() === "" || isValidIsraeliIdOrPassport(v) || t("InvalidIsraeliId")}
                             />
                             <Error
                                 errorName={errors?.authorizedPerson?.[index]?.authorizedIdNumber}

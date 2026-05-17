@@ -8,7 +8,7 @@ import Error from "@/components/form/others/Error";
 import Title from "@/components/form/others/Title";
 import InputArea from "@/components/form/input/InputArea";
 import useUserSubmit from "@/hooks/useUserSubmit";
-import { isValidIsraeliID } from "@/utils/israeliId";
+import { isValidIsraeliIdOrPassport } from "@/utils/israeliId";
 import SelectWithOptions from "@/components/form/selectOption/SelectWithOptions";
 import DrawerButton from "@/components/form/button/DrawerButton";
 import LabelArea from "@/components/form/selectOption/LabelArea";
@@ -170,7 +170,7 @@ const UserDrawer = ({ id }) => {
                     type="text"
                     placeholder={t("LawyerIdNumber")}
                     isRequired={false}
-                    validate={(v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId")}
+                    validate={(v) => !v || String(v).trim() === "" || isValidIsraeliIdOrPassport(v) || t("InvalidIsraeliId")}
                   />
                   <Error errorName={errors.idNumber} />
                 </div>

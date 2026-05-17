@@ -49,10 +49,11 @@ export function isValidIsraeliID(id) {
  */
 export function isValidPassportNumber(value) {
   if (value === undefined || value === null) return false;
-  const str = String(value).trim();
-  if (str.length === 0) return false;
-  if (str.length < 5 || str.length > 20) return false;
-  return /^[A-Za-z0-9]+$/.test(str);
+  const trimmed = String(value).trim();
+  if (trimmed.length === 0) return false;
+  const compact = trimmed.replace(/[\s-]/g, "");
+  if (compact.length < 5 || compact.length > 20) return false;
+  return /^[A-Za-z0-9]+$/.test(compact);
 }
 
 /**

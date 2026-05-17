@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import logo from "@/assets/img/logo.jpeg";
-import { isValidIsraeliID } from "@/utils/israeliId";
+import { isValidIsraeliIdOrPassport } from "@/utils/israeliId";
 import { defaultLoan } from "@/hooks/Product/useProductSubmit";
 // VITE_APP_API_BASE_URL = "http://localhost:3031/api" — מסירים את /api בסוף
 const API_BASE = import.meta.env.VITE_APP_API_BASE_URL || "http://localhost:3031/api";
@@ -56,7 +56,7 @@ const ConsultantForm = () => {
   const lawyerToken = searchParams.get("token"); // מספר רישום עורך הדין (מזהה)
   const lawyerName = searchParams.get("lawyerName") || "";
 
-  const idValidate = (v) => !v || String(v).trim() === "" || isValidIsraeliID(v) || t("InvalidIsraeliId");
+  const idValidate = (v) => !v || String(v).trim() === "" || isValidIsraeliIdOrPassport(v) || t("InvalidIsraeliId");
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
@@ -167,7 +167,7 @@ const ConsultantForm = () => {
               <div key={i} className="col-span-12 border rounded-xl p-4 bg-gray-50 grid grid-cols-12 gap-4">
                 <Field label="שם פרטי" col={3}><Input register={register} name={`borrowers[${i}].borrowerName`} placeholder="שם פרטי" /></Field>
                 <Field label="שם משפחה" col={3}><Input register={register} name={`borrowers[${i}].borrowerLastName`} placeholder="שם משפחה" /></Field>
-                <Field label="מספר ת.ז" col={3}><Input register={register} name={`borrowers[${i}].borrowerIdNumber`} type="text" placeholder="מספר ת.ז" registerOptions={{ validate: idValidate }} /></Field>
+                <Field label="מספר ת.ז / דרכון" col={3}><Input register={register} name={`borrowers[${i}].borrowerIdNumber`} type="text" placeholder="ת.ז או דרכון" registerOptions={{ validate: idValidate }} /></Field>
                 {errors?.borrowers?.[i]?.borrowerIdNumber && <div className="col-span-12 text-red-600 text-sm">{errors.borrowers[i].borrowerIdNumber.message}</div>}
                 <Field label="כתובת" col={6}><Input register={register} name={`borrowers[${i}].borrowerAddress`} placeholder="כתובת מגורים" /></Field>
                 <Field label="תאריך לידה" col={3}><Input register={register} name={`borrowers[${i}].borrowerDateOfBirth`} type="date" /></Field>
