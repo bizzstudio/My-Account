@@ -10,7 +10,7 @@ import { normalizeIsraeliID } from "@/utils/israeliId";
 const dash = (v) => {
   if (v == null || v === "") return "-";
   if (typeof v === "number" && !Number.isFinite(v)) return "-";
-  return String(v);
+  return String(v).replace(/\r?\n+/g, " ").replace(/\t/g, " ").trim();
 };
 
 const dashOptionalZero = (v) => {
@@ -18,10 +18,12 @@ const dashOptionalZero = (v) => {
   return String(v);
 };
 
+/** תאריך קצר וקבוע אורך (19.5.2026) — מונע שבירת פריסה בטבלאות חתימה */
 const formatDateHe = (v) => {
   if (!v) return "-";
   const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString("he-IL");
+  if (Number.isNaN(d.getTime())) return "-";
+  return `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
 };
 
 /** מפצל תאריך לרכיבים נפרדים (יום / חודש / שנה) כמחרוזות */

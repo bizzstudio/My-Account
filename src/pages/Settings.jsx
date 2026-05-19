@@ -473,6 +473,11 @@ const Settings = () => {
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4" dir="rtl">
               משתנים לשימוש בתבניות מסמך (העתק ל־Word והחלף בערכים).
             </p>
+            <p className="text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2 mb-4" dir="rtl">
+              <strong>טבלת חתימה (שם עו&quot;ד / חתימה / תאריך):</strong> הזינו כל תג בשורה אחת בתוך התא שלו
+              (למשל <span className="font-mono" dir="ltr">{"{signingDate}"}</span> בעמודת התאריך בלבד).
+              אל תפצלו תג בין שורות, ואל תשכפלו את אותו תג מחוץ לטבלה — אחרת התאריך עלול לרדת מתחת לשם ולהתווסף עמוד מיותר.
+            </p>
             <div className="space-y-6" dir="rtl">
               {LEGEND_SECTIONS.map((section) => (
                 <div key={section.title}>

@@ -4,24 +4,21 @@ import Cookies from "js-cookie";
 import { buildWordTemplateData, formatBorrowerDisplayName } from "@/utils/buildWordTemplateData";
 
 /**
- * מחיל גופן David 12pt על כל ה-runs במסמך DOCX (PizZip לאחר מילוי docxtemplater).
- * מתקן גם את docDefaults ב-styles.xml וגם כל <w:rPr> ב-document.xml.
+ * מחיל גופן David על כל ה-runs (PizZip לאחר מילוי docxtemplater).
+ * גודל הגופן הקיים בתבנית נשמר — כדי שלא יישברו טבלאות חתימה ולא יתווסף עמוד מיותר.
  */
 function applyDocumentFont(zip, fontName = "David", sizePt = 12) {
   const halfPt = String(sizePt * 2);
   const fontTag = `<w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:eastAsia="${fontName}"/>`;
-  const sizeTag = `<w:sz w:val="${halfPt}"/><w:szCs w:val="${halfPt}"/>`;
-  const injection = fontTag + sizeTag;
+  const defaultSizeTag = `<w:sz w:val="${halfPt}"/><w:szCs w:val="${halfPt}"/>`;
 
   const patchRpr = (xml) =>
     xml.replace(
       /(<w:rPr(?:\s[^>]*)?>)([\s\S]*?)(<\/w:rPr>)/g,
       (_, open, inner, close) => {
-        const cleaned = inner
-          .replace(/<w:rFonts\b[^/]*\/>/g, "")
-          .replace(/<w:sz\b[^/]*\/>/g, "")
-          .replace(/<w:szCs\b[^/]*\/>/g, "");
-        return `${open}${injection}${cleaned}${close}`;
+        const cleaned = inner.replace(/<w:rFonts\b[^/]*\/>/g, "");
+        const sizePart = /<w:sz\b/.test(inner) ? "" : defaultSizeTag;
+        return `${open}${fontTag}${sizePart}${cleaned}${close}`;
       }
     );
 
@@ -35,12 +32,12 @@ function applyDocumentFont(zip, fontName = "David", sizePt = 12) {
       } else if (/<w:docDefaults/.test(xml)) {
         xml = xml.replace(
           /(<w:docDefaults[^>]*>)/,
-          `$1<w:rPrDefault><w:rPr>${injection}</w:rPr></w:rPrDefault>`
+          `$1<w:rPrDefault><w:rPr>${fontTag}${defaultSizeTag}</w:rPr></w:rPrDefault>`
         );
       } else {
         xml = xml.replace(
           /(<w:style\b)/,
-          `<w:docDefaults><w:rPrDefault><w:rPr>${injection}</w:rPr></w:rPrDefault></w:docDefaults>$1`
+          `<w:docDefaults><w:rPrDefault><w:rPr>${fontTag}${defaultSizeTag}</w:rPr></w:rPrDefault></w:docDefaults>$1`
         );
       }
       zip.file("word/styles.xml", xml);
@@ -57,11 +54,80 @@ function applyDocumentFont(zip, fontName = "David", sizePt = 12) {
       // הוסף rPr ל-run שאין לו (<w:r> ו-<w:r ...> ואחריו <w:t ולא <w:rPr>)
       xml = xml.replace(
         /(<w:r(?:\s[^>]*)?>)(?![\s\S]*?<w:rPr)(<w:t\b)/g,
-        `$1<w:rPr>${injection}</w:rPr>$2`
+        `$1<w:rPr>${fontTag}${defaultSizeTag}</w:rPr>$2`
       );
       zip.file("word/document.xml", xml);
     }
   } catch (_) {}
+}
+
+/** תיקון OOXML בגוף המסמך / כותרות / תחתיות — טבלאות חתימה ורווחים מיותרים */
+function patchDocxPartXml(xml) {
+  if (!xml) return xml;
+
+  // טבלאות: פריסה קבועה — מונע מיזוג עמודות (תאריך שיורד מתחת לשם עו"ד)
+  xml = xml.replace(/<w:tblPr([^>]*)>([\s\S]*?)<\/w:tblPr>/g, (match, attrs, inner) => {
+    let patched = inner.replace(/<w:tblLayout\b[^/]*\/>/g, "");
+    patched += '<w:tblLayout w:type="fixed"/>';
+    return `<w:tblPr${attrs}>${patched}</w:tblPr>`;
+  });
+
+  // שורות טבלה שלא נשברות בין עמודים
+  xml = xml.replace(/<w:tr>(\s*<w:tc)/g, "<w:tr><w:trPr><w:cantSplit/></w:trPr>$1");
+  xml = xml.replace(/<w:trPr([^>]*)>([\s\S]*?)<\/w:trPr>/g, (match, attrs, inner) => {
+    if (/<w:cantSplit\b/.test(inner)) return match;
+    return `<w:trPr${attrs}>${inner}<w:cantSplit/></w:trPr>`;
+  });
+
+  // תאים: יישור לתחתית (שורת חתימה)
+  xml = xml.replace(/<w:tcPr([^>]*)>([\s\S]*?)<\/w:tcPr>/g, (match, attrs, inner) => {
+    if (/<w:vAlign\b/.test(inner)) return match;
+    return `<w:tcPr${attrs}>${inner}<w:vAlign w:val="bottom"/></w:tcPr>`;
+  });
+  xml = xml.replace(/<w:tc>(\s*<w:p)/g, '<w:tc><w:tcPr><w:vAlign w:val="bottom"/></w:tcPr>$1');
+
+  // רווח אחרי פסקה גדול מדי — מקור נפוץ לעמוד שלישי מיותר
+  xml = xml.replace(/<w:spacing\b([^>]*)\/>/g, (tag, attrs) => {
+    const after = attrs.match(/\bw:after="(\d+)"/);
+    if (!after) return tag;
+    const n = parseInt(after[1], 10);
+    if (n <= 160) return tag;
+    const trimmed = attrs.replace(/\bw:after="\d+"/, ' w:after="160"');
+    return `<w:spacing${trimmed}/>`;
+  });
+
+  // פסקאות ריקות לחלוטין אחרי מילוי (לעיתים נוצרות מ-docxtemplater)
+  xml = xml.replace(
+    /<w:p\b[^>]*>(?:(?!<\/w:p>).)*<w:t[^>]*>\s*<\/w:t>(?:(?!<\/w:p>).)*<\/w:p>\s*/g,
+    ""
+  );
+
+  return xml;
+}
+
+function fixDocxLayoutAfterMerge(zip) {
+  const paths = Object.keys(zip.files).filter((p) =>
+    /^word\/(document|header\d+|footer\d+)\.xml$/.test(p)
+  );
+  for (const path of paths) {
+    try {
+      const file = zip.file(path);
+      if (!file) continue;
+      zip.file(path, patchDocxPartXml(file.asText()));
+    } catch (_) {}
+  }
+}
+
+function sanitizeMergeData(data) {
+  const out = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (typeof value === "string") {
+      out[key] = value.replace(/\r?\n+/g, " ").replace(/\t/g, " ").trim();
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
 }
 
 // מנקה token מתווים לא חוקיים ב-header (שורה חדשה, רווח מיותר) — מונע "Invalid character in header content [Authorization]"
@@ -208,7 +274,8 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
           linebreaks: true,
           nullGetter: () => "-",
         });
-        await doc.renderAsync(safeData);
+        await doc.renderAsync(sanitizeMergeData(safeData));
+        fixDocxLayoutAfterMerge(zip);
         applyDocumentFont(zip);
         return doc.getZip().generate({ type: "blob" });
       };
