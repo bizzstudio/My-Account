@@ -61,63 +61,6 @@ function applyDocumentFont(zip, fontName = "David", sizePt = 12) {
   } catch (_) {}
 }
 
-/** תיקון OOXML בגוף המסמך / כותרות / תחתיות — טבלאות חתימה ורווחים מיותרים */
-function patchDocxPartXml(xml) {
-  if (!xml) return xml;
-
-  // טבלאות: פריסה קבועה — מונע מיזוג עמודות (תאריך שיורד מתחת לשם עו"ד)
-  xml = xml.replace(/<w:tblPr([^>]*)>([\s\S]*?)<\/w:tblPr>/g, (match, attrs, inner) => {
-    let patched = inner.replace(/<w:tblLayout\b[^/]*\/>/g, "");
-    patched += '<w:tblLayout w:type="fixed"/>';
-    return `<w:tblPr${attrs}>${patched}</w:tblPr>`;
-  });
-
-  // שורות טבלה שלא נשברות בין עמודים
-  xml = xml.replace(/<w:tr>(\s*<w:tc)/g, "<w:tr><w:trPr><w:cantSplit/></w:trPr>$1");
-  xml = xml.replace(/<w:trPr([^>]*)>([\s\S]*?)<\/w:trPr>/g, (match, attrs, inner) => {
-    if (/<w:cantSplit\b/.test(inner)) return match;
-    return `<w:trPr${attrs}>${inner}<w:cantSplit/></w:trPr>`;
-  });
-
-  // תאים: יישור לתחתית (שורת חתימה)
-  xml = xml.replace(/<w:tcPr([^>]*)>([\s\S]*?)<\/w:tcPr>/g, (match, attrs, inner) => {
-    if (/<w:vAlign\b/.test(inner)) return match;
-    return `<w:tcPr${attrs}>${inner}<w:vAlign w:val="bottom"/></w:tcPr>`;
-  });
-  xml = xml.replace(/<w:tc>(\s*<w:p)/g, '<w:tc><w:tcPr><w:vAlign w:val="bottom"/></w:tcPr>$1');
-
-  // רווח אחרי פסקה גדול מדי — מקור נפוץ לעמוד שלישי מיותר
-  xml = xml.replace(/<w:spacing\b([^>]*)\/>/g, (tag, attrs) => {
-    const after = attrs.match(/\bw:after="(\d+)"/);
-    if (!after) return tag;
-    const n = parseInt(after[1], 10);
-    if (n <= 160) return tag;
-    const trimmed = attrs.replace(/\bw:after="\d+"/, ' w:after="160"');
-    return `<w:spacing${trimmed}/>`;
-  });
-
-  // פסקאות ריקות לחלוטין אחרי מילוי (לעיתים נוצרות מ-docxtemplater)
-  xml = xml.replace(
-    /<w:p\b[^>]*>(?:(?!<\/w:p>).)*<w:t[^>]*>\s*<\/w:t>(?:(?!<\/w:p>).)*<\/w:p>\s*/g,
-    ""
-  );
-
-  return xml;
-}
-
-function fixDocxLayoutAfterMerge(zip) {
-  const paths = Object.keys(zip.files).filter((p) =>
-    /^word\/(document|header\d+|footer\d+)\.xml$/.test(p)
-  );
-  for (const path of paths) {
-    try {
-      const file = zip.file(path);
-      if (!file) continue;
-      zip.file(path, patchDocxPartXml(file.asText()));
-    } catch (_) {}
-  }
-}
-
 function sanitizeMergeData(data) {
   const out = {};
   for (const [key, value] of Object.entries(data)) {
@@ -275,7 +218,6 @@ const ExportWord = async (products, isCheck = [], template = null, options = {})
           nullGetter: () => "-",
         });
         await doc.renderAsync(sanitizeMergeData(safeData));
-        fixDocxLayoutAfterMerge(zip);
         applyDocumentFont(zip);
         return doc.getZip().generate({ type: "blob" });
       };
