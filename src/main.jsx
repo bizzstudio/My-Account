@@ -15,8 +15,6 @@ import "@/assets/css/tailwind.css";
 import App from "@/App";
 import myTheme from "@/assets/theme/myTheme";
 import { UserProvider } from "@/context/UserContext";
-import { SidebarProvider } from "@/context/SidebarContext";
-// import { ChatProvider } from "@/context/ChatContext";
 import ThemeSuspense from "@/components/theme/ThemeSuspense";
 import store from "@/reduxStore/store";
 import "@/i18n";
@@ -35,15 +33,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <UserProvider>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <SidebarProvider>
-          {/* <ChatProvider> */}
-          <Suspense fallback={<ThemeSuspense />}>
-            <Windmill usePreferences theme={myTheme}>
-              <App />
-            </Windmill>
-          </Suspense>
-          {/* </ChatProvider> */}
-        </SidebarProvider>
+        <Suspense fallback={<ThemeSuspense />}>
+          <Windmill usePreferences theme={myTheme}>
+            <App />
+          </Windmill>
+        </Suspense>
       </PersistGate>
     </Provider>
   </UserProvider>
