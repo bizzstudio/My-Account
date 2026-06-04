@@ -37,12 +37,12 @@ export default function Loans() {
         className="flex gap-2"
       >
         <div className="relative flex-1">
-          <FiSearch className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <FiSearch className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="חיפוש לפי מספר הלוואה"
-            className="w-full rounded-xl border border-gray-300 py-2.5 pr-10 pl-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+            placeholder="חיפוש לפי מספר הלוואה, שם לקוח או ת״ז"
+            className="w-full rounded-xl border border-gray-300 py-2.5 pe-3 ps-11 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
           />
         </div>
         <Button type="submit" variant="secondary">חיפוש</Button>
