@@ -1,7 +1,7 @@
 // admin/pages/Customers.jsx — ניהול לקוחות (5.3)
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiPlus, FiSearch } from "react-icons/fi";
+import { FiPlus } from "react-icons/fi";
 import { useForm } from "react-hook-form";
 import useApi from "@/portal/hooks/useApi";
 import AdminService from "../services/adminService";
@@ -10,12 +10,12 @@ import DataTable from "@/portal/components/ui/DataTable";
 import Badge from "@/portal/components/ui/Badge";
 import { Loading, ErrorState } from "@/portal/components/ui/States";
 import Modal from "../components/ui/Modal";
+import SearchBox from "../components/ui/SearchBox";
 import { TextField, SelectField, Button } from "../components/ui/Form";
 import { notifyError, notifySuccess } from "@/utils/toast";
 
 export default function Customers() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -70,24 +70,10 @@ export default function Customers() {
         </Button>
       </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          setQuery(search);
-        }}
-        className="flex gap-2"
-      >
-        <div className="relative flex-1">
-          <FiSearch className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="חיפוש לפי שם, ת״ז, טלפון או אימייל"
-            className="w-full rounded-xl border border-gray-300 py-2.5 pe-3 ps-11 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-          />
-        </div>
-        <Button type="submit" variant="secondary">חיפוש</Button>
-      </form>
+      <SearchBox
+        placeholder="חיפוש לפי שם, ת״ז, טלפון או אימייל"
+        onSearch={setQuery}
+      />
 
       <Card>
         {loading ? (

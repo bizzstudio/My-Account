@@ -1,19 +1,19 @@
 // admin/pages/Loans.jsx — ניהול הלוואות: רשימה (5.4)
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiPlus, FiSearch } from "react-icons/fi";
+import { FiPlus } from "react-icons/fi";
 import useApi from "@/portal/hooks/useApi";
 import AdminService from "../services/adminService";
 import { Card } from "@/portal/components/ui/Card";
 import Badge from "@/portal/components/ui/Badge";
 import { Loading, ErrorState } from "@/portal/components/ui/States";
 import { Button } from "../components/ui/Form";
+import SearchBox from "../components/ui/SearchBox";
 import { LOAN_STATUS_LABELS, LOAN_STATUS_TONE } from "@/portal/lib/labels";
 import { formatMoney, formatDate } from "@/portal/lib/format";
 
 export default function Loans() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const { data, loading, error, refetch } = useApi(
     () => AdminService.listLoans(query ? { search: query } : {}),
@@ -29,24 +29,10 @@ export default function Loans() {
         </Button>
       </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          setQuery(search);
-        }}
-        className="flex gap-2"
-      >
-        <div className="relative flex-1">
-          <FiSearch className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="חיפוש לפי מספר הלוואה, שם לקוח או ת״ז"
-            className="w-full rounded-xl border border-gray-300 py-2.5 pe-3 ps-11 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-          />
-        </div>
-        <Button type="submit" variant="secondary">חיפוש</Button>
-      </form>
+      <SearchBox
+        placeholder="חיפוש לפי מספר הלוואה, שם לקוח או ת״ז"
+        onSearch={setQuery}
+      />
 
       <Card>
         {loading ? (
