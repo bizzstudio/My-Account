@@ -34,6 +34,19 @@ export default function PortalLogin() {
         nationalId: values.nationalId.trim(),
         email: values.email.trim(),
       });
+      // ת"ז דמו — השרת מחזיר טוקן מלא וכניסה ישירה ללא קוד
+      if (res?.token) {
+        const isAdmin = ADMIN_ROLES.includes(res.role);
+        if (isAdmin) {
+          adminLogin(res);
+        } else {
+          portalLogin(res);
+        }
+        navigate(res.redirect || (isAdmin ? "/admin" : "/dashboard"), {
+          replace: true,
+        });
+        return;
+      }
       // השרת מחזיר תגובה אחידה; נמשיך לשלב הקוד רק אם קיבלנו otpToken
       if (res?.otpToken) {
         setOtpToken(res.otpToken);
